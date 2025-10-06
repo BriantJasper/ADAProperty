@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";gid
+import type { ReactNode } from "react";
 
 interface ContainerProps {
   children: ReactNode;
