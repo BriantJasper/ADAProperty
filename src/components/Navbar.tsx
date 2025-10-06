@@ -4,7 +4,7 @@ import { ShoppingCart } from "lucide-react";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [compareCount, setCompareCount] = useState(1); // Example: default 2 items
+  const [compareCount] = useState(1); // Example: default 2 items
 
   return (
     <header className="absolute top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md">
