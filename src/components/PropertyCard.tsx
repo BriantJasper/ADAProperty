@@ -21,6 +21,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const { state, dispatch } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(property);
+  const images = property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : [property.imageUrl];
+  const [slide, setSlide] = useState(0);
 
   const isInComparison = state.comparisonCart.some(item => item.property.id === property.id);
   const canAddToComparison = state.comparisonCart.length < 3 && !isInComparison;
@@ -131,15 +133,40 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   return (
     <div className="max-w-sm overflow-hidden rounded-lg bg-white shadow-lg font-sans">
       <div className="relative">
-        {/* Property Image */}
-        <img
-          className="h-56 w-full object-cover"
-          src={property.imageUrl}
-          alt={`Image of ${property.type} in ${property.location}`}
-        />
+        {/* Image Slider */}
+        <div className="relative h-56 w-full overflow-hidden">
+          <img
+            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
+            src={images[slide]}
+            alt={`${property.type} ${slide + 1}`}
+          />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={() => setSlide((s) => (s - 1 + images.length) % images.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/60"
+                aria-label="Prev"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => setSlide((s) => (s + 1) % images.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/60"
+                aria-label="Next"
+              >
+                ›
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, i) => (
+                  <span key={i} className={`w-2 h-2 rounded-full ${i === slide ? 'bg-white' : 'bg-white/50'}`} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Badges */}
-        <div className="absolute inset-x-0 top-3 px-3 flex justify-between pointer-events-none">
+        <div className="absolute left-3 bottom-3 px-3 flex gap-2 pointer-events-none">
           <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorStatus}`}>
             {property.status}
           </div>

@@ -12,6 +12,7 @@ export interface Property {
   colorType: string;
   colorStatus: string;
   imageUrl: string;
+  imageUrls?: string[];
   phoneNumber: string;
   description?: string;
   createdAt: Date;
