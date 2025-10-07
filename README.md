@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# ADAProperty (React + TypeScript + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikasi katalog properti dengan Admin Panel, komparasi properti (max 3), WhatsApp integration, dan filter lokasi/sub‑lokasi.
 
-Currently, two official plugins are available:
+## Menjalankan
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Install dependency: `npm install`
+2. Jalankan dev server: `npm run dev`
+3. Buka `http://localhost:5173`
 
-## React Compiler
+## Fitur Utama
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Admin Panel (CRUD properti)
+- Komparasi properti (maksimal 3)
+- Tombol WhatsApp dengan pesan otomatis
+- Filter Lokasi + Sub‑lokasi (otomatis dari data)
+- Filter tambahan: Status, Tipe, Price Min/Max
+- Persistensi data via localStorage
 
-## Expanding the ESLint configuration
+## Arsitektur & State
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Global state di `src/context/AppContext.tsx`:
+  - `properties`, `comparisonCart`, `isAdminMode`, `isAuthenticated`, `user`, `selectedLocation`
+  - Actions: CRUD, comparison add/remove/clear, `LOGIN/LOGOUT`, `SET_SELECTED_LOCATION`, `LOAD_PROPERTIES`
+  - Persist ke `localStorage`
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Routes
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- `/` Home (hero + Popular Section)
+- `/properties` Daftar Properti + panel filter + sub‑lokasi
+- `/comparison` Halaman komparasi keranjang (max 3)
+- `/admin` Admin Panel (protected)
+- `/about` Tentang Kami
+- `/contact` Kontak Kami
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+> Navbar otomatis solid putih di `/admin`, `/about`, `/comparison`, `/contact`.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Login Admin (Demo)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Username: `admin`
+- Password: `admin123`
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Struktur Penting
+
+- `src/components/PropertyCard.tsx` — kartu properti + WA + compare + admin controls
+- `src/components/ComparisonCart.tsx` — keranjang komparasi
+- `src/components/PropertyForm.tsx` — form tambah/edit properti
+- `src/components/Navbar.tsx` — navbar adaptif (transparan/solid)
+- `src/pages/PropertiesPage.tsx` — halaman daftar properti + filter + sub‑lokasi
+- `src/pages/ContactPage.tsx` — halaman kontak
+- `src/pages/About.tsx` — halaman tentang + anggota
+
+## Catatan Aset
+
+Letakkan gambar di `public/images/*` dan rujuk dengan path absolut, contoh: `/images/p1.png`.
+
