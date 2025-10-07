@@ -165,11 +165,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           )}
         </div>
 
-        {/* Badges */}
-        <div className="absolute left-3 bottom-3 px-3 flex gap-2 pointer-events-none">
-          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorStatus}`}>
-            {property.status}
-          </div>
+        {/* Badges (bottom-left) aligned with left content padding */}
+        <div className="absolute left-5 bottom-3 flex gap-2 pointer-events-none">
+          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorStatus}`}>{property.status}</div>
           <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorType} flex items-center gap-1.5`}>
             {property.type.toLowerCase() === 'rumah' ? (
               <HomeIcon className="w-3.5 h-3.5" />
@@ -242,11 +240,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               onClick={handleWhatsAppClick}
               className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
             >
-              <FaWhatsapp />
               WhatsApp
             </button>
           )}
-          
           {showComparisonButton && (
             <>
               {isInComparison ? (
