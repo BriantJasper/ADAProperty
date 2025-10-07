@@ -85,14 +85,14 @@ const PropertiesPage: React.FC = () => {
           <p className="mt-2 opacity-90">{location ? `Lokasi: ${location}` : 'Semua lokasi'}</p>
 
           {/* Filter Glass Panel */}
-          <div className="mt-6 bg-white/15 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white/20">
+          <div className="mt-6 bg-white/15 backdrop-blur-md rounded-3xl p-4 md:p-6 border border-white/20">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-              {/* Location Select */}
-              <div className="md:col-span-4">
+              {/* Location Select centered */}
+              <div className="md:col-span-4 flex justify-center">
                 <select
                   value={location}
                   onChange={(e) => dispatch({ type: 'SET_SELECTED_LOCATION', payload: e.target.value })}
-                  className="w-full md:w-[380px] px-4 py-2 rounded-md bg-white/80 text-gray-800"
+                  className="w-full md:w-[520px] px-4 py-2 rounded-full bg-white/90 text-gray-800 text-center"
                 >
                   <option value="">Pilih Lokasi</option>
                   {cityOptions.map((city) => (
@@ -156,7 +156,7 @@ const PropertiesPage: React.FC = () => {
           </div>
 
           {subLocations.length > 0 && (
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-3">
               <button
                 onClick={() => setActiveSub('')}
                 className={`px-4 py-2 rounded-full border backdrop-blur-sm ${

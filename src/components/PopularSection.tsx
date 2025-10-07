@@ -25,6 +25,7 @@ export default function PopularSection() {
               property={property}
               showAdminControls={false}
               showComparisonButton={true}
+              showWhatsAppButton={false}
             />
           ))}
         </div>

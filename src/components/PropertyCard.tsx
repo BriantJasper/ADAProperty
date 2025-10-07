@@ -2,18 +2,21 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import type { Property } from '../types/Property';
 import { IoAdd, IoTrash, IoPencil, IoEye, IoEyeOff } from 'react-icons/io5';
+import { Home as HomeIcon, Building2 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 interface PropertyCardProps {
   property: Property;
   showAdminControls?: boolean;
   showComparisonButton?: boolean;
+  showWhatsAppButton?: boolean;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
   showAdminControls = false,
   showComparisonButton = true,
+  showWhatsAppButton = false,
 }) => {
   const { state, dispatch } = useApp();
   const [isEditing, setIsEditing] = useState(false);
@@ -135,18 +138,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           alt={`Image of ${property.type} in ${property.location}`}
         />
 
-        {/* Status Tag */}
-        <div
-          className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-xs font-semibold text-white ${property.colorStatus}`}
-        >
-          {property.status}
-        </div>
-
-        {/* Type Tag */}
-        <div
-          className={`absolute right-3 top-3 rounded-md px-2.5 py-1 text-xs font-semibold text-white ${property.colorType}`}
-        >
-          {property.type}
+        {/* Badges */}
+        <div className="absolute inset-x-0 top-3 px-3 flex justify-between pointer-events-none">
+          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorStatus}`}>
+            {property.status}
+          </div>
+          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorType} flex items-center gap-1.5`}>
+            {property.type.toLowerCase() === 'rumah' ? (
+              <HomeIcon className="w-3.5 h-3.5" />
+            ) : (
+              <Building2 className="w-3.5 h-3.5" />
+            )}
+            <span>{property.type}</span>
+          </div>
         </div>
 
         {/* Admin Controls */}
@@ -206,13 +210,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex gap-2">
-          <button
-            onClick={handleWhatsAppClick}
-            className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-          >
-            <FaWhatsapp />
-            WhatsApp
-          </button>
+          {showWhatsAppButton && (
+            <button
+              onClick={handleWhatsAppClick}
+              className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+            >
+              <FaWhatsapp />
+              WhatsApp
+            </button>
+          )}
           
           {showComparisonButton && (
             <>
