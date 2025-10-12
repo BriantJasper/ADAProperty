@@ -1,7 +1,5 @@
-import React from 'react';
 import { useApp } from '../context/AppContext';
 import PropertyCard from '../components/PropertyCard';
-import type { Property } from '../types/Property';
 
 export default function PopularSection() {
   const { state, dispatch } = useApp();
