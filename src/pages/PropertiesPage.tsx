@@ -1,70 +1,76 @@
-import React, { useMemo, useState } from 'react';
-import { useApp } from '../context/AppContext';
-import PropertyCard from '../components/PropertyCard';
+import React, { useMemo, useState } from "react";
+import { useApp } from "../context/AppContext";
+import PropertyCard from "../components/PropertyCard";
+import Dropdown from "../components/Dropdown";
+import Container from "../components/Container";
+import { motion, AnimatePresence } from "framer-motion";
+
+import {
+  Search,
+  SlidersHorizontal,
+  MapPin,
+  Home,
+  Building2,
+  DollarSign,
+  X,
+} from "lucide-react";
 
 const PropertiesPage: React.FC = () => {
   const { state, dispatch } = useApp();
-  const [activeSub, setActiveSub] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [minPrice, setMinPrice] = useState<string>('');
-  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [activeSub, setActiveSub] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const location = state.selectedLocation; // e.g. "Cikarang"
+  const location = state.selectedLocation;
 
-  // All distinct cities (after comma) for the location dropdown
-  const cityOptions = useMemo(() => {
-    const cities = Array.from(
-      new Set(
-        state.properties
-          .map((p) => (p.location.split(',')[1] || '').trim()) // city after comma
-          .filter(Boolean)
-      )
-    );
-    return cities;
-  }, [state.properties]);
+  const locations = ["Cikarang", "Bekasi", "Jakarta", "Karawang", "Bandung"];
 
-  // Price parser: returns lower bound number in Rupiah (millions based)
   const parsePriceToNumber = (price: string): number => {
-    // Examples: "300 - 400 Juta", "1 - 2 Miliar", "35 Juta / bulan"
-    const clean = price.replace(/\s+/g, ' ').toLowerCase();
-    const isMonthly = clean.includes('bulan');
+    const clean = price.replace(/\s+/g, " ").toLowerCase();
     const matchRange = clean.match(/([\d.,]+)\s*-\s*([\d.,]+)/);
     const matchSingle = clean.match(/([\d.,]+)/);
     let base = 0;
     if (matchRange) {
-      base = parseFloat(matchRange[1].replace(',', '.'));
+      base = parseFloat(matchRange[1].replace(",", "."));
     } else if (matchSingle) {
-      base = parseFloat(matchSingle[1].replace(',', '.'));
+      base = parseFloat(matchSingle[1].replace(",", "."));
     }
-    if (clean.includes('miliar')) base = base * 1_000_000_000;
-    else base = base * 1_000_000; // juta
-    // treat sewa per bulan as is
-    return isMonthly ? base : base; // same unit for filtering
+    if (clean.includes("miliar")) base = base * 1_000_000_000;
+    else base = base * 1_000_000;
+    return base;
   };
 
-  // Derive sub-locations from existing property.location strings
   const { subLocations, filteredByLocation } = useMemo(() => {
     const list = state.properties.filter((p) => {
       if (!location) return true;
-      const city = (p.location.split(',')[1] || '').trim().toLowerCase();
+      const city = (p.location.split(",")[1] || "").trim().toLowerCase();
       return city.includes(location.toLowerCase());
     });
     const subs = Array.from(
-      new Set(
-        list
-          .map((p) => p.location.split(',')[0].trim()) // e.g. "Jababeka"
-          .filter(Boolean)
-      )
+      new Set(list.map((p) => p.location.split(",")[0].trim()).filter(Boolean))
     );
     return { subLocations: subs, filteredByLocation: list };
   }, [state.properties, location]);
 
   const finalList = useMemo(() => {
     let list = filteredByLocation;
+
+    if (searchQuery) {
+      list = list.filter(
+        (p) =>
+          p.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.status.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
     if (activeSub) list = list.filter((p) => p.location.startsWith(activeSub));
     if (statusFilter) list = list.filter((p) => p.status === statusFilter);
     if (typeFilter) list = list.filter((p) => p.type === typeFilter);
+
     const min = minPrice ? Number(minPrice) : undefined;
     const max = maxPrice ? Number(maxPrice) : undefined;
     if (min !== undefined && !Number.isNaN(min)) {
@@ -74,93 +80,220 @@ const PropertiesPage: React.FC = () => {
       list = list.filter((p) => parsePriceToNumber(p.price) <= max * 1_000_000);
     }
     return list;
-  }, [filteredByLocation, activeSub, statusFilter, typeFilter, minPrice, maxPrice]);
+  }, [
+    filteredByLocation,
+    activeSub,
+    statusFilter,
+    typeFilter,
+    minPrice,
+    maxPrice,
+    searchQuery,
+  ]);
+
+  const activeFiltersCount = [
+    statusFilter,
+    typeFilter,
+    minPrice,
+    maxPrice,
+    activeSub,
+  ].filter(Boolean).length;
+
+  const clearAllFilters = () => {
+    setStatusFilter("");
+    setTypeFilter("");
+    setMinPrice("");
+    setMaxPrice("");
+    setActiveSub("");
+    setSearchQuery("");
+  };
+
+  const statusOptions = [
+    { value: "", label: "Semua Status" },
+    { value: "Dijual", label: "Dijual" },
+    { value: "Disewa", label: "Disewa" },
+  ];
+
+  const typeOptions = [
+    { value: "", label: "Semua Tipe" },
+    { value: "Rumah", label: "Rumah" },
+    { value: "Apartemen", label: "Apartemen" },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="relative h-[360px] bg-cover bg-center" style={{ backgroundImage: 'url(/images/hero-bg.png)' }}>
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-10 text-white">
-          <h1 className="text-3xl md:text-4xl font-bold">Daftar Properti</h1>
-          <p className="mt-2 opacity-90">{location ? `Lokasi: ${location}` : 'Semua lokasi'}</p>
+    <div className="relative min-h-screen">
+      {/* Hero Section - Similar to Home Page */}
+      <section
+        className="relative pt-20 md:pt-28"
+        style={{ minHeight: "100vh" }}
+      >
+        <div
+          className="hero-bg absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(/images/hero-bg.png)` }}
+        >
+          <div className="absolute inset-0 bg-black/40"></div>
+        </div>
 
-          {/* Filter Glass Panel */}
-          <div className="mt-6 bg-white/15 backdrop-blur-md rounded-3xl p-4 md:p-6 border border-white/20">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-              {/* Location Select centered */}
-              <div className="md:col-span-4 flex justify-center">
-                <select
-                  value={location}
-                  onChange={(e) => dispatch({ type: 'SET_SELECTED_LOCATION', payload: e.target.value })}
-                  className="w-full md:w-[520px] px-4 py-2 rounded-full bg-white/90 text-gray-800 text-center"
-                >
-                  <option value="">Pilih Lokasi</option>
-                  {cityOptions.map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status */}
-              <div>
-                <div className="text-sm opacity-80 mb-1">Status</div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md bg-white/80 text-gray-800"
-                >
-                  <option value="">Semua</option>
-                  <option value="Dijual">Dijual</option>
-                  <option value="Disewa">Disewa</option>
-                </select>
-              </div>
-
-              {/* Type */}
-              <div>
-                <div className="text-sm opacity-80 mb-1">Type</div>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md bg-white/80 text-gray-800"
-                >
-                  <option value="">Semua</option>
-                  <option value="Rumah">Rumah</option>
-                  <option value="Apartemen">Apartemen</option>
-                </select>
-              </div>
-
-              {/* Price Min */}
-              <div>
-                <div className="text-sm opacity-80 mb-1">Price Min (Juta)</div>
-                <input
-                  type="number"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md bg-white/80 text-gray-800"
-                  placeholder="cth: 300"
+        <div className="relative z-10 h-full flex items-center justify-center px-4">
+          <Container>
+            <div className="text-center max-w-4xl mx-auto">
+              <div className="mb-8">
+                <img
+                  src="/images/logo.png"
+                  alt="ADA Property"
+                  className="h-32 mx-auto mb-6 drop-shadow-2xl"
                 />
               </div>
 
-              {/* Price Max */}
-              <div>
-                <div className="text-sm opacity-80 mb-1">Price Max (Juta)</div>
-                <input
-                  type="number"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md bg-white/80 text-gray-800"
-                  placeholder="cth: 2000"
+              <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-bold mb-6 drop-shadow-lg leading-tight">
+                Jelajahi Properti Pilihan
+                <br />
+                {location ? `di ${location}` : "di Seluruh Area"}
+              </h1>
+
+              <p className="text-white text-lg md:text-xl mb-8 drop-shadow-md max-w-3xl mx-auto">
+                Temukan properti impian Anda dengan filter pencarian yang
+                lengkap
+                <br />
+                dan mudah digunakan
+              </p>
+
+              {/* Location Dropdown */}
+              <div className="max-w-md mx-auto mb-6">
+                <Dropdown
+                  label="Pilih Lokasi"
+                  options={locations}
+                  selected={location}
+                  onSelect={(value) =>
+                    dispatch({
+                      type: "SET_SELECTED_LOCATION",
+                      payload: value,
+                    })
+                  }
                 />
+              </div>
+
+              {/* Search Bar */}
+              <div className="max-w-2xl mx-auto mb-6">
+                <div className="relative ">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari berdasarkan lokasi, tipe, atau status..."
+                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/95 backdrop-blur-md text-gray-800 placeholder-gray-400 shadow-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Filter Panel - Always Open */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-2xl max-w-5xl mx-auto">
+                {/* Filter Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-white font-medium">
+                      <SlidersHorizontal className="w-5 h-5" />
+                      <span className="text-lg">Filter Properti</span>
+                      {activeFiltersCount > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-blue-500 text-white text-xs font-bold">
+                          {activeFiltersCount}
+                        </span>
+                      )}
+                    </div>
+
+                    {activeFiltersCount > 0 && (
+                      <button
+                        onClick={clearAllFilters}
+                        className="flex items-center gap-1 px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-white transition-all font-medium"
+                      >
+                        <X className="w-4 h-4" />
+                        <span>Hapus Filter</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="text-white/90 text-sm font-medium bg-white/10 px-4 py-2 rounded-lg">
+                    {finalList.length} properti
+                  </div>
+                </div>
+
+                {/* Filters - Always Visible */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Status */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-white/90 mb-2 font-medium">
+                      <Home className="w-4 h-4" />
+                      Status
+                    </label>
+                    <Dropdown
+                      options={statusOptions}
+                      value={statusFilter}
+                      onChange={setStatusFilter}
+                      placeholder="Pilih Status"
+                    />
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-white/90 mb-2 font-medium">
+                      <Building2 className="w-4 h-4" />
+                      Tipe
+                    </label>
+                    <Dropdown
+                      options={typeOptions}
+                      value={typeFilter}
+                      onChange={setTypeFilter}
+                      placeholder="Pilih Tipe"
+                    />
+                  </div>
+
+                  {/* Price Min */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-white/90 mb-2 font-medium">
+                      <DollarSign className="w-4 h-4" />
+                      Harga Min (Juta)
+                    </label>
+                    <input
+                      type="number"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg bg-white/95 backdrop-blur-sm text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                      placeholder="300"
+                    />
+                  </div>
+
+                  {/* Price Max */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-white/90 mb-2 font-medium">
+                      <DollarSign className="w-4 h-4" />
+                      Harga Max (Juta)
+                    </label>
+                    <input
+                      type="number"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg bg-white/95 backdrop-blur-sm text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                      placeholder="2000"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </Container>
+        </div>
+      </section>
 
-          {subLocations.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-3">
+      {/* Sub-location Pills */}
+      {subLocations.length > 0 && (
+        <div className="bg-white py-8 shadow-md">
+          <Container>
+            <div className="flex flex-wrap gap-3 justify-center">
               <button
-                onClick={() => setActiveSub('')}
-                className={`px-4 py-2 rounded-full border backdrop-blur-sm ${
-                  activeSub === '' ? 'bg-white text-black' : 'bg-white/20 text-white hover:bg-white/30'
+                onClick={() => setActiveSub("")}
+                className={`px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 ${
+                  activeSub === ""
+                    ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Semua Sub-Lokasi
@@ -169,40 +302,73 @@ const PropertiesPage: React.FC = () => {
                 <button
                   key={sub}
                   onClick={() => setActiveSub(sub)}
-                  className={`px-4 py-2 rounded-full border backdrop-blur-sm ${
-                    activeSub === sub ? 'bg-white text-black' : 'bg-white/20 text-white hover:bg-white/30'
+                  className={`px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 ${
+                    activeSub === sub
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {sub}
                 </button>
               ))}
             </div>
-          )}
+          </Container>
         </div>
-      </div>
+      )}
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        {finalList.length === 0 ? (
-          <div className="bg-white rounded-xl shadow p-8 text-center text-gray-600">
-            Tidak ada properti untuk filter saat ini.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {finalList.map((property) => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                showAdminControls={false}
-                showComparisonButton={true}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Properties Grid */}
+      <section className="relative py-20 bg-gray-50">
+        <Container className="px-8 md:px-16 lg:px-24">
+          {finalList.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Tidak ada properti ditemukan
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Coba sesuaikan filter pencarian Anda
+              </p>
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={clearAllFilters}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium"
+                >
+                  Reset Semua Filter
+                </button>
+              )}
+            </div>
+          ) : (
+            <motion.div
+              layout
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              <AnimatePresence>
+                {finalList.map((property) => (
+                  <motion.div
+                    key={property.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PropertyCard
+                      property={property}
+                      showAdminControls={false}
+                      showComparisonButton={true}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </Container>
+      </section>
     </div>
   );
 };
 
 export default PropertiesPage;
-
-
