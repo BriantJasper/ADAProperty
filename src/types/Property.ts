@@ -1,20 +1,18 @@
 export interface Property {
   id: string;
-  type: string;
-  status: string;
-  price: string;
-  landArea: string;
-  buildingArea: string;
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  subLocation: string;
+  type: 'rumah' | 'apartemen' | 'tanah' | 'ruko';
+  status: 'dijual' | 'disewa';
   bedrooms: number;
   bathrooms: number;
-  garage: boolean;
-  location: string;
-  colorType: string;
-  colorStatus: string;
-  imageUrl: string;
-  imageUrls?: string[];
-  phoneNumber: string;
-  description?: string;
+  area: number;
+  images: string[];
+  features: string[];
+  whatsappNumber: string;
   createdAt: Date;
   updatedAt: Date;
 }

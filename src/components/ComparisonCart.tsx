@@ -17,10 +17,8 @@ const ComparisonCart: React.FC = () => {
   };
 
   const handleWhatsAppClick = (property: any) => {
-    const message = `Halo, saya tertarik dengan properti ${property.type} di ${property.location} dengan harga ${property.price}. Apakah masih tersedia?`;
-    const whatsappUrl = `https://wa.me/${
-      property.phoneNumber
-    }?text=${encodeURIComponent(message)}`;
+    const message = `Halo, saya tertarik dengan properti ${property.title} di ${property.location} dengan harga Rp ${property.price.toLocaleString()}. Apakah masih tersedia?`;
+    const whatsappUrl = `https://wa.me/${property.whatsappNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -72,7 +70,7 @@ const ComparisonCart: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {state.comparisonCart.map((item, idx) => (
           <div
-            key={item.property.id}
+            key={`comparison-item-${item.property.id}-${idx}`}
             onMouseEnter={() => setHoveredCard(item.property.id)}
             onMouseLeave={() => setHoveredCard(null)}
             className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${
@@ -85,8 +83,8 @@ const ComparisonCart: React.FC = () => {
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden bg-gray-200">
               <img
-                src={item.property.imageUrl}
-                alt={item.property.type}
+                src={item.property.images?.[0] || '/images/p1.png'}
+                alt={item.property.title}
                 className={`w-full h-full object-cover transition-transform duration-500 ${
                   hoveredCard === item.property.id ? "scale-105" : "scale-100"
                 }`}
@@ -108,7 +106,7 @@ const ComparisonCart: React.FC = () => {
               <div className="bg-blue-50 rounded-lg p-4 mb-4">
                 <div className="text-xs text-gray-600 mb-1">Harga</div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {item.property.price}
+                  Rp {item.property.price.toLocaleString()}
                 </div>
               </div>
 
@@ -153,25 +151,19 @@ const ComparisonCart: React.FC = () => {
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                   <Maximize size={18} className="text-gray-600 mb-1" />
                   <div className="text-base font-semibold text-gray-900">
-                    {item.property.buildingArea}
+                    {item.property.area}m²
                   </div>
-                  <div className="text-xs text-gray-500">Luas Bangunan</div>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <Maximize size={18} className="text-gray-600 mb-1" />
-                  <div className="text-base font-semibold text-gray-900">
-                    {item.property.landArea}
-                  </div>
-                  <div className="text-xs text-gray-500">Luas Tanah</div>
+                  <div className="text-xs text-gray-500">Luas Area</div>
                 </div>
               </div>
 
-              {/* Garage Info */}
-              {item.property.garage && (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4">
-                  <span className="text-sm text-green-700 font-medium">
-                    ✓ Garasi Tersedia
-                  </span>
+              {/* Features Info */}
+              {item.property.features && item.property.features.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-4">
+                  <div className="text-sm text-blue-700 font-medium mb-1">Fitur:</div>
+                  <div className="text-xs text-blue-600">
+                    {item.property.features.join(", ")}
+                  </div>
                 </div>
               )}
 

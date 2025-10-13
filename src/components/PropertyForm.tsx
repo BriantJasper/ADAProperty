@@ -10,31 +10,40 @@ interface PropertyFormProps {
 }
 
 const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel }) => {
-  const [formData, setFormData] = useState<Partial<Property>>({
-    type: property?.type || '',
-    status: property?.status || 'Dijual',
-    price: property?.price || '',
-    landArea: property?.landArea || '',
-    buildingArea: property?.buildingArea || '',
+  const { addProperty, updateProperty, state } = useApp();
+  const [formData, setFormData] = useState<Partial<Property> & { garage?: boolean }>({
+    title: property?.title || '',
+    description: property?.description || '',
+    price: property?.price || 0,
+    location: property?.location || '',
+    subLocation: property?.subLocation || '',
+    type: property?.type || 'rumah',
+    status: property?.status || 'dijual',
     bedrooms: property?.bedrooms || 1,
     bathrooms: property?.bathrooms || 1,
-    garage: property?.garage || false,
-    location: property?.location || '',
-    phoneNumber: property?.phoneNumber || '',
-    description: property?.description || '',
-    imageUrl: property?.imageUrl || '',
-    colorType: property?.colorType || 'bg-green-600',
-    colorStatus: property?.colorStatus || 'bg-blue-800',
+    area: property?.area || 0,
+    images: property?.images || [],
+    features: property?.features || [],
+    whatsappNumber: property?.whatsappNumber || '',
+    garage: false,
   });
 
-  const [imagePreview, setImagePreview] = useState<string>(formData.imageUrl || '');
+  const [imagePreview, setImagePreview] = useState<string>(formData.images?.[0] || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
     } else if (type === 'number') {
-      setFormData(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
+      const num = parseInt(value);
+      // Clamp sesuai aturan backend: harga >=1, lainnya >=0
+      if (name === 'price') {
+        setFormData(prev => ({ ...prev, [name]: isNaN(num) ? 0 : Math.max(num, 1) }));
+      } else {
+        setFormData(prev => ({ ...prev, [name]: isNaN(num) ? 0 : Math.max(num, 0) }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -47,36 +56,84 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
       reader.onload = (event) => {
         const result = event.target?.result as string;
         setImagePreview(result);
-        setFormData(prev => ({ ...prev, imageUrl: result }));
+        setFormData(prev => ({ ...prev, images: [result] }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const newProperty: Property = {
-      id: property?.id || Date.now().toString(),
-      type: formData.type || '',
-      status: formData.status || 'Dijual',
-      price: formData.price || '',
-      landArea: formData.landArea || '',
-      buildingArea: formData.buildingArea || '',
-      bedrooms: formData.bedrooms || 1,
-      bathrooms: formData.bathrooms || 1,
-      garage: formData.garage || false,
-      location: formData.location || '',
-      phoneNumber: formData.phoneNumber || '',
-      description: formData.description || '',
-      imageUrl: formData.imageUrl || '',
-      colorType: formData.colorType || 'bg-green-600',
-      colorStatus: formData.colorStatus || 'bg-blue-800',
-      createdAt: property?.createdAt || new Date(),
-      updatedAt: new Date(),
-    };
+    setIsSubmitting(true);
 
-    onSave(newProperty);
+    try {
+      // Bangun payload yang sesuai validasi backend (tanpa placeholder default)
+      const trimmed = (v: any) => (typeof v === 'string' ? v.trim() : v);
+      const propertyData = {
+        title: trimmed(formData.title),
+        description: trimmed(formData.description),
+        price: typeof formData.price === 'number' ? formData.price : parseInt(String(formData.price)) || 0,
+        location: trimmed(formData.location),
+        subLocation: trimmed(formData.subLocation) || trimmed(formData.location),
+        type: formData.type,
+        status: formData.status,
+        bedrooms: typeof formData.bedrooms === 'number' ? formData.bedrooms : parseInt(String(formData.bedrooms)) || 0,
+        bathrooms: typeof formData.bathrooms === 'number' ? formData.bathrooms : parseInt(String(formData.bathrooms)) || 0,
+        area: typeof formData.area === 'number' ? formData.area : parseInt(String(formData.area)) || 0,
+        images: formData.images && formData.images.length > 0 ? formData.images : ['/images/p1.png'],
+        features: formData.garage ? [...(formData.features || []), 'Garasi'] : (formData.features || []),
+        whatsappNumber: trimmed(formData.whatsappNumber),
+      } as Partial<Property>;
+
+      // Validasi ringan di sisi klien agar sesuai aturan backend
+      const validationErrors: string[] = [];
+      if (!propertyData.title || (propertyData.title as string).length < 1 || (propertyData.title as string).length > 255) {
+        validationErrors.push('Judul harus 1-255 karakter');
+      }
+      if (!Number.isFinite(propertyData.price as number)) {
+        validationErrors.push('Harga harus berupa angka');
+      } else if ((propertyData.price as number) <= 0) {
+        validationErrors.push('Harga harus lebih dari 0');
+      }
+      if (!propertyData.location) {
+        validationErrors.push('Lokasi wajib diisi');
+      }
+      if (!propertyData.subLocation) {
+        validationErrors.push('Sub lokasi wajib diisi');
+      }
+      if (!['rumah', 'apartemen', 'tanah', 'ruko'].includes(propertyData.type as string)) {
+        validationErrors.push('Tipe harus salah satu dari: rumah, apartemen, tanah, ruko');
+      }
+      if (!['dijual', 'disewa'].includes(propertyData.status as string)) {
+        validationErrors.push('Status harus salah satu dari: dijual, disewa');
+      }
+      const isNonNegInt = (n: any) => Number.isInteger(n) && n >= 0;
+      if (!isNonNegInt(propertyData.bedrooms)) {
+        validationErrors.push('Kamar tidur harus bilangan bulat ≥ 0');
+      }
+      if (!isNonNegInt(propertyData.bathrooms)) {
+        validationErrors.push('Kamar mandi harus bilangan bulat ≥ 0');
+      }
+      if (!isNonNegInt(propertyData.area)) {
+        validationErrors.push('Luas area harus bilangan bulat ≥ 0');
+      }
+      if (!propertyData.whatsappNumber) {
+        validationErrors.push('Nomor WhatsApp wajib diisi');
+      }
+
+      if (validationErrors.length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      setErrors([]);
+      onSave(propertyData as Property);
+    } catch (error: any) {
+      console.error('Form submission error:', error);
+      alert(`An error occurred while saving the property: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -94,6 +151,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {errors.length > 0 && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            <ul className="list-disc pl-5">
+              {errors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -122,6 +188,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Judul Properti *
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="Contoh: Rumah Mewah 3 Kamar Tidur"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Tipe Properti *
             </label>
             <select
@@ -132,13 +213,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Pilih Tipe</option>
-              <option value="Rumah">Rumah</option>
-              <option value="Apartemen">Apartemen</option>
-              <option value="Townhouse">Townhouse</option>
-              <option value="Villa">Villa</option>
+              <option value="rumah">Rumah</option>
+              <option value="apartemen">Apartemen</option>
+              <option value="tanah">Tanah</option>
+              <option value="ruko">Ruko</option>
             </select>
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Status *
@@ -150,28 +233,29 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Dijual">Dijual</option>
-              <option value="Disewa">Disewa</option>
+              <option value="dijual">Dijual</option>
+              <option value="disewa">Disewa</option>
             </select>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Harga *
             </label>
             <input
-              type="text"
+              type="number"
               name="price"
               value={formData.price}
               onChange={handleInputChange}
-              placeholder="Contoh: 300 - 400 Juta"
+              placeholder="Contoh: 450000000"
+              min="1"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Lokasi *
@@ -182,6 +266,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               value={formData.location}
               onChange={handleInputChange}
               placeholder="Contoh: Jababeka, Cikarang"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sub Lokasi *
+            </label>
+            <input
+              type="text"
+              name="subLocation"
+              value={formData.subLocation}
+              onChange={handleInputChange}
+              placeholder="Contoh: Jababeka"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -199,7 +298,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               name="bedrooms"
               value={formData.bedrooms}
               onChange={handleInputChange}
-              min="1"
+              min="0"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -214,7 +313,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               name="bathrooms"
               value={formData.bathrooms}
               onChange={handleInputChange}
-              min="1"
+              min="0"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -222,14 +321,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Luas Bangunan *
+              Luas Area *
             </label>
             <input
-              type="text"
-              name="buildingArea"
-              value={formData.buildingArea}
+              type="number"
+              name="area"
+              value={formData.area}
               onChange={handleInputChange}
-              placeholder="Contoh: 130m²"
+              placeholder="Contoh: 180"
+              min="0"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -237,34 +337,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Luas Tanah *
+              Nomor WhatsApp *
             </label>
             <input
-              type="text"
-              name="landArea"
-              value={formData.landArea}
+              type="tel"
+              name="whatsappNumber"
+              value={formData.whatsappNumber}
               onChange={handleInputChange}
-              placeholder="Contoh: 150m²"
+              placeholder="Contoh: 6281234567890"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        </div>
-
-        {/* Additional Info */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nomor WhatsApp *
-          </label>
-          <input
-            type="tel"
-            name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleInputChange}
-            placeholder="Contoh: 6281234567890"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
 
         <div>
@@ -319,7 +403,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             </label>
             <select
               name="colorStatus"
-              value={formData.colorStatus}
+              value={(formData as any).colorStatus || ''}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -335,9 +419,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting || state.loading}
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {property ? 'Update Properti' : 'Tambah Properti'}
+            {isSubmitting || state.loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {property ? 'Menyimpan...' : 'Menambahkan...'}
+              </>
+            ) : (
+              <>
+                <IoAdd className="w-4 h-4" />
+                {property ? 'Update Properti' : 'Tambah Properti'}
+              </>
+            )}
           </button>
           <button
             type="button"

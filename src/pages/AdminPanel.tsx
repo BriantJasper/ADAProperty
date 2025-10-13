@@ -1,26 +1,159 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IoAdd, IoEye, IoEyeOff, IoHome, IoCart, IoSparkles } from 'react-icons/io5';
+import { IoAdd, IoEye, IoEyeOff, IoHome, IoCart, IoSparkles, IoKey, IoSave, IoClose } from 'react-icons/io5';
+import { useApp } from '../context/AppContext';
+import PropertyForm from '../components/PropertyForm';
+import PropertyCard from '../components/PropertyCard';
+import ComparisonCart from '../components/ComparisonCart';
+import type { Property } from '../types/Property';
 
-// Mock context and types for demonstration
-const mockState = {
-  properties: [],
-  comparisonCart: [],
-  isAdminMode: true
+// Komponen form untuk mengubah kredensial admin
+const ChangeCredentialsForm = ({ onCancel }) => {
+  const { changeCredentials } = useApp();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validasi
+    if (!currentPassword || !newUsername || !newPassword || !confirmPassword) {
+      setError('Semua field harus diisi');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Password baru dan konfirmasi password tidak cocok');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await changeCredentials(currentPassword, { username: newUsername, password: newPassword });
+      if (result.success) {
+        alert('Kredensial berhasil diubah!');
+        onCancel(); // Close the form
+      } else {
+        setError(result.error || 'Gagal mengubah kredensial');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-bold text-gray-900">Ubah Username & Password Admin</h3>
+        <motion.button
+          onClick={onCancel}
+          className="text-gray-500 hover:text-gray-700"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <IoClose className="text-xl" />
+        </motion.button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">
+            Password Saat Ini
+          </label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">
+            Username Baru
+          </label>
+          <input
+            type="text"
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">
+            Password Baru
+          </label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 text-sm font-medium mb-2">
+            Konfirmasi Password Baru
+          </label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <motion.button
+            type="button"
+            onClick={onCancel}
+            className="mr-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            disabled={loading}
+          >
+            Batal
+          </motion.button>
+          <motion.button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            disabled={loading}
+          >
+            <IoSave className="mr-1" />
+            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
+          </motion.button>
+        </div>
+      </form>
+    </div>
+  );
 };
 
-const mockDispatch = () => {};
-
 const AdminPanel: React.FC = () => {
+  const { state, dispatch, deleteProperty } = useApp();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showComparisonCart, setShowComparisonCart] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(true);
-  const [properties] = useState([
-    { id: 1, name: 'Villa Modern', price: 2500000000, location: 'Bali' },
-    { id: 2, name: 'Apartemen Mewah', price: 1500000000, location: 'Jakarta' },
-    { id: 3, name: 'Rumah Keluarga', price: 1200000000, location: 'Bandung' }
-  ]);
-  const [comparisonCart] = useState([]);
+  const [showChangeCredentialsForm, setShowChangeCredentialsForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -118,11 +251,55 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const { addProperty } = useApp();
+  
+  const handleAddProperty = async (property: Property) => {
+    const result = await addProperty(property);
+    if (result.success) {
+      alert('Properti berhasil ditambahkan!');
+      setShowAddForm(false);
+      setEditingProperty(null);
+    } else {
+      alert(`Gagal menambahkan properti: ${result.error}`);
+    }
+  };
+
+  const handleEditProperty = (property: Property) => {
+    setEditingProperty(property);
+  };
+
+  const handleUpdateProperty = async (property: Property) => {
+    if (editingProperty) {
+      const result = await updateProperty(editingProperty.id, property);
+      if (result.success) {
+        alert('Properti berhasil diupdate!');
+        setEditingProperty(null);
+      } else {
+        alert(`Gagal mengupdate properti: ${result.error}`);
+      }
+    }
+  };
+
+  const handleDeleteProperty = async (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus properti ini?')) {
+      const result = await deleteProperty(id);
+      if (!result.success) {
+        alert(result.error || 'Failed to delete property');
+      }
+    }
+  };
+
+  const handleCancelForm = () => {
+    setShowAddForm(false);
+    setEditingProperty(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
+          key="bg-element-1"
           className="absolute top-20 left-20 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30"
           animate={{
             x: [0, 100, 0],
@@ -135,6 +312,7 @@ const AdminPanel: React.FC = () => {
           }}
         />
         <motion.div
+          key="bg-element-2"
           className="absolute bottom-20 right-20 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30"
           animate={{
             x: [0, -100, 0],
@@ -184,19 +362,19 @@ const AdminPanel: React.FC = () => {
 
             <div className="flex items-center gap-4">
               <motion.button
-                onClick={() => setIsAdminMode(!isAdminMode)}
+                onClick={() => dispatch({ type: 'SET_ADMIN_MODE', payload: !state.isAdminMode })}
                 className={`px-6 py-3 rounded-xl flex items-center gap-2 font-semibold shadow-lg transition-all ${
-                  isAdminMode
+                  state.isAdminMode
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                     : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
                 }`}
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
-                animate={isAdminMode ? glowVariants.animate : {}}
+                animate={state.isAdminMode ? glowVariants.animate : {}}
               >
-                {isAdminMode ? <IoEye className="text-xl" /> : <IoEyeOff className="text-xl" />}
-                {isAdminMode ? 'Admin Active' : 'Admin Inactive'}
+                {state.isAdminMode ? <IoEye className="text-xl" /> : <IoEyeOff className="text-xl" />}
+                {state.isAdminMode ? 'Admin Active' : 'Admin Inactive'}
               </motion.button>
 
               <motion.button
@@ -209,7 +387,7 @@ const AdminPanel: React.FC = () => {
                 <IoCart className="text-xl" />
                 Keranjang
                 <AnimatePresence>
-                  {comparisonCart.length > 0 && (
+                  {state.comparisonCart.length > 0 && (
                     <motion.span
                       className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
                       variants={badgeVariants}
@@ -217,10 +395,21 @@ const AdminPanel: React.FC = () => {
                       animate="animate"
                       exit={{ scale: 0 }}
                     >
-                      {comparisonCart.length}
+                      {state.comparisonCart.length}
                     </motion.span>
                   )}
                 </AnimatePresence>
+              </motion.button>
+
+              <motion.button
+                onClick={() => setShowChangeCredentialsForm(true)}
+                className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <IoKey className="text-xl" />
+                Ganti Kredensial
               </motion.button>
 
               <motion.button
@@ -260,7 +449,7 @@ const AdminPanel: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.2, type: "spring" }}
                 >
-                  {properties.length}
+                  {state.properties.length}
                 </motion.p>
               </div>
               <div className="bg-blue-100 p-4 rounded-xl">
@@ -283,7 +472,7 @@ const AdminPanel: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3, type: "spring" }}
                 >
-                  {comparisonCart.length}
+                  {state.comparisonCart.length}
                 </motion.p>
               </div>
               <div className="bg-purple-100 p-4 rounded-xl">
@@ -301,11 +490,11 @@ const AdminPanel: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600 font-medium">Status Mode</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {isAdminMode ? 'Admin' : 'Guest'}
+                  {state.isAdminMode ? 'Admin' : 'Guest'}
                 </p>
               </div>
-              <div className={`p-4 rounded-xl ${isAdminMode ? 'bg-green-100' : 'bg-gray-100'}`}>
-                {isAdminMode ? (
+              <div className={`p-4 rounded-xl ${state.isAdminMode ? 'bg-green-100' : 'bg-gray-100'}`}>
+                {state.isAdminMode ? (
                   <IoEye className="text-3xl text-green-600" />
                 ) : (
                   <IoEyeOff className="text-3xl text-gray-600" />
@@ -325,23 +514,10 @@ const AdminPanel: React.FC = () => {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <motion.div
-                className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-              >
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Tambah Properti Baru</h3>
-                <p className="text-gray-600">Form untuk menambahkan properti akan ditampilkan di sini...</p>
-                <motion.button
-                  onClick={() => setShowAddForm(false)}
-                  className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Tutup
-                </motion.button>
-              </motion.div>
+              <PropertyForm
+                onSave={handleAddProperty}
+                onCancel={handleCancelForm}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -358,7 +534,7 @@ const AdminPanel: React.FC = () => {
           >
             <h2 className="text-2xl font-bold text-gray-900">
               Daftar Properti
-              <span className="ml-3 text-lg text-blue-600 font-normal">({properties.length})</span>
+              <span className="ml-3 text-lg text-blue-600 font-normal">({state.properties.length})</span>
             </h2>
             <motion.div
               className="px-4 py-2 bg-blue-50 rounded-lg text-sm font-medium text-blue-700"
@@ -371,11 +547,11 @@ const AdminPanel: React.FC = () => {
                 ease: "easeInOut"
               }}
             >
-              {isAdminMode ? '🔓 Semua fitur tersedia' : '🔒 Mode tampilan saja'}
+              {state.isAdminMode ? '🔓 Semua fitur tersedia' : '🔒 Mode tampilan saja'}
             </motion.div>
           </motion.div>
 
-          {properties.length === 0 ? (
+          {state.properties.length === 0 ? (
             <motion.div
               className="text-center py-20 bg-white rounded-2xl shadow-lg"
               variants={itemVariants}
@@ -399,62 +575,36 @@ const AdminPanel: React.FC = () => {
                 Mulai dengan menambahkan properti pertama Anda
               </p>
               <motion.button
-                onClick={() => setShowAddForm(true)}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 mx-auto font-semibold"
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <IoAdd className="text-xl" />
-                Tambah Properti Pertama
-              </motion.button>
+                 onClick={() => setShowAddForm(true)}
+                 className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 mx-auto font-semibold"
+                 variants={buttonVariants}
+                 whileHover="hover"
+                 whileTap="tap"
+               >
+                 <IoAdd className="text-xl" />
+                 Tambah Properti Pertama
+               </motion.button>
             </motion.div>
           ) : (
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              variants={containerVariants}
-            >
-              {properties.map((property, index) => (
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={containerVariants}
+          >
+            {state.properties.map((property, index) => (
                 <motion.div
-                  key={property.id}
+                  key={`property-${property.id}`}
                   className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100"
                   variants={cardVariants}
                   whileHover="hover"
                   custom={index}
                 >
-                  <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 relative overflow-hidden">
-                    <motion.div
-                      className="absolute inset-0 bg-black/20"
-                      whileHover={{ opacity: 0 }}
-                    />
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <p className="text-sm font-medium opacity-90">{property.location}</p>
-                      <h3 className="text-xl font-bold">{property.name}</h3>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-2xl font-bold text-gray-900 mb-4">
-                      Rp {(property.price / 1000000000).toFixed(1)}M
-                    </p>
-                    <div className="flex gap-2">
-                      <motion.button
-                        className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-medium"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        Lihat Detail
-                      </motion.button>
-                      {isAdminMode && (
-                        <motion.button
-                          className="px-4 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium"
-                          whileHover={{ scale: 1.05, backgroundColor: "#fee2e2" }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          Edit
-                        </motion.button>
-                      )}
-                    </div>
-                  </div>
+                  <PropertyCard
+                    key={`property-card-${property.id}`}
+                    property={property}
+                    showAdminControls={true}
+                    showComparisonButton={false}
+                    showWhatsAppButton={false}
+                  />
                 </motion.div>
               ))}
             </motion.div>
@@ -463,7 +613,7 @@ const AdminPanel: React.FC = () => {
 
         {/* Admin Guide */}
         <AnimatePresence>
-          {isAdminMode && (
+          {state.isAdminMode && (
             <motion.div
               className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
@@ -491,6 +641,7 @@ const AdminPanel: React.FC = () => {
                   { icon: "✏️", title: "Edit Properti", desc: "Klik tombol edit pada kartu untuk mengubah data" },
                   { icon: "🗑️", title: "Hapus Properti", desc: "Hapus properti yang tidak diperlukan" },
                   { icon: "📊", title: "Komparasi", desc: "Bandingkan hingga 3 properti sekaligus" },
+                  { icon: "🔑", title: "Ubah Kredensial", desc: "Ubah username dan password admin" },
                 ].map((item, index) => (
                   <motion.div
                     key={index}
@@ -510,6 +661,73 @@ const AdminPanel: React.FC = () => {
                   </motion.div>
                 ))}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit Form Section */}
+        <AnimatePresence>
+          {editingProperty && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+              >
+                <PropertyForm
+                  property={editingProperty}
+                  onSave={handleUpdateProperty}
+                  onCancel={handleCancelForm}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Change Credentials Form */}
+        <AnimatePresence>
+          {showChangeCredentialsForm && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="bg-white rounded-2xl shadow-xl max-w-md w-full"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+              >
+                <ChangeCredentialsForm onCancel={() => setShowChangeCredentialsForm(false)} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Comparison Cart */}
+        <AnimatePresence>
+          {showComparisonCart && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+              >
+                <ComparisonCart onClose={() => setShowComparisonCart(false)} />
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

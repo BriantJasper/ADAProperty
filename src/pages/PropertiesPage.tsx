@@ -28,17 +28,21 @@ const PropertiesPage: React.FC = () => {
 
   const locations = ["Cikarang", "Bekasi", "Jakarta", "Karawang", "Bandung"];
 
-  const parsePriceToNumber = (price: string): number => {
-    const clean = price.replace(/\s+/g, " ").toLowerCase();
+  // Mendukung harga bertipe number (dari backend) maupun string (contoh data lama)
+  const parsePriceToNumber = (price: string | number): number => {
+    if (typeof price === 'number') {
+      return price;
+    }
+    const clean = price.replace(/\s+/g, ' ').toLowerCase();
     const matchRange = clean.match(/([\d.,]+)\s*-\s*([\d.,]+)/);
     const matchSingle = clean.match(/([\d.,]+)/);
     let base = 0;
     if (matchRange) {
-      base = parseFloat(matchRange[1].replace(",", "."));
+      base = parseFloat(matchRange[1].replace(',', '.'));
     } else if (matchSingle) {
-      base = parseFloat(matchSingle[1].replace(",", "."));
+      base = parseFloat(matchSingle[1].replace(',', '.'));
     }
-    if (clean.includes("miliar")) base = base * 1_000_000_000;
+    if (clean.includes('miliar')) base = base * 1_000_000_000;
     else base = base * 1_000_000;
     return base;
   };
@@ -68,8 +72,8 @@ const PropertiesPage: React.FC = () => {
     }
 
     if (activeSub) list = list.filter((p) => p.location.startsWith(activeSub));
-    if (statusFilter) list = list.filter((p) => p.status === statusFilter);
-    if (typeFilter) list = list.filter((p) => p.type === typeFilter);
+    if (statusFilter) list = list.filter((p) => p.status?.toLowerCase() === statusFilter.toLowerCase());
+    if (typeFilter) list = list.filter((p) => p.type?.toLowerCase() === typeFilter.toLowerCase());
 
     const min = minPrice ? Number(minPrice) : undefined;
     const max = maxPrice ? Number(maxPrice) : undefined;
@@ -348,7 +352,7 @@ const PropertiesPage: React.FC = () => {
               <AnimatePresence>
                 {finalList.map((property) => (
                   <motion.div
-                    key={property.id}
+                    key={`property-list-${property.id}`}
                     layout
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -356,6 +360,7 @@ const PropertiesPage: React.FC = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <PropertyCard
+                      key={`property-card-list-${property.id}`}
                       property={property}
                       showAdminControls={false}
                       showComparisonButton={true}

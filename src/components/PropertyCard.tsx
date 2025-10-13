@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import type { Property } from '../types/Property';
-import { IoAdd, IoTrash, IoPencil, IoEye, IoEyeOff } from 'react-icons/io5';
+import { IoAdd, IoTrash, IoPencil, IoEyeOff } from 'react-icons/io5';
 import { Home as HomeIcon, Building2 } from 'lucide-react';
-import { FaWhatsapp } from 'react-icons/fa';
 
 interface PropertyCardProps {
   property: Property;
@@ -18,10 +17,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   showComparisonButton = true,
   showWhatsAppButton = false,
 }) => {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, updateProperty, deleteProperty } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(property);
-  const images = property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : [property.imageUrl];
+  const images = property.images && property.images.length > 0 ? property.images : ['/images/p1.png'];
   const [slide, setSlide] = useState(0);
 
   const isInComparison = state.comparisonCart.some(item => item.property.id === property.id);
@@ -38,20 +37,38 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   };
 
   const handleWhatsAppClick = () => {
-    const message = `Halo, saya tertarik dengan properti ${property.type} di ${property.location} dengan harga ${property.price}. Apakah masih tersedia?`;
-    const whatsappUrl = `https://wa.me/${property.phoneNumber}?text=${encodeURIComponent(message)}`;
+    const formattedPrice = property.price ? property.price.toLocaleString() : '0';
+    const message = `Halo, saya tertarik dengan properti ${property.title} di ${property.location} dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
+    const whatsappUrl = `https://wa.me/${property.whatsappNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Apakah Anda yakin ingin menghapus properti ini?')) {
-      dispatch({ type: 'DELETE_PROPERTY', payload: property.id });
+      try {
+        const result = await deleteProperty(property.id);
+        if (!result.success) {
+          alert('Gagal menghapus properti: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting property:', error);
+        alert('Gagal menghapus properti');
+      }
     }
   };
 
-  const handleSave = () => {
-    dispatch({ type: 'UPDATE_PROPERTY', payload: { ...editForm, updatedAt: new Date() } });
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const result = await updateProperty(property.id, { ...editForm, updatedAt: new Date() });
+      if (result.success) {
+        setIsEditing(false);
+      } else {
+        alert('Gagal mengupdate properti: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error updating property:', error);
+      alert('Gagal mengupdate properti');
+    }
   };
 
   const handleCancel = () => {
@@ -65,31 +82,44 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         <h3 className="text-lg font-bold mb-4">Edit Properti</h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tipe</label>
+            <label className="block text-sm font-medium text-gray-700">Title</label>
             <input
               type="text"
-              value={editForm.type}
-              onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Tipe</label>
+            <select
+              value={editForm.type}
+              onChange={(e) => setEditForm({ ...editForm, type: e.target.value as 'rumah' | 'apartemen' | 'tanah' | 'ruko' })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="rumah">Rumah</option>
+              <option value="apartemen">Apartemen</option>
+              <option value="tanah">Tanah</option>
+              <option value="ruko">Ruko</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Status</label>
             <select
               value={editForm.status}
-              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+              onChange={(e) => setEditForm({ ...editForm, status: e.target.value as 'dijual' | 'disewa' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="Dijual">Dijual</option>
-              <option value="Disewa">Disewa</option>
+              <option value="dijual">Dijual</option>
+              <option value="disewa">Disewa</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Harga</label>
             <input
-              type="text"
+              type="number"
               value={editForm.price}
-              onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+              onChange={(e) => setEditForm({ ...editForm, price: parseInt(e.target.value) || 0 })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
@@ -103,11 +133,61 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700">Sub Lokasi</label>
+            <input
+              type="text"
+              value={editForm.subLocation}
+              onChange={(e) => setEditForm({ ...editForm, subLocation: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+            <textarea
+              value={editForm.description}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              rows={3}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Kamar Tidur</label>
+              <input
+                type="number"
+                value={editForm.bedrooms}
+                onChange={(e) => setEditForm({ ...editForm, bedrooms: parseInt(e.target.value) || 1 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                min="1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Kamar Mandi</label>
+              <input
+                type="number"
+                value={editForm.bathrooms}
+                onChange={(e) => setEditForm({ ...editForm, bathrooms: parseInt(e.target.value) || 1 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                min="1"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Luas (m²)</label>
+            <input
+              type="number"
+              value={editForm.area}
+              onChange={(e) => setEditForm({ ...editForm, area: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              min="0"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700">Nomor WhatsApp</label>
             <input
               type="text"
-              value={editForm.phoneNumber}
-              onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+              value={editForm.whatsappNumber}
+              onChange={(e) => setEditForm({ ...editForm, whatsappNumber: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
@@ -167,9 +247,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
         {/* Badges (bottom-left) aligned with left content padding */}
         <div className="absolute left-5 bottom-3 flex gap-2 pointer-events-none">
-          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorStatus}`}>{property.status}</div>
-          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.colorType} flex items-center gap-1.5`}>
-            {property.type.toLowerCase() === 'rumah' ? (
+          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.status === 'dijual' ? 'bg-blue-600' : 'bg-green-600'}`}>{property.status}</div>
+          <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 ${property.type === 'rumah' ? 'bg-green-600' : 'bg-purple-600'} flex items-center gap-1.5`}>
+            {property.type === 'rumah' ? (
               <HomeIcon className="w-3.5 h-3.5" />
             ) : (
               <Building2 className="w-3.5 h-3.5" />
@@ -180,18 +260,22 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
         {/* Admin Controls */}
         {showAdminControls && (
-          <div className="absolute top-3 left-1/2 transform -translate-x-1/2 flex gap-2">
+          <div className="absolute top-3 right-3 flex gap-2">
             <button
               onClick={() => setIsEditing(true)}
-              className="bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700"
+              className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 shadow-lg transition-all duration-200 flex items-center gap-1"
+              title="Edit Properti"
             >
-              <IoPencil size={16} />
+              <IoPencil size={18} />
+              <span className="text-xs font-medium">Edit</span>
             </button>
             <button
               onClick={handleDelete}
-              className="bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+              className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 shadow-lg transition-all duration-200 flex items-center gap-1"
+              title="Hapus Properti"
             >
-              <IoTrash size={16} />
+              <IoTrash size={18} />
+              <span className="text-xs font-medium">Hapus</span>
             </button>
           </div>
         )}
@@ -200,7 +284,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       {/* Card Content */}
       <div className="p-5">
         {/* Price */}
-        <h3 className="text-2xl font-bold text-gray-900">{property.price}</h3>
+        <h3 className="text-2xl font-bold text-gray-900">Rp {property.price ? property.price.toLocaleString() : '0'}</h3>
 
         {/* Location */}
         <div className="mt-1 mb-4 flex items-center text-sm text-gray-600">
@@ -218,19 +302,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             <span>{property.bathrooms}</span>
           </div>
           <div className="flex items-center gap-x-1.5">
-            <span>🏠</span>
-            <span>{property.buildingArea}</span>
-          </div>
-          <div className="flex items-center gap-x-1.5">
             <span>📐</span>
-            <span>{property.landArea}</span>
+            <span>{property.area}m²</span>
           </div>
-          {property.garage && (
-            <div className="flex items-center gap-x-1.5">
-              <span>🚗</span>
-              <span>Ada</span>
-            </div>
-          )}
         </div>
 
         {/* Action Buttons */}
