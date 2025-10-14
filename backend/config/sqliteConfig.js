@@ -241,8 +241,9 @@ const syncDatabase = async () => {
     console.log('✅ SQLite database connection established successfully.');
 
     // Sync models (create tables if they don't exist)
-    await sequelize.sync({ alter: true });
-    console.log('✅ SQLite database synchronized successfully.');
+    // Use safe sync without alter to avoid SQLite backup/unique conflicts
+    await sequelize.sync();
+    console.log('✅ SQLite database synchronized successfully (safe sync).');
 
     // Create default admin user if it doesn't exist
     await createDefaultAdmin();
