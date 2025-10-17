@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 import { IoAdd, IoTrash, IoPencil, IoEyeOff } from "react-icons/io5";
-import { Home as HomeIcon, Building2, Bed, Bath } from "lucide-react";
+import {
+  Home as HomeIcon,
+  Building2,
+  Bed,
+  Bath,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 interface PropertyCardProps {
   property: Property;
@@ -22,7 +29,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const [editForm, setEditForm] = useState(property);
   const images =
     property.images && property.images.length > 0
-      ? property.images
+      ? property.images.slice(0, 5)
       : ["/images/p1.png"];
   const [slide, setSlide] = useState(0);
 
@@ -90,6 +97,22 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const handleCancel = () => {
     setEditForm(property);
     setIsEditing(false);
+  };
+
+  const goToPrevious = () => {
+    setSlide((s) => (s - 1 + images.length) % images.length);
+  };
+
+  const goToNext = () => {
+    setSlide((s) => (s + 1) % images.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setSlide(index);
+  };
+
+  const formatText = (text: string): string => {
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
   if (isEditing) {
@@ -313,42 +336,36 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     <div className="max-w-sm overflow-hidden rounded-lg bg-white shadow-lg font-sans">
       <div className="relative">
         {/* Image Slider */}
-        <div className="relative h-56 w-full overflow-hidden">
+        <div className="relative h-56 w-full overflow-hidden bg-gray-200">
+          {/* Main Image */}
           <img
             className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
             src={images[slide]}
             alt={`${property.type} ${slide + 1}`}
           />
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={() =>
-                  setSlide((s) => (s - 1 + images.length) % images.length)
-                }
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/60"
-                aria-label="Prev"
-              >
-                ‹
-              </button>
-              <button
-                onClick={() => setSlide((s) => (s + 1) % images.length)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/60"
-                aria-label="Next"
-              >
-                ›
-              </button>
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {images.map((_, i) => (
-                  <span
-                    key={i}
-                    className={`w-2 h-2 rounded-full ${
-                      i === slide ? "bg-white" : "bg-white/50"
-                    }`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+
+          {/* Previous Button */}
+          <button
+            onClick={goToPrevious}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 z-10"
+            aria-label="Previous image"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          {/* Next Button */}
+          <button
+            onClick={goToNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 z-10"
+            aria-label="Next image"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          {/* Image Counter - Top Right */}
+          <div className="absolute top-2 right-2 bg-black/60 text-white px-2.5 py-1 rounded-full text-xs font-semibold">
+            {slide + 1} / {images.length}
+          </div>
 
           {/* Location - Top Center */}
           <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none">
@@ -364,7 +381,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 property.status === "dijual" ? "bg-blue-600" : "bg-green-600"
               }`}
             >
-              {property.status}
+              {formatText(property.status)}
             </div>
             <div
               className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
@@ -376,7 +393,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               ) : (
                 <Building2 className="w-3.5 h-3.5" />
               )}
-              <span>{property.type}</span>
+              <span>{formatText(property.type)}</span>
             </div>
           </div>
 
