@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import Dropdown from "../components/Dropdown";
 import PopularSection from "../components/PopularSection";
 import Container from "../components/Container";
-import { useApp } from '../context/AppContext';
-import type { Property } from '../types/Property';
+import { useApp } from "../context/AppContext";
+import type { Property } from "../types/Property";
 
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -14,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     const sampleProperties: Property[] = [
       {
-        id: '1',
+        id: "1",
         type: "Rumah",
         status: "Dijual",
         price: "300 - 400 Juta",
@@ -32,7 +32,7 @@ export default function Home() {
         updatedAt: new Date(),
       },
       {
-        id: '2',
+        id: "2",
         type: "Apartemen",
         status: "Dijual",
         price: "1 - 2 Miliar",
@@ -50,7 +50,7 @@ export default function Home() {
         updatedAt: new Date(),
       },
       {
-        id: '3',
+        id: "3",
         type: "Apartemen",
         status: "Disewa",
         price: "35 Juta / bulan",
@@ -68,18 +68,18 @@ export default function Home() {
         updatedAt: new Date(),
       },
     ];
-    
+
     // Only add sample data if no properties exist
     if (state.properties.length === 0) {
-      sampleProperties.forEach(property => {
-        dispatch({ type: 'ADD_PROPERTY', payload: property });
+      sampleProperties.forEach((property) => {
+        dispatch({ type: "ADD_PROPERTY", payload: property });
       });
     }
   }, [dispatch, state.properties.length]);
 
   // Sync selected location to global context
   useEffect(() => {
-    dispatch({ type: 'SET_SELECTED_LOCATION', payload: selectedLocation });
+    dispatch({ type: "SET_SELECTED_LOCATION", payload: selectedLocation });
   }, [selectedLocation, dispatch]);
 
   return (
@@ -110,9 +110,9 @@ export default function Home() {
               </h1>
 
               <p className="text-white text-lg md:text-xl mb-8 drop-shadow-md max-w-3xl mx-auto">
-                Kami membantu Anda menemukan rumah, apartemen, dan properti
+                Kami membantu anda menemukan rumah idaman, apartemen nyaman, atau
                 <br />
-                terbaik sesuai kebutuhan dan budget
+                investasi yang pas - cepat, mudah, dan terpercaya!
               </p>
 
               <div className="max-w-md mx-auto">

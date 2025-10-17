@@ -5,11 +5,12 @@ export interface Property {
   price: number;
   location: string;
   subLocation: string;
-  type: 'rumah' | 'apartemen' | 'tanah' | 'ruko';
-  status: 'dijual' | 'disewa';
+  type: "rumah" | "apartemen" | "tanah" | "ruko";
+  status: "dijual" | "disewa";
   bedrooms: number;
   bathrooms: number;
   area: number;
+  landArea?: number;
   images: string[];
   features: string[];
   whatsappNumber: string;

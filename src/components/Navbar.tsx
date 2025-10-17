@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, Settings, LogOut, LogIn } from "lucide-react";
-import { useApp } from '../context/AppContext';
+import { ShoppingCart, Settings, LogOut, LogIn, Menu, X } from "lucide-react";
+import { useApp } from "../context/AppContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,46 +9,48 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const compareCount = state.comparisonCart.length;
-  const onAdmin = location.pathname.startsWith('/admin');
-  const onAbout = location.pathname.startsWith('/about');
-  const onComparison = location.pathname.startsWith('/comparison');
-  const onContact = location.pathname.startsWith('/contact');
+  const onAdmin = location.pathname.startsWith("/admin");
+  const onAbout = location.pathname.startsWith("/about");
+  const onComparison = location.pathname.startsWith("/comparison");
+  const onContact = location.pathname.startsWith("/contact");
   const useSolid = onAdmin || onAbout || onComparison || onContact;
 
   const handleCompareClick = () => {
-    navigate('/comparison');
+    navigate("/comparison");
   };
 
   const handleAdminClick = () => {
-    if (state.isAuthenticated && state.user?.role === 'admin') {
-      navigate('/admin');
+    if (state.isAuthenticated && state.user?.role === "admin") {
+      navigate("/admin");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   };
 
   const handleLogout = () => {
-    dispatch({ type: 'LOGOUT' });
-    navigate('/');
+    dispatch({ type: "LOGOUT" });
+    navigate("/");
   };
 
   const handleLogin = () => {
-    navigate('/login');
+    navigate("/login");
   };
 
   const linkBase = useSolid
-    ? "text-gray-700 hover:text-blue-600"
-    : "text-white hover:text-gray-200";
+    ? "text-gray-700 hover:text-yellow-600"
+    : "text-white hover:text-yellow-300";
   const headerClass = useSolid
     ? "sticky top-0 left-0 right-0 z-50 bg-white border-b shadow"
     : "absolute top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md";
   const iconBtn = useSolid
-    ? "p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all"
-    : "p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all";
+    ? "p-2.5 rounded-lg bg-gray-100 hover:bg-yellow-100 text-gray-700 hover:text-yellow-600 transition-all duration-200"
+    : "p-2.5 rounded-lg bg-white/20 hover:bg-yellow-400/30 text-white transition-all duration-200";
   const cartBtn = (highlight: boolean) =>
     highlight
-      ? (useSolid ? "bg-yellow-400 text-black" : "bg-yellow-400 text-black")
-      : (useSolid ? "bg-gray-100 hover:bg-gray-200 text-gray-700" : "bg-white/20 hover:bg-white/30 text-white");
+      ? "p-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg shadow-yellow-500/30 transition-all duration-200"
+      : useSolid
+      ? "p-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition-all duration-200"
+      : "p-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition-all duration-200";
 
   return (
     <header className={headerClass}>
@@ -96,23 +98,23 @@ export default function Navbar() {
           </div>
 
           {/* Right Side Buttons */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3">
             {/* Login/Logout Button */}
             {state.isAuthenticated ? (
               <button
                 onClick={handleLogout}
-                className={useSolid ? "p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 transition-all" : "p-2 rounded-full bg-red-500/20 hover:bg-red-500/30 text-white transition-all"}
+                className={
+                  useSolid
+                    ? "p-2.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-all duration-200"
+                    : "p-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-white transition-all duration-200"
+                }
                 title="Logout"
               >
-                <LogOut className="w-6 h-6" />
+                <LogOut className="w-5 h-5" />
               </button>
             ) : (
-              <button
-                onClick={handleLogin}
-                className={iconBtn}
-                title="Login"
-              >
-                <LogIn className="w-6 h-6" />
+              <button onClick={handleLogin} className={iconBtn} title="Login">
+                <LogIn className="w-5 h-5" />
               </button>
             )}
 
@@ -120,27 +122,36 @@ export default function Navbar() {
             <button
               onClick={handleAdminClick}
               className={iconBtn}
-              title={state.isAuthenticated && state.user?.role === 'admin' ? "Admin Panel" : "Login Admin"}
+              title={
+                state.isAuthenticated && state.user?.role === "admin"
+                  ? "Admin Panel"
+                  : "Login Admin"
+              }
             >
-              <Settings className="w-6 h-6" />
+              <Settings className="w-5 h-5" />
             </button>
 
             {/* Compare / Cart Button */}
             <button
               onClick={handleCompareClick}
-              className={`
-                p-2 rounded-full backdrop-blur-sm transition-all relative
-                ${cartBtn(compareCount >= 3)}
-              `}
+              className={`relative transition-all duration-200 ${cartBtn(
+                compareCount >= 3
+              )}`}
               title="Komparasi Properti"
             >
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-5 h-5" />
               {/* Badge */}
               {compareCount > 0 && (
                 <span
                   className={`
-                    absolute -top-1 -right-1 text-xs font-semibold rounded-full px-1.5 py-0.5 
-                    ${compareCount >= 3 ? "bg-red-500 text-white" : (useSolid ? "bg-yellow-400 text-black" : "bg-yellow-400 text-black")}
+                    absolute -top-2 -right-2 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center
+                    ${
+                      compareCount >= 3
+                        ? "bg-red-500 text-white"
+                        : useSolid
+                        ? "bg-yellow-500 text-white"
+                        : "bg-yellow-400 text-gray-900"
+                    }
                   `}
                 >
                   {compareCount}
@@ -153,30 +164,17 @@ export default function Navbar() {
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={useSolid ? "p-2 rounded-md text-gray-700 hover:bg-gray-100" : "p-2 rounded-md text-white hover:bg-white/10"}
+              className={
+                useSolid
+                  ? "p-2 rounded-lg text-gray-700 hover:bg-yellow-100"
+                  : "p-2 rounded-lg text-white hover:bg-white/10"
+              }
             >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {isOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              {isOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -187,28 +185,28 @@ export default function Navbar() {
             <div className="flex flex-col space-y-3">
               <Link
                 to="/"
-                className="text-white hover:text-gray-200 font-medium"
+                className="text-white hover:text-yellow-300 font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 Home
               </Link>
               <Link
                 to="/about"
-                className="text-white hover:text-gray-200 font-medium"
+                className="text-white hover:text-yellow-300 font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 Tentang Kami
               </Link>
               <Link
                 to="/properties"
-                className="text-white hover:text-gray-200 font-medium"
+                className="text-white hover:text-yellow-300 font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 Properti
               </Link>
               <Link
                 to="/contact"
-                className="text-white hover:text-gray-200 font-medium"
+                className="text-white hover:text-yellow-300 font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 Kontak Kami
@@ -218,9 +216,11 @@ export default function Navbar() {
                   handleAdminClick();
                   setIsOpen(false);
                 }}
-                className="text-white hover:text-gray-200 font-medium text-left"
+                className="text-white hover:text-yellow-300 font-medium text-left"
               >
-                {state.isAuthenticated && state.user?.role === 'admin' ? 'Admin Panel' : 'Login Admin'}
+                {state.isAuthenticated && state.user?.role === "admin"
+                  ? "Admin Panel"
+                  : "Login Admin"}
               </button>
               {state.isAuthenticated ? (
                 <button
@@ -228,7 +228,7 @@ export default function Navbar() {
                     handleLogout();
                     setIsOpen(false);
                   }}
-                  className="text-white hover:text-gray-200 font-medium text-left"
+                  className="text-white hover:text-yellow-300 font-medium text-left"
                 >
                   Logout
                 </button>
@@ -238,7 +238,7 @@ export default function Navbar() {
                     handleLogin();
                     setIsOpen(false);
                   }}
-                  className="text-white hover:text-gray-200 font-medium text-left"
+                  className="text-white hover:text-yellow-300 font-medium text-left"
                 >
                   Login
                 </button>
@@ -248,7 +248,7 @@ export default function Navbar() {
                   handleCompareClick();
                   setIsOpen(false);
                 }}
-                className="text-white hover:text-gray-200 font-medium text-left flex items-center gap-2"
+                className="text-white hover:text-yellow-300 font-medium text-left flex items-center gap-2"
               >
                 <ShoppingCart className="w-4 h-4" />
                 Komparasi ({compareCount})

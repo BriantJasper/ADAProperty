@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -7,6 +9,7 @@ export default function ContactPage() {
   const [errors, setErrors] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
@@ -14,74 +17,142 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // simple validation
     if (name.trim().length < 3 || message.trim().length < 10) {
       setErrors("Nama minimal 3 karakter dan keluhan minimal 10 karakter.");
       return;
     }
     setErrors(null);
 
-    // submit via email and WhatsApp deep link
     const subject = encodeURIComponent("Kontak ADA Property");
     const body = encodeURIComponent(
       `Nama: ${name}\nKontak: ${emailPhone}\n\nPesan:\n${message}`
     );
-    // open mail client
     window.open(
       `mailto:hello@adaproperty.com?subject=${subject}&body=${body}`,
       "_blank"
     );
-    // open WhatsApp (ganti nomor tujuan bila perlu)
     const phone = "6281234567890";
     const waText = encodeURIComponent(
       `Halo Admin, saya ${name}.\nKontak: ${emailPhone}\n\n${message}`
     );
     window.open(`https://wa.me/${phone}?text=${waText}`, "_blank");
 
-    alert("Pesan siap dikirim melalui Email dan WhatsApp. Terima kasih!");
+    setSubmitted(true);
     setName("");
     setEmailPhone("");
     setMessage("");
+
+    setTimeout(() => setSubmitted(false), 5000);
+  };
+
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
-      <div
-        className="absolute bottom-20 right-10 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"
-        style={{ animationDelay: "1s" }}
-      ></div>
+    <div className="min-h-screen bg-white overflow-hidden">
+      {/* Animated background orbs */}
+      <motion.div
+        className="absolute top-20 right-10 w-80 h-80 bg-yellow-300/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1, 1.2, 1],
+          rotate: [0, 90, 0],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+      <motion.div
+        className="absolute bottom-20 left-10 w-80 h-80 bg-orange-300/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1.2, 1, 1.2],
+          rotate: [0, -90, 0],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
 
-      <div
-        className={`max-w-6xl mx-auto px-6 py-16 relative z-10 transition-all duration-1000 ${
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-        }`}
-      >
+      <div className="max-w-6xl mx-auto px-6 py-20 relative z-10">
         {/* Header Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Hubungi Kami
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <span className="inline-block px-4 py-2 rounded-full bg-yellow-400/20 border border-yellow-500/40 text-yellow-700 text-sm font-semibold mb-6">
+            📞 Hubungi Kami
+          </span>
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gray-900">
+            Kami Siap
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 to-orange-600">
+              {" "}
+              Membantu Anda
+            </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
             Tim kami siap membantu Anda menemukan properti impian atau menjawab
             pertanyaan Anda
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
           {/* Form */}
-          <form
+          <motion.form
             onSubmit={handleSubmit}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 space-y-6 hover:shadow-3xl transition-shadow duration-300"
+            className="bg-white rounded-3xl shadow-lg border border-yellow-200/50 p-8 space-y-6 hover:shadow-xl transition-shadow duration-300"
+            variants={fadeInUp}
           >
             {errors && (
-              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded animate-pulse">
+              <motion.div
+                className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
                 <p className="font-medium">⚠️ {errors}</p>
-              </div>
+              </motion.div>
             )}
+
+            {submitted && (
+              <motion.div
+                className="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <p className="font-medium">
+                  ✓ Pesan siap dikirim melalui Email dan WhatsApp!
+                </p>
+              </motion.div>
+            )}
+
             <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Nama Lengkap
               </label>
               <input
@@ -89,17 +160,18 @@ export default function ContactPage() {
                 onChange={(e) => setName(e.target.value)}
                 onFocus={() => setFocusedField("name")}
                 onBlur={() => setFocusedField(null)}
-                className={`w-full border-2 rounded-lg px-4 py-3 transition-all duration-300 ${
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all duration-300 ${
                   focusedField === "name"
-                    ? "border-blue-500 shadow-lg scale-105"
-                    : "border-gray-300"
-                } hover:border-blue-400`}
+                    ? "border-yellow-500 shadow-lg"
+                    : "border-gray-200 hover:border-yellow-300"
+                } focus:outline-none bg-white`}
                 placeholder="Masukkan nama lengkap Anda"
                 required
               />
             </div>
+
             <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Email / Nomor Telepon
               </label>
               <input
@@ -107,17 +179,18 @@ export default function ContactPage() {
                 onChange={(e) => setEmailPhone(e.target.value)}
                 onFocus={() => setFocusedField("contact")}
                 onBlur={() => setFocusedField(null)}
-                className={`w-full border-2 rounded-lg px-4 py-3 transition-all duration-300 ${
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all duration-300 ${
                   focusedField === "contact"
-                    ? "border-blue-500 shadow-lg scale-105"
-                    : "border-gray-300"
-                } hover:border-blue-400`}
+                    ? "border-yellow-500 shadow-lg"
+                    : "border-gray-200 hover:border-yellow-300"
+                } focus:outline-none bg-white`}
                 placeholder="email@domain.com atau 08xxxxxxxxxx"
                 required
               />
             </div>
+
             <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Pesan
               </label>
               <textarea
@@ -125,121 +198,103 @@ export default function ContactPage() {
                 onChange={(e) => setMessage(e.target.value)}
                 onFocus={() => setFocusedField("message")}
                 onBlur={() => setFocusedField(null)}
-                className={`w-full border-2 rounded-lg px-4 py-3 min-h-[160px] transition-all duration-300 ${
+                className={`w-full border-2 rounded-xl px-4 py-3 min-h-[160px] transition-all duration-300 ${
                   focusedField === "message"
-                    ? "border-blue-500 shadow-lg scale-105"
-                    : "border-gray-300"
-                } hover:border-blue-400`}
+                    ? "border-yellow-500 shadow-lg"
+                    : "border-gray-200 hover:border-yellow-300"
+                } focus:outline-none bg-white resize-none`}
                 placeholder="Ceritakan kebutuhan properti Anda atau ajukan pertanyaan..."
                 required
               />
             </div>
-            <button
+
+            <motion.button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-lg py-4 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
+              className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold rounded-xl py-4 flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
+              <Send className="w-5 h-5" />
               Kirim Pesan
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
 
           {/* Contact Info Cards */}
-          <div className="space-y-6">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 hover:scale-105 group">
+          <motion.div
+            className="space-y-6"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Phone Card */}
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg border border-yellow-200/50 p-8 hover:shadow-xl transition-all duration-300 group"
+              variants={fadeInUp}
+              whileHover={{ y: -4 }}
+            >
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full p-4 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    />
-                  </svg>
+                <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-4 group-hover:scale-110 transition-transform duration-300">
+                  <Phone className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-2 text-gray-800">
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">
                     Telepon
                   </h3>
-                  <p className="text-gray-600 mb-2">
+                  <p className="text-gray-600 mb-3">
                     Hubungi kami langsung untuk konsultasi cepat
                   </p>
                   <a
                     href="tel:+6281234567890"
-                    className="text-blue-600 hover:text-blue-700 font-semibold"
+                    className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
                   >
                     +62 812-3456-7890
                   </a>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 hover:scale-105 group">
+            {/* Email Card */}
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg border border-yellow-200/50 p-8 hover:shadow-xl transition-all duration-300 group"
+              variants={fadeInUp}
+              whileHover={{ y: -4 }}
+            >
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full p-4 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-4 group-hover:scale-110 transition-transform duration-300">
+                  <Mail className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-2 text-gray-800">
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">
                     Email
                   </h3>
-                  <p className="text-gray-600 mb-2">
+                  <p className="text-gray-600 mb-3">
                     Kirim email untuk pertanyaan detail
                   </p>
                   <a
                     href="mailto:hello@adaproperty.com"
-                    className="text-blue-600 hover:text-blue-700 font-semibold"
+                    className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
                   >
                     hello@adaproperty.com
                   </a>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 hover:scale-105 group">
+            {/* Address Card */}
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg border border-yellow-200/50 p-8 hover:shadow-xl transition-all duration-300 group"
+              variants={fadeInUp}
+              whileHover={{ y: -4 }}
+            >
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full p-4 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-4 group-hover:scale-110 transition-transform duration-300">
+                  <MapPin className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-xl mb-2 text-gray-800">
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">
                     Kantor
                   </h3>
-                  <p className="text-gray-600 mb-2">
+                  <p className="text-gray-600 mb-3">
                     Kunjungi kantor kami untuk konsultasi tatap muka
                   </p>
                   <p className="text-gray-700 font-medium">
@@ -248,27 +303,37 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <h3 className="font-bold text-2xl mb-3">Jam Operasional</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="font-medium">Senin - Jumat</span>
-                  <span>09:00 - 18:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Sabtu</span>
-                  <span>09:00 - 15:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Minggu</span>
-                  <span>Tutup</span>
+            {/* Hours Card */}
+            <motion.div
+              className="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl shadow-lg p-8 text-white hover:shadow-xl transition-all duration-300 group"
+              variants={fadeInUp}
+              whileHover={{ y: -4 }}
+            >
+              <div className="flex items-start space-x-4">
+                <Clock className="w-6 h-6 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-3">Jam Operasional</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Senin - Jumat</span>
+                      <span>09:00 - 18:00</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Sabtu</span>
+                      <span>09:00 - 15:00</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Minggu</span>
+                      <span>Tutup</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
