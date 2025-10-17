@@ -14,6 +14,8 @@ export interface Property {
   images: string[];
   features: string[];
   whatsappNumber: string;
+  igUrl?: string;
+  tiktokUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

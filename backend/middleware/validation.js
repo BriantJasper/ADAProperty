@@ -45,7 +45,17 @@ const propertyValidation = [
   
   body('whatsappNumber')
     .notEmpty()
-    .withMessage('WhatsApp number is required')
+    .withMessage('WhatsApp number is required'),
+  
+  // Optional social links
+  body('igUrl')
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage('Instagram URL harus valid'),
+  body('tiktokUrl')
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage('TikTok URL harus valid')
 ];
 
 // Login validation rules

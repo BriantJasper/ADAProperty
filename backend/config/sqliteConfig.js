@@ -127,6 +127,20 @@ const Property = sequelize.define('Property', {
     validate: {
       notEmpty: true
     }
+  },
+  igUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      isUrl: true
+    }
+  },
+  tiktokUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      isUrl: true
+    }
   }
 }, {
   tableName: 'properties',
@@ -233,6 +247,26 @@ const PasswordResetOtp = sequelize.define('PasswordResetOtp', {
 // Relasi
 PasswordResetOtp.belongsTo(User, { foreignKey: 'userId' });
 
+// Ensure new optional columns exist in SQLite table (safe alter)
+const ensurePropertyColumns = async () => {
+  try {
+    const [columns] = await sequelize.query("PRAGMA table_info('properties');");
+    const names = Array.isArray(columns) ? columns.map((c) => c.name) : [];
+    const addIfMissing = async (name, typeSql) => {
+      if (!names.includes(name)) {
+        await sequelize.query(`ALTER TABLE properties ADD COLUMN ${name} ${typeSql};`);
+        console.log(`✅ Column '${name}' added to properties table.`);
+      } else {
+        console.log(`ℹ️  Column '${name}' already exists.`);
+      }
+    };
+    await addIfMissing('igUrl', 'TEXT');
+    await addIfMissing('tiktokUrl', 'TEXT');
+  } catch (err) {
+    console.error('❌ Failed to ensure property columns:', err);
+  }
+};
+
 // Sync database and create tables
 const syncDatabase = async () => {
   try {
@@ -244,6 +278,9 @@ const syncDatabase = async () => {
     // Use safe sync without alter to avoid SQLite backup/unique conflicts
     await sequelize.sync();
     console.log('✅ SQLite database synchronized successfully (safe sync).');
+
+    // Ensure optional social link columns exist
+    await ensurePropertyColumns();
 
     // Create default admin user if it doesn't exist
     await createDefaultAdmin();

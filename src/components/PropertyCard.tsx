@@ -1,15 +1,8 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
-import { IoAdd, IoTrash, IoPencil, IoEyeOff } from "react-icons/io5";
-import {
-  Home as HomeIcon,
-  Building2,
-  Bed,
-  Bath,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { IoAdd, IoTrash, IoPencil, IoEyeOff, IoLogoInstagram, IoLogoTiktok } from "react-icons/io5";
+import { Home as HomeIcon, Building2, Bed, Bath, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PropertyCardProps {
   property: Property;
@@ -397,6 +390,36 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             </div>
           </div>
 
+          {/* Social Links - Bottom Right */}
+          {(property.igUrl || property.tiktokUrl) && (
+            <div className="absolute right-3 bottom-16 flex items-center gap-2 pointer-events-auto">
+              {property.igUrl && (
+                <a
+                  href={property.igUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-pink-600 hover:text-pink-700"
+                  title="Buka Instagram"
+                >
+                  <IoLogoInstagram size={14} />
+                  <span className="text-xs font-medium">IG</span>
+                </a>
+              )}
+              {property.tiktokUrl && (
+                <a
+                  href={property.tiktokUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-gray-800 hover:text-black"
+                  title="Buka TikTok"
+                >
+                  <IoLogoTiktok size={14} />
+                  <span className="text-xs font-medium">TikTok</span>
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Property Details - Bottom Right */}
           <div className="absolute right-3 bottom-3 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1.5 shadow-md pointer-events-none">
             <div className="flex gap-2 text-gray-700 text-xs font-medium">
@@ -487,6 +510,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             </>
           )}
         </div>
+
+
       </div>
     </div>
   );

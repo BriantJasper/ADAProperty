@@ -25,6 +25,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     images: property?.images || [],
     features: property?.features || [],
     whatsappNumber: property?.whatsappNumber || '',
+    igUrl: property?.igUrl || '',
+    tiktokUrl: property?.tiktokUrl || '',
     garage: false,
   });
 
@@ -49,17 +51,36 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setImagePreview(result);
-        setFormData(prev => ({ ...prev, images: [result] }));
-      };
-      reader.readAsDataURL(file);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+
+    const toBase64 = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+    try {
+      const results = await Promise.all(files.map(toBase64));
+      setFormData(prev => ({
+        ...prev,
+        images: [...(prev.images || []), ...results],
+      }));
+    } catch (err) {
+      console.error('Failed to read image files:', err);
+      alert('Gagal membaca file gambar');
     }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData(prev => {
+      const imgs = (prev.images || []).slice();
+      imgs.splice(index, 1);
+      return { ...prev, images: imgs };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +104,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         images: formData.images && formData.images.length > 0 ? formData.images : ['/images/p1.png'],
         features: formData.garage ? [...(formData.features || []), 'Garasi'] : (formData.features || []),
         whatsappNumber: trimmed(formData.whatsappNumber),
+        igUrl: trimmed(formData.igUrl) || undefined,
+        tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
       } as Partial<Property>;
 
       // Validasi ringan di sisi klien agar sesuai aturan backend
@@ -163,25 +186,44 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Gambar Properti
+            Gambar Properti (boleh lebih dari satu)
           </label>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageUpload}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
+              <p className="mt-2 text-xs text-gray-500">
+                Tip: pilih beberapa gambar sekaligus atau ulangi upload.
+              </p>
             </div>
-            {imagePreview && (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-20 h-20 object-cover rounded-lg"
-              />
-            )}
           </div>
+
+          {(formData.images?.length || 0) > 0 && (
+            <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {formData.images!.map((img, idx) => (
+                <div key={idx} className="relative group">
+                  <img
+                    src={img}
+                    alt={`Preview ${idx + 1}`}
+                    className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
+                    title="Hapus gambar ini"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Basic Info */}
@@ -346,6 +388,36 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               onChange={handleInputChange}
               placeholder="Contoh: 6281234567890"
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Social Links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Instagram (opsional)
+            </label>
+            <input
+              type="url"
+              name="igUrl"
+              value={formData.igUrl || ''}
+              onChange={handleInputChange}
+              placeholder="https://instagram.com/username"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              TikTok (opsional)
+            </label>
+            <input
+              type="url"
+              name="tiktokUrl"
+              value={formData.tiktokUrl || ''}
+              onChange={handleInputChange}
+              placeholder="https://tiktok.com/@username"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
