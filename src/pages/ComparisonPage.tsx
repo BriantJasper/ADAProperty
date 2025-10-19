@@ -4,6 +4,7 @@ import { IoArrowBack, IoTrash } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { Scale, TrendingUp, DollarSign, Home, Zap } from "lucide-react";
 import type { Property } from "../types/Property";
+import { FaWhatsapp } from "react-icons/fa";
 
 interface SectionConfig {
   title: string;
@@ -42,6 +43,9 @@ const ComparisonPage: React.FC = () => {
   );
 
   const BOOKING_FEE = 10_000_000;
+
+  // Gunakan nomor WhatsApp admin jika tersedia dari env, fallback ke nomor properti
+  const adminWhatsApp = (import.meta as any).env?.VITE_ADMIN_WHATSAPP as string | undefined;
 
   const sectionConfigs: SectionConfig[] = [
     {
@@ -215,18 +219,46 @@ const ComparisonPage: React.FC = () => {
       <td className="px-6 py-3 font-medium text-gray-600 bg-gray-50/50 w-40 text-sm">
         {rowConfig.label}
       </td>
-      {comparisonProperties.map((prop) => (
-        <td
-          key={prop.id}
-          className="px-6 py-3 text-center text-gray-800 text-sm"
-        >
-          <span className="font-medium">
-            {rowConfig.formatter
-              ? rowConfig.formatter(prop[rowConfig.key as keyof Property])
-              : prop[rowConfig.key as keyof Property] || "-"}
-          </span>
-        </td>
-      ))}
+      {comparisonProperties.map((prop) => {
+        if (rowConfig.key === "whatsappNumber") {
+          const targetNumber = adminWhatsApp || prop.whatsappNumber || "";
+          const normalized = typeof targetNumber === "string" ? targetNumber.replace(/\D/g, "") : "";
+          const formattedPrice = prop.price ? prop.price.toLocaleString() : "0";
+          const message = `Halo Admin ADAProperty, saya tertarik dengan properti ${prop.title} di ${prop.location}${prop.subLocation ? ` (${prop.subLocation})` : ""} dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
+          const waUrl = normalized ? `https://wa.me/${normalized}?text=${encodeURIComponent(message)}` : null;
+
+          return (
+            <td key={prop.id} className="px-6 py-3 text-center text-gray-800 text-sm">
+              <div className="flex flex-col items-center gap-2">
+                <span className="font-medium">{prop.whatsappNumber || "-"}</span>
+                {waUrl && (
+                  <button
+                    onClick={() => window.open(waUrl, "_blank")}
+                    className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    title={adminWhatsApp ? "Chat Admin via WhatsApp" : "Chat via WhatsApp"}
+                  >
+                    <FaWhatsapp className="text-lg" />
+                    {adminWhatsApp ? "Chat Admin" : "Chat via WhatsApp"}
+                  </button>
+                )}
+              </div>
+            </td>
+          );
+        }
+
+        return (
+          <td
+            key={prop.id}
+            className="px-6 py-3 text-center text-gray-800 text-sm"
+          >
+            <span className="font-medium">
+              {rowConfig.formatter
+                ? rowConfig.formatter(prop[rowConfig.key as keyof Property])
+                : (prop[rowConfig.key as keyof Property] as any) || "-"}
+            </span>
+          </td>
+        );
+      })}
     </tr>
   );
 
