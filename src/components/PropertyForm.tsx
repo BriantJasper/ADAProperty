@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import ApiService from '../services/api';
 import type { Property } from '../types/Property';
 import { IoAdd, IoClose, IoImage } from 'react-icons/io5';
 
@@ -22,12 +23,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     bedrooms: property?.bedrooms || 1,
     bathrooms: property?.bathrooms || 1,
     area: property?.area || 0,
+    landArea: property?.landArea || 0,
+    floors: property?.floors ?? 0,
     images: property?.images || [],
     features: property?.features || [],
     whatsappNumber: property?.whatsappNumber || '',
     igUrl: property?.igUrl || '',
     tiktokUrl: property?.tiktokUrl || '',
     garage: false,
+    financing: property?.financing || { dpPercent: 10, tenorYears: 20, fixedYears: 3, bookingFee: 15000000, ppnPercent: 11 },
   });
 
   const [imagePreview, setImagePreview] = useState<string>(formData.images?.[0] || '');
@@ -55,23 +59,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
 
-    const toBase64 = (file: File) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
     try {
-      const results = await Promise.all(files.map(toBase64));
-      setFormData(prev => ({
-        ...prev,
-        images: [...(prev.images || []), ...results],
-      }));
+      const res = await ApiService.uploadImages(files);
+      if (res?.success && Array.isArray(res.data)) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...(prev.images || []), ...res.data],
+        }));
+      } else {
+        console.error('Upload image failed:', res);
+        alert(res?.error || 'Gagal mengunggah gambar');
+      }
     } catch (err) {
-      console.error('Failed to read image files:', err);
-      alert('Gagal membaca file gambar');
+      console.error('Failed to upload image files:', err);
+      alert('Terjadi kesalahan saat mengunggah gambar');
     }
   };
 
@@ -81,6 +82,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
       imgs.splice(index, 1);
       return { ...prev, images: imgs };
     });
+  };
+
+  const updateFinancing = (patch: Partial<{ dpPercent: number; tenorYears: number; fixedYears: number; bookingFee: number; ppnPercent: number }>) => {
+    setFormData(prev => ({
+      ...prev,
+      financing: {
+        dpPercent: 10,
+        tenorYears: 20,
+        fixedYears: 3,
+        bookingFee: 15000000,
+        ppnPercent: 11,
+        ...(prev as any).financing,
+        ...patch,
+      },
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,11 +117,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         bedrooms: typeof formData.bedrooms === 'number' ? formData.bedrooms : parseInt(String(formData.bedrooms)) || 0,
         bathrooms: typeof formData.bathrooms === 'number' ? formData.bathrooms : parseInt(String(formData.bathrooms)) || 0,
         area: typeof formData.area === 'number' ? formData.area : parseInt(String(formData.area)) || 0,
+        landArea: typeof formData.landArea === 'number' ? formData.landArea : parseInt(String(formData.landArea as any)) || 0,
+        floors: typeof formData.floors === 'number' ? formData.floors : parseInt(String(formData.floors as any)) || 0,
         images: formData.images && formData.images.length > 0 ? formData.images : ['/images/p1.png'],
         features: formData.garage ? [...(formData.features || []), 'Garasi'] : (formData.features || []),
         whatsappNumber: trimmed(formData.whatsappNumber),
         igUrl: trimmed(formData.igUrl) || undefined,
         tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
+        financing: {
+          dpPercent: Number(((formData as any).financing?.dpPercent ?? 10)),
+          tenorYears: Number(((formData as any).financing?.tenorYears ?? 20)),
+          fixedYears: Number(((formData as any).financing?.fixedYears ?? 3)),
+          bookingFee: Number(((formData as any).financing?.bookingFee ?? 15000000)),
+          ppnPercent: Number(((formData as any).financing?.ppnPercent ?? 11)),
+        },
       } as Partial<Property>;
 
       // Validasi ringan di sisi klien agar sesuai aturan backend
@@ -140,8 +165,33 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
       if (!isNonNegInt(propertyData.area)) {
         validationErrors.push('Luas area harus bilangan bulat ≥ 0');
       }
+      if (!isNonNegInt(propertyData.floors)) {
+        validationErrors.push('Jumlah lantai wajib diisi dan bilangan bulat ≥ 0');
+      }
       if (!propertyData.whatsappNumber) {
         validationErrors.push('Nomor WhatsApp wajib diisi');
+      }
+
+      // Validasi Parameter Pembiayaan
+      const fin = (propertyData as any).financing as { dpPercent: number; tenorYears: number; fixedYears: number; bookingFee: number; ppnPercent?: number };
+      if (fin) {
+        if (!Number.isFinite(fin.dpPercent) || fin.dpPercent < 5 || fin.dpPercent > 50) {
+          validationErrors.push('DP harus antara 5–50%');
+        }
+        if (!Number.isFinite(fin.tenorYears) || fin.tenorYears < 5 || fin.tenorYears > 30) {
+          validationErrors.push('Tenor harus antara 5–30 tahun');
+        }
+        if (!Number.isFinite(fin.fixedYears) || fin.fixedYears < 1 || fin.fixedYears > 10) {
+          validationErrors.push('Bunga fix harus antara 1–10 tahun');
+        }
+        if (!Number.isFinite(fin.bookingFee) || fin.bookingFee < 0) {
+          validationErrors.push('Booking fee harus ≥ 0');
+        }
+        if (fin.ppnPercent !== undefined) {
+          if (!Number.isFinite(fin.ppnPercent) || fin.ppnPercent < 0 || fin.ppnPercent > 100) {
+            validationErrors.push('PPN harus antara 0–100%');
+          }
+        }
       }
 
       if (validationErrors.length > 0) {
@@ -329,6 +379,111 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
           </div>
         </div>
 
+        {/* Parameter Pembiayaan */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Parameter Pembiayaan</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Persentase DP */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-700">Persentase DP</label>
+                <span className="text-lg font-bold text-blue-600">{((formData as any).financing?.dpPercent ?? 10)}%</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={50}
+                step={1}
+                value={((formData as any).financing?.dpPercent ?? 10)}
+                onChange={(e) => updateFinancing({ dpPercent: Number(e.target.value) })}
+                className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>5%</span>
+                <span>50%</span>
+              </div>
+            </div>
+
+            {/* Tenor Cicilan */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-700">Tenor Cicilan (Tahun)</label>
+                <span className="text-lg font-bold text-green-600">{((formData as any).financing?.tenorYears ?? 20)} Thn</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={30}
+                step={1}
+                value={((formData as any).financing?.tenorYears ?? 20)}
+                onChange={(e) => updateFinancing({ tenorYears: Number(e.target.value) })}
+                className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>5 Thn</span>
+                <span>30 Thn</span>
+              </div>
+            </div>
+
+            {/* Bunga Fix */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-700">Bunga Fix (Tahun)</label>
+                <span className="text-lg font-bold text-amber-600">{((formData as any).financing?.fixedYears ?? 3)} Thn</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={1}
+                value={((formData as any).financing?.fixedYears ?? 3)}
+                onChange={(e) => updateFinancing({ fixedYears: Number(e.target.value) })}
+                className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>1 Thn</span>
+                <span>10 Thn</span>
+              </div>
+            </div>
+
+            {/* PPN (%) */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-700">PPN (%)</label>
+                <span className="text-lg font-bold text-purple-600">{((formData as any).financing?.ppnPercent ?? 11)}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={((formData as any).financing?.ppnPercent ?? 11)}
+                onChange={(e) => updateFinancing({ ppnPercent: Number(e.target.value) })}
+                className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>0%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Booking Fee */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Booking Fee (Rp)</label>
+              <input
+                type="number"
+                min={0}
+                value={((formData as any).financing?.bookingFee ?? 15000000)}
+                onChange={(e) => updateFinancing({ bookingFee: Number(e.target.value) })}
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Masukkan nominal booking fee.</p>
+            </div>
+          </div>
+        </div>
+
         {/* Property Details */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
@@ -363,7 +518,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Luas Area *
+              Luas Bangunan (m²) *
             </label>
             <input
               type="number"
@@ -373,6 +528,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               placeholder="Contoh: 180"
               min="0"
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Luas Tanah (m²)
+            </label>
+            <input
+              type="number"
+              name="landArea"
+              value={formData.landArea || 0}
+              onChange={handleInputChange}
+              placeholder="Contoh: 200"
+              min="0"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -390,6 +560,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Jumlah Lantai
+            </label>
+            <input
+              type="number"
+              name="floors"
+              value={formData.floors ?? 0}
+              onChange={handleInputChange}
+              min="0"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
           </div>
         </div>
 
@@ -496,7 +681,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
           >
             {isSubmitting || state.loading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4"></div>
                 {property ? 'Menyimpan...' : 'Menambahkan...'}
               </>
             ) : (

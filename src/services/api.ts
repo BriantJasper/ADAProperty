@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
 const USE_FALLBACK = false; // Nonaktifkan fallback agar menggunakan backend SQLite
 let nextFallbackId = 100; // ID untuk properti baru dalam fallback mode
 
@@ -6,13 +6,15 @@ class ApiService {
   // Helper method to make API calls
   static async makeRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    // Build headers allowing FormData without forcing Content-Type
+    const headers = { ...((options as any).headers || {}) } as any;
+    const isFormData = typeof FormData !== 'undefined' && (options as any).body instanceof FormData;
+    if (!('Content-Type' in headers) && !isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
     const config = {
-      // Spread options first, then enforce merged headers so Content-Type is not lost
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options as any).headers,
-      },
+      headers,
     } as any;
 
     try {
@@ -377,7 +379,40 @@ class ApiService {
       }
     });
   }
+  
+  // Ganti kredensial admin
+  static async changeCredentials(currentPassword: string, newCredentials: { username: string; password: string }, token?: string) {
+    const authToken = token ?? (typeof Storage !== 'undefined' ? localStorage.getItem('auth_token') : null);
+    if (!authToken) {
+      throw new Error('Authentication required');
+    }
 
+    if (USE_FALLBACK) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('adminCredentials') || '{"username":"admin","password":"admin123"}');
+        if (currentPassword !== stored.password) {
+          return { success: false, error: 'Current password is incorrect' };
+        }
+        localStorage.setItem('adminCredentials', JSON.stringify({ username: newCredentials.username, password: newCredentials.password }));
+        return { success: true, message: 'Credentials updated successfully' };
+      } catch (e) {
+        return { success: false, error: 'Failed to update credentials in fallback mode' };
+      }
+    }
+
+    return this.makeRequest('/admin/change-credentials', {
+      method: 'POST',
+      body: JSON.stringify({
+        currentPassword,
+        newUsername: newCredentials.username,
+        newPassword: newCredentials.password,
+      }),
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+  }
+  
   static async verifyToken() {
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -439,13 +474,35 @@ class ApiService {
       };
     }
     
-    return this.makeRequest('/properties', {
+    const res = await this.makeRequest('/properties', {
       method: 'POST',
       body: JSON.stringify(propertyData),
       headers: {
         'Authorization': `Bearer ${token}`,
       },
     });
+
+    // Backend mengembalikan { success, data: { id } } → ambil properti lengkap
+    if (res && res.success) {
+      const newId = typeof res.data === 'object' ? res.data?.id : res.data;
+      if (newId) {
+        const full = await this.getPropertyById(String(newId));
+        if (full && full.success) {
+          return full;
+        }
+        // Fallback jika fetch detail gagal: kembalikan gabungan input + id
+        return {
+          success: true,
+          data: {
+            ...propertyData,
+            id: String(newId),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        };
+      }
+    }
+    return res;
   }
 
   static async updateProperty(id, propertyData) {
@@ -454,7 +511,6 @@ class ApiService {
       throw new Error('Authentication required');
     }
 
-    // Jika menggunakan fallback, update properti di fallbackProperties
     if (USE_FALLBACK) {
       this.ensureFallbackLoaded();
       const propertyIndex = this.fallbackProperties.findIndex(p => p.id === id);
@@ -467,26 +523,23 @@ class ApiService {
         };
         this.fallbackProperties[propertyIndex] = updatedProperty;
         this.persistFallback();
-        
-        return {
-          success: true,
-          data: updatedProperty
-        };
+        return { success: true, data: updatedProperty };
       } else {
-        return {
-          success: false,
-          error: 'Property not found'
-        };
+        return { success: false, error: 'Property not found' };
       }
     }
 
-    return this.makeRequest(`/properties/${id}`, {
+    const res = await this.makeRequest(`/properties/${id}`, {
       method: 'PUT',
       body: JSON.stringify(propertyData),
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
+
+    if (res && res.success) {
+      const full = await this.getPropertyById(id);
+      if (full && full.success) return full;
+    }
+    return res;
   }
 
   static async deleteProperty(id) {
@@ -495,141 +548,39 @@ class ApiService {
       throw new Error('Authentication required');
     }
 
-    // Jika menggunakan fallback, hapus properti dari fallbackProperties
     if (USE_FALLBACK) {
       this.ensureFallbackLoaded();
-      const propertyIndex = this.fallbackProperties.findIndex(p => p.id === id);
-      if (propertyIndex !== -1) {
-        this.fallbackProperties.splice(propertyIndex, 1);
+      const idx = this.fallbackProperties.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        this.fallbackProperties.splice(idx, 1);
         this.persistFallback();
-        
-        return {
-          success: true,
-          message: 'Property deleted successfully'
-        };
-      } else {
-        return {
-          success: false,
-          error: 'Property not found'
-        };
+        return { success: true, message: 'Property deleted successfully' };
       }
+      return { success: false, error: 'Property not found' };
     }
 
     return this.makeRequest(`/properties/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
   }
 
-  // Change admin credentials
-  static async changeCredentials(currentPassword, newCredentials, token) {
-    if (USE_FALLBACK) {
-      // Simulate credential change in fallback mode
-      const storedCredentials = JSON.parse(localStorage.getItem('adminCredentials') || '{"username": "admin", "password": "admin123"}');
-      
-      if (storedCredentials.password !== currentPassword) {
-        return {
-          success: false,
-          error: 'Password saat ini tidak benar'
-        };
-      }
-
-      // Update stored credentials
-      localStorage.setItem('adminCredentials', JSON.stringify(newCredentials));
-      
-      return {
-        success: true,
-        message: 'Kredensial berhasil diubah'
-      };
+  // Upload multiple images and return array of public URLs
+  static async uploadImages(files: File[]) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      throw new Error('Authentication required');
     }
-
-    return this.makeRequest('/admin/change-credentials', {
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f, f.name));
+    const res = await this.makeRequest('/upload', {
       method: 'POST',
+      body: form,
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        currentPassword,
-        newUsername: newCredentials.username,
-        newPassword: newCredentials.password
-      }),
     });
-  }
-
-  // Health check
-  static async healthCheck() {
-    return this.makeRequest('/health');
-  }
-
-  // Migrasi data dari localStorage (fallback) ke SQLite backend
-  static async migrateFallbackToSQLite() {
-    try {
-      if (USE_FALLBACK) {
-        // Jika fallback aktif, tidak ada migrasi ke backend
-        return { success: false, message: 'Fallback mode aktif; migrasi dilewati' };
-      }
-
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        return { success: false, error: 'Not authenticated' };
-      }
-
-      const raw = localStorage.getItem(this.STORAGE_KEY);
-      if (!raw) {
-        return { success: true, message: 'No local fallback data found' };
-      }
-
-      let localProps: any[] = [];
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) localProps = parsed;
-      } catch (e) {
-        console.error('Failed to parse local fallback properties for migration:', e);
-        return { success: false, error: 'Invalid local fallback data' };
-      }
-
-      // Ambil data dari backend untuk deduplikasi sederhana
-      const backendResp = await this.getProperties();
-      const backendProps: any[] = backendResp?.success ? backendResp.data || [] : [];
-      const backendFingerprints = new Set(
-        backendProps.map(p => `${(p.title||'').toLowerCase()}|${p.price}|${(p.location||'').toLowerCase()}`)
-      );
-
-      let migratedCount = 0;
-      for (const p of localProps) {
-        // Hindari duplikasi: abaikan item yang kemungkinan sample default (id 1-3)
-        const idNum = parseInt(p.id, 10);
-        const fingerprint = `${(p.title||'').toLowerCase()}|${p.price}|${(p.location||'').toLowerCase()}`;
-        const isDuplicate = backendFingerprints.has(fingerprint);
-        const isDefaultSample = !isNaN(idNum) && idNum <= 3; 
-
-        if (isDuplicate || isDefaultSample) continue;
-
-        // Backend akan membuat ID sendiri; hindari mengirimkan id lokal
-        const { id, createdAt, updatedAt, ...payload } = p;
-        const resp = await this.makeRequest('/properties', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (resp?.success) {
-          migratedCount += 1;
-          backendFingerprints.add(fingerprint);
-        }
-      }
-
-      // Setelah migrasi, bersihkan local fallback agar tidak rancu
-      if (migratedCount > 0) {
-        localStorage.removeItem(this.STORAGE_KEY);
-      }
-
-      return { success: true, migrated: migratedCount };
-    } catch (error: any) {
-      console.error('Migration error:', error);
-      return { success: false, error: error?.message || 'Unknown migration error' };
-    }
+    return res;
   }
 }
 

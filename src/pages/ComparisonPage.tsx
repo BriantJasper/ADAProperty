@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Scale, TrendingUp, DollarSign, Home, Zap } from "lucide-react";
 import type { Property } from "../types/Property";
 import { FaWhatsapp } from "react-icons/fa";
+import PropertyCatalogModal from "../components/PropertyCatalogModal";
 
 interface SectionConfig {
   title: string;
@@ -19,20 +20,22 @@ interface SectionConfig {
 interface RowConfig {
   label: string;
   key: keyof Property | string;
-  formatter?: (value: any) => string | number;
+  formatter?: (value: any, prop: Property) => string | number;
 }
 
 const ComparisonPage: React.FC = () => {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
-  const [depositPercent, setDepositPercent] = useState(10);
-  const [cilanTenor, setCilanTenor] = useState(20);
-  const [fixedMonths, setFixedMonths] = useState(3);
+  const [catalogProperty, setCatalogProperty] = useState<Property | null>(null);
+
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  const openCatalog = (prop: Property) => setCatalogProperty(prop);
+  const closeCatalog = () => setCatalogProperty(null);
 
   const handleRemoveProperty = (propertyId: string) => {
     dispatch({ type: "REMOVE_FROM_COMPARISON", payload: propertyId });
@@ -42,7 +45,7 @@ const ComparisonPage: React.FC = () => {
     (item) => item.property
   );
 
-  const BOOKING_FEE = 10_000_000;
+
 
   // Gunakan nomor WhatsApp admin jika tersedia dari env, fallback ke nomor properti
   const adminWhatsApp = (import.meta as any).env?.VITE_ADMIN_WHATSAPP as string | undefined;
@@ -64,10 +67,11 @@ const ComparisonPage: React.FC = () => {
         {
           label: "DP %",
           key: "price",
-          formatter: (value) =>
-            `Rp ${Math.round(
-              (value || 0) * (depositPercent / 100)
-            ).toLocaleString()}`,
+          formatter: (value, prop) => {
+            const dpPercent = prop.financing?.dpPercent ?? 10;
+            const dpAmount = Math.round((value || 0) * (dpPercent / 100));
+            return `Rp ${dpAmount.toLocaleString()}`;
+          },
         },
       ],
     },
@@ -82,14 +86,19 @@ const ComparisonPage: React.FC = () => {
         {
           label: "Booking Fee",
           key: "price",
-          formatter: () => `Rp ${BOOKING_FEE.toLocaleString()}`,
+          formatter: (_value, prop) => {
+            const booking = prop.financing?.bookingFee ?? 10000000;
+            return `Rp ${booking.toLocaleString()}`;
+          },
         },
         {
           label: "Sisa DP",
           key: "price",
-          formatter: (value) => {
-            const dpAmount = Math.round((value || 0) * (depositPercent / 100));
-            const sisaDp = dpAmount - BOOKING_FEE;
+          formatter: (value, prop) => {
+            const dpPercent = prop.financing?.dpPercent ?? 10;
+            const booking = prop.financing?.bookingFee ?? 10000000;
+            const dpAmount = Math.round((value || 0) * (dpPercent / 100));
+            const sisaDp = Math.max(dpAmount - booking, 0);
             return `Rp ${sisaDp.toLocaleString()}`;
           },
         },
@@ -106,13 +115,16 @@ const ComparisonPage: React.FC = () => {
         {
           label: "Angsuran",
           key: "price",
-          formatter: (value) => {
-            const dpAmount = Math.round((value || 0) * (depositPercent / 100));
+          formatter: (value, prop) => {
+            const dpPercent = prop.financing?.dpPercent ?? 10;
+            const tenorYears = prop.financing?.tenorYears ?? 20;
+            const fixedYears = prop.financing?.fixedYears ?? 3;
+            const dpAmount = Math.round((value || 0) * (dpPercent / 100));
             const principalAmount = (value || 0) - dpAmount;
             const monthlyInstallment = Math.round(
-              principalAmount / (cilanTenor * 12)
+              principalAmount / (tenorYears * 12)
             );
-            return `Rp ${monthlyInstallment.toLocaleString()} Fix ${fixedMonths} Thn (Tenor ${cilanTenor} Thn)`;
+            return `Rp ${monthlyInstallment.toLocaleString()} Fix ${fixedYears} Thn (Tenor ${tenorYears} Thn)`;
           },
         },
       ],
@@ -253,7 +265,7 @@ const ComparisonPage: React.FC = () => {
           >
             <span className="font-medium">
               {rowConfig.formatter
-                ? rowConfig.formatter(prop[rowConfig.key as keyof Property])
+                ? rowConfig.formatter(prop[rowConfig.key as keyof Property], prop)
                 : (prop[rowConfig.key as keyof Property] as any) || "-"}
             </span>
           </td>
@@ -332,188 +344,100 @@ const ComparisonPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Control Panel */}
+
+
+            {/* Comparison Cards */}
             <div
-              className={`bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6 transition-all duration-500 ${
+              className={`transition-all duration-500 ${
                 isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }`}
             >
-              <h2 className="text-lg font-bold text-gray-900 mb-6">
-                Parameter Pembiayaan
-              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {comparisonProperties.map((prop) => (
+                  <div
+                    key={prop.id}
+                    className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+                  >
+                    {/* Image Header */}
+                    <div className="relative h-48 bg-gray-200">
+                      <img
+                        src={prop.images?.[0] || "/images/p1.png"}
+                        alt={prop.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => handleRemoveProperty(prop.id)}
+                        className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-xl transition-all shadow-lg"
+                        title="Hapus dari perbandingan"
+                      >
+                        <IoTrash size={18} />
+                      </button>
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none">
+                        <p className="text-xs font-semibold text-gray-800">
+                          {prop.location}
+                        </p>
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Deposit Percentage */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Persentase DP
-                    </label>
-                    <span className="text-lg font-bold text-blue-600">
-                      {depositPercent}%
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="5"
-                    max="50"
-                    step="1"
-                    value={depositPercent}
-                    onChange={(e) => setDepositPercent(Number(e.target.value))}
-                    className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                    <span>5%</span>
-                    <span>50%</span>
-                  </div>
-                </div>
+                    {/* Card Content (ambil dari detail card PropertyCard) */}
+                    <div className="p-5">
+                      {/* Price */}
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        Rp {prop.price?.toLocaleString() || "0"}
+                      </h3>
 
-                {/* Installment Tenor */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Tenor Cicilan (Tahun)
-                    </label>
-                    <span className="text-lg font-bold text-green-600">
-                      {cilanTenor} Thn
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="5"
-                    max="30"
-                    step="1"
-                    value={cilanTenor}
-                    onChange={(e) => setCilanTenor(Number(e.target.value))}
-                    className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                    <span>5 Thn</span>
-                    <span>30 Thn</span>
-                  </div>
-                </div>
+                      {/* Harga & DP Section */}
+                      <div className="mt-3 space-y-2">
+                        <div className="bg-white text-gray-900 rounded-lg px-4 py-2 flex items-center justify-between border border-blue-600">
+                          <span className="text-sm font-semibold">Harga</span>
+                          <span className="text-sm">Rp {prop.price?.toLocaleString() || "0"}</span>
+                        </div>
+                        {/* DP sebagai header di bawah Harga */}
+                        <div className="bg-white text-gray-900 rounded-lg px-4 py-3 flex items-center justify-between border border-blue-700">
+                          <span className="text-base font-semibold">DP</span>
+                          <span className="text-lg font-bold text-blue-700">Rp {Math.round((prop.price || 0) * ((prop.financing?.dpPercent ?? 10) / 100)).toLocaleString()}</span>
+                        </div>
+                      </div>
 
-                {/* Fixed Months */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Bunga Fix (Tahun)
-                    </label>
-                    <span className="text-lg font-bold text-amber-600">
-                      {fixedMonths} Thn
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    value={fixedMonths}
-                    onChange={(e) => setFixedMonths(Number(e.target.value))}
-                    className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                    <span>1 Thn</span>
-                    <span>10 Thn</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                      {/* Detail singkat: tipe, lantai, kamar */}
+                      <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Tipe</span>
+                          <span className="font-semibold text-gray-900">{prop.type || '-'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Lantai</span>
+                          <span className="font-semibold text-gray-900">{prop.floors ?? '-'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Kamar Tidur</span>
+                          <span className="font-semibold text-gray-900">{prop.bedrooms}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Kamar Mandi</span>
+                          <span className="font-semibold text-gray-900">{prop.bathrooms}</span>
+                        </div>
+                      </div>
 
-            {/* Comparison Table */}
-            <div
-              className={`bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 ${
-                isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
-              }`}
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  {/* Header with Property Images and Info */}
-                  <thead>
-                    <tr className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-gray-200">
-                      <th className="px-6 py-5 text-left font-bold text-gray-700 bg-slate-50 w-40">
-                        Detail
-                      </th>
-                      {comparisonProperties.map((prop) => (
-                        <th
-                          key={prop.id}
-                          className="px-6 py-5 text-center min-w-72 border-l border-gray-100"
+                      {/* Actions */}
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={() => openCatalog(prop)}
+                          className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         >
-                          <div className="relative">
-                            {/* Property Image */}
-                            <div className="mb-5 rounded-2xl overflow-hidden h-48 bg-gray-200 shadow-md">
-                              <img
-                                src={
-                                  prop.images && prop.images.length > 0
-                                    ? prop.images[0]
-                                    : "/images/p1.png"
-                                }
-                                alt={prop.title}
-                                className="w-full h-full object-cover"
-                              />
-                              {/* Remove Button */}
-                              <button
-                                onClick={() => handleRemoveProperty(prop.id)}
-                                className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-xl transition-all shadow-lg"
-                                title="Hapus dari perbandingan"
-                              >
-                                <IoTrash size={18} />
-                              </button>
-                            </div>
-
-                            {/* Property Info */}
-                            <div className="space-y-3">
-                              <h3 className="font-bold text-gray-900 text-base line-clamp-2">
-                                {prop.title}
-                              </h3>
-
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-gray-600">Tipe:</span>
-                                  <span className="font-semibold text-gray-800 capitalize">
-                                    {prop.type}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-gray-600">Status:</span>
-                                  <span
-                                    className={`font-semibold px-3 py-1 rounded-lg text-xs ${
-                                      prop.status === "dijual"
-                                        ? "bg-blue-100 text-blue-800"
-                                        : "bg-green-100 text-green-800"
-                                    }`}
-                                  >
-                                    {prop.status === "dijual"
-                                      ? "Dijual"
-                                      : "Disewa"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-100">
-                                  <span className="text-gray-600">Lokasi:</span>
-                                  <span className="font-semibold text-gray-800 text-right">
-                                    {prop.location}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  {/* Comparison Details */}
-                  <tbody>
-                    {sectionConfigs.map((section) => (
-                      <React.Fragment key={section.title}>
-                        {renderSectionHeader(section)}
-                        {section.rows.map((row) => renderDetailRow(row))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+                          Detail
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {catalogProperty && (
+                <PropertyCatalogModal property={catalogProperty} onClose={closeCatalog} />
+              )}
             </div>
+            {/* End Comparison Table */}
           </>
         )}
       </div>

@@ -1,0 +1,8 @@
+# backend/php/api/.htaccess
+RewriteEngine On
+RewriteBase /api/
+
+# If the request is not a real file or directory, route to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

@@ -16,6 +16,9 @@ const ChangeCredentialsForm = ({ onCancel }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,13 +76,26 @@ const ChangeCredentialsForm = ({ onCancel }) => {
           <label className="block text-gray-700 text-sm font-medium mb-2">
             Password Saat Ini
           </label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showCurrentPassword ? "text" : "password"}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              {showCurrentPassword ? (
+                <IoEyeOff className="h-5 w-5" />
+              ) : (
+                <IoEye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="mb-4">
@@ -99,26 +115,52 @@ const ChangeCredentialsForm = ({ onCancel }) => {
           <label className="block text-gray-700 text-sm font-medium mb-2">
             Password Baru
           </label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showNewPassword ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              {showNewPassword ? (
+                <IoEyeOff className="h-5 w-5" />
+              ) : (
+                <IoEye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-medium mb-2">
             Konfirmasi Password Baru
           </label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              {showConfirmPassword ? (
+                <IoEyeOff className="h-5 w-5" />
+              ) : (
+                <IoEye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-end">

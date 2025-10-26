@@ -244,10 +244,10 @@ export default function ContactPage() {
                     Hubungi kami langsung untuk konsultasi cepat
                   </p>
                   <a
-                    href="tel:+6281234567890"
+                    href="tel:+6282220005543"
                     className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
                   >
-                    +62 812-3456-7890
+                    +62 82220005543
                   </a>
                 </div>
               </div>
@@ -271,10 +271,10 @@ export default function ContactPage() {
                     Kirim email untuk pertanyaan detail
                   </p>
                   <a
-                    href="mailto:hello@adaproperty.com"
+                    href="mailto:adaproperty8899@gmail.com"
                     className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
                   >
-                    hello@adaproperty.com
+                    adaproperty8899@gmail.com
                   </a>
                 </div>
               </div>
@@ -298,8 +298,8 @@ export default function ContactPage() {
                     Kunjungi kantor kami untuk konsultasi tatap muka
                   </p>
                   <p className="text-gray-700 font-medium">
-                    Jl. Contoh Raya No. 1<br />
-                    Jakarta, Indonesia
+                    Jl. Cimandiri 1B Blok V No.9<br />
+                    Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat 17823
                   </p>
                 </div>
               </div>
@@ -318,11 +318,11 @@ export default function ContactPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="font-medium">Senin - Jumat</span>
-                      <span>09:00 - 18:00</span>
+                      <span>09:00 - 17:00</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Sabtu</span>
-                      <span>09:00 - 15:00</span>
+                      <span>09:00 - 13:00</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Minggu</span>

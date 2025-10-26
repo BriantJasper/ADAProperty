@@ -12,41 +12,48 @@ export default function Footer() {
       <div className="flex flex-col lg:flex-row justify-between items-start gap-12 border-b border-gray-200 pb-12">
         <div>
           <h2 className="text-3xl font-semibold">
-            Have <span className="bg-yellow-300 px-1">any questions?</span>
+            Punya <span className="bg-yellow-300 px-1">pertanyaan?</span>
           </h2>
-          <p className="text-2xl mt-2">Contact Us</p>
+          {/* <p className="text-2xl mt-2">Kontak kami!</p> */}
+          <a
+                href="/contact"
+                className="text-2xl mt-2"
+              >
+                Kontak kami!
+              </a>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-8 text-sm">
           <div className="flex items-start gap-3">
             <Phone className="w-5 h-5 mt-1" />
             <div>
-              <p className="font-medium">Phone Number</p>
-              <p>+0(850) 544 7514</p>
+              <p className="font-medium">Nomor Telepon</p>
+              <p>+62 82220005543</p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
             <Mail className="w-5 h-5 mt-1" />
             <div>
-              <p className="font-medium">E-Mail Address</p>
-              <p>hello@crosson.com</p>
+              <p className="font-medium">Alamat Email</p>
+              <p>adaproperty8899@gmail.comgine</p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
             <MapPin className="w-5 h-5 mt-1" />
             <div>
-              <p className="font-medium">Headquarters</p>
+              <p className="font-medium">Alamat Kantor</p>
               <p>
-                One Apple Park Way; Cupertino <br /> CA 95014, U.S.A.
+                Jl. Cimandiri 1B Blok V No.9<br /> 
+                Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat 17823
               </p>
-              <a
+              {/* <a
                 href="#"
                 className="underline text-sm text-gray-800 hover:text-black"
               >
                 Get Direction
-              </a>
+              </a> */}
             </div>
           </div>
         </div>
@@ -55,7 +62,7 @@ export default function Footer() {
       {/* Bottom Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12">
         {/* Products */}
-        <div>
+        {/* <div>
           <h3 className="font-semibold text-xl mb-4">Products</h3>
           <ul className="space-y-2 text-gray-700">
             <li>Filling Machines</li>
@@ -64,10 +71,10 @@ export default function Footer() {
             <li>Linear Machines</li>
             <li>Rotary Machines</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Solutions */}
-        <div>
+        {/* <div>
           <h3 className="font-semibold text-xl mb-4">Solutions</h3>
           <ul className="space-y-2 text-gray-700">
             <li>End of Line Solutions</li>
@@ -76,10 +83,10 @@ export default function Footer() {
             <li>Conveyor Solutions</li>
             <li>Special Solutions Your Needs</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Corporate */}
-        <div>
+        {/* <div>
           <h3 className="font-semibold text-xl mb-4">Corporate</h3>
           <ul className="space-y-2 text-gray-700">
             <li>About Us</li>
@@ -88,10 +95,10 @@ export default function Footer() {
             <li>News</li>
             <li>Contact</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Career Opportunities */}
-        <div>
+        {/* <div>
           <h3 className="font-semibold text-xl mb-4">Career Opportunities</h3>
           <p className="text-gray-700 text-sm mb-3">
             Cake pudding lollipop pastry cupcake chocolate. Gummi bears halvah{" "}
@@ -104,7 +111,7 @@ export default function Footer() {
             Opening Positions
             <span className="text-lg">→</span>
           </button>
-        </div>
+        </div> */}
       </div>
     </footer>
   );

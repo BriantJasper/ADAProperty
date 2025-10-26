@@ -165,18 +165,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (response.success) {
         localStorage.setItem('auth_token', response.data.token);
         dispatch({ type: 'LOGIN', payload: response.data.user });
-        // Migrasi data lokal (fallback) ke SQLite setelah login
+        // Refresh properties from backend after login
         try {
-          const mig = await ApiService.migrateFallbackToSQLite();
-          if (mig?.success) {
-            // Refresh properties dari backend setelah migrasi
-            const loadResp = await ApiService.getProperties();
-            if (loadResp?.success) {
-              dispatch({ type: 'LOAD_PROPERTIES', payload: loadResp.data || [] });
-            }
+          const loadResp = await ApiService.getProperties();
+          if (loadResp?.success) {
+            dispatch({ type: 'LOAD_PROPERTIES', payload: loadResp.data || [] });
           }
         } catch (e) {
-          console.error('Failed to migrate local fallback data:', e);
+          console.error('Failed to load properties after login:', e);
         }
         return { success: true };
       } else {
@@ -237,6 +233,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         bedrooms: typeof propertyData.bedrooms === 'number' ? propertyData.bedrooms : 1,
         bathrooms: typeof propertyData.bathrooms === 'number' ? propertyData.bathrooms : 1,
         area: typeof propertyData.area === 'number' ? propertyData.area : 0,
+        floors: typeof (propertyData as any).floors === 'number' ? (propertyData as any).floors : undefined,
         whatsappNumber: propertyData.whatsappNumber || '6281234567890'
       };
       

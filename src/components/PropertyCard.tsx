@@ -3,6 +3,8 @@ import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 import { IoAdd, IoTrash, IoPencil, IoEyeOff, IoLogoInstagram, IoLogoTiktok } from "react-icons/io5";
 import { Home as HomeIcon, Building2, Bed, Bath, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import PropertyCatalogModal from "./PropertyCatalogModal";
 
 interface PropertyCardProps {
   property: Property;
@@ -31,6 +33,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   );
   const canAddToComparison = state.comparisonCart.length < 3 && !isInComparison;
 
+  // Catalog modal state
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const openCatalog = () => setIsCatalogOpen(true);
+  const closeCatalog = () => setIsCatalogOpen(false);
+
   const handleAddToComparison = () => {
     if (canAddToComparison) {
       dispatch({ type: "ADD_TO_COMPARISON", payload: property });
@@ -41,7 +48,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     dispatch({ type: "REMOVE_FROM_COMPARISON", payload: property.id });
   };
 
-  const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const formattedPrice = property.price
       ? property.price.toLocaleString()
       : "0";
@@ -104,8 +112,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     setSlide(index);
   };
 
-  const formatText = (text: string): string => {
+  const formatText = (text?: string): string => {
+    if (!text || typeof text !== 'string') return '-';
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
+  const formatCurrency = (value?: number): string => {
+    const num = typeof value === 'number' ? value : 0;
+    return num.toLocaleString('id-ID');
   };
 
   if (isEditing) {
@@ -326,7 +340,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   }
 
   return (
-    <div className="max-w-sm overflow-hidden rounded-lg bg-white shadow-lg font-sans">
+    <>
+      <motion.div
+        className="max-w-sm overflow-hidden rounded-lg bg-white shadow-lg font-sans"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2, scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      >
       <div className="relative">
         {/* Image Slider */}
         <div className="relative h-56 w-full overflow-hidden bg-gray-200">
@@ -467,14 +488,53 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       </div>
 
       {/* Card Content */}
-      <div className="p-5">
+      <div className="p-5" onClick={(e) => e.stopPropagation()}>
         {/* Price */}
         <h3 className="text-2xl font-bold text-gray-900">
-          Rp {property.price ? property.price.toLocaleString() : "0"}
+          Rp {formatCurrency(property.price)}
         </h3>
+
+        {/* Harga & DP Section */}
+        <div className="mt-3 space-y-2">
+          <div className="bg-white text-gray-900 rounded-lg px-4 py-2 flex items-center justify-between border border-blue-600">
+            <span className="text-sm font-semibold">Harga</span>
+            <span className="text-sm">Rp {formatCurrency(property.price)}</span>
+          </div>
+          {/* DP sebagai header di bawah Harga */}
+          <div className="bg-white text-gray-900 rounded-lg px-4 py-3 flex items-center justify-between border border-blue-700">
+            <span className="text-base font-semibold">DP</span>
+            <span className="text-lg font-bold text-blue-700">Rp {formatCurrency(Math.round((property.price || 0) * 0.10))}</span>
+          </div>
+        </div>
+
+        {/* Detail singkat: tipe, lantai, kamar */}
+        <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Tipe</span>
+            <span className="font-semibold text-gray-900">{formatText(property.type)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Lantai</span>
+            <span className="font-semibold text-gray-900">{property.floors ?? '-'}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Kamar Tidur</span>
+            <span className="font-semibold text-gray-900">{property.bedrooms}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Kamar Mandi</span>
+            <span className="font-semibold text-gray-900">{property.bathrooms}</span>
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsCatalogOpen(true); }}
+            className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            Detail
+          </button>
           {showWhatsAppButton && (
             <button
               onClick={handleWhatsAppClick}
@@ -487,7 +547,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             <>
               {isInComparison ? (
                 <button
-                  onClick={handleRemoveFromComparison}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveFromComparison();
+                  }}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
                 >
                   <IoEyeOff />
@@ -495,7 +558,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 </button>
               ) : (
                 <button
-                  onClick={handleAddToComparison}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToComparison();
+                  }}
                   disabled={!canAddToComparison}
                   className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
                     canAddToComparison
@@ -513,7 +579,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
 
       </div>
-    </div>
+    </motion.div>
+    {isCatalogOpen && (
+      <PropertyCatalogModal property={property} onClose={() => setIsCatalogOpen(false)} />
+    )}
+    </>
   );
 };
 

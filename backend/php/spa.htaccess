@@ -1,0 +1,10 @@
+# Place this .htaccess in your web root (public_html)
+RewriteEngine On
+
+# If a file or directory exists, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Otherwise, forward to SPA entry (index.html)
+RewriteRule ^ index.html [L]
