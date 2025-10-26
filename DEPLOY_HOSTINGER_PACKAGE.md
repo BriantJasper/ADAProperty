@@ -1,71 +1,42 @@
-# Hostinger Shared Hosting Deploy Package (PHP + MySQL backend, Vite React frontend)
+# Hostinger Shared Hosting Deployment (Laravel backend) — Deprecated PHP Package
 
-This document is a concise checklist and file mapping to deploy ADAProperty to Hostinger shared hosting.
+Project backend is now Laravel (`backend/laravel-api`). The previous native PHP backend and mapping in this document are deprecated and have been removed.
 
-## Prerequisites
-- Hostinger shared hosting with cPanel (Apache + PHP).
-- MySQL database and user created in cPanel.
-- Frontend build available in `dist/` (already generated).
+## Recommended Approaches
 
-## File Mapping
+- Use a server where you can set the document root to `backend/laravel-api/public` and run PHP 8.2+ with Composer (Hostinger Cloud/VPS, or any VPS). Follow `backend/laravel-api/README_RUN_SERVER.md` for setup.
+- Or deploy only the frontend to Hostinger shared hosting and point API to an external Laravel server (VPS or managed provider). Configure the frontend `VITE_API_BASE_URL` to your Laravel API URL.
 
-Upload these files/folders to your hosting:
+## Frontend-Only on Hostinger Shared
 
-1) public_html/ (Frontend SPA)
-- Upload the contents of `dist/` (all files inside `dist/`).
-- Add SPA rewrite file: use `backend/php/spa.htaccess` as `.htaccess` in `public_html/`.
-
-2) public_html/api/ (Backend PHP API)
-- Upload `backend/php/api/index.php` → `public_html/api/index.php`
-- Upload `backend/php/api/.htaccess` → `public_html/api/.htaccess`
-
-3) public_html/ (Backend shared files)
-- Upload `backend/php/config.php` → `public_html/config.php`
-- Upload `backend/php/db.php` → `public_html/db.php`
-- Upload `backend/php/utils/jwt.php` → `public_html/utils/jwt.php`
-- Upload `backend/php/utils/utils.php` → `public_html/utils/utils.php`
-- Create `public_html/.env.php` based on `backend/php/.env.php.example`
-
-4) Optional uploads directory
-- Create `public_html/api/uploads/` if you plan to store uploaded images as files.
-
-## .env.php Template (place at public_html/.env.php)
-```php
-<?php
-$_ENV = [
-  'APP_ENV' => 'production',
-  'TIMEZONE' => 'Asia/Jakarta',
-  'CORS_ORIGIN' => 'https://yourdomain.com',
-  'DB_HOST' => 'localhost',
-  'DB_PORT' => '3306',
-  'DB_NAME' => 'uXXXXXX_db',
-  'DB_USER' => 'uXXXXXX_user',
-  'DB_PASS' => 'your_password_here',
-  'JWT_SECRET' => 'replace_with_a_long_random_secret',
-  'JWT_EXPIRE_SECONDS' => '604800',
-  'ADMIN_USERNAME' => 'admin',
-  'ADMIN_PASSWORD' => 'change_me',
-  'ADMIN_EMAIL' => 'admin@yourdomain.com',
-];
+1) Build frontend:
+   - `npm run build` → outputs `dist/`.
+2) Upload contents of `dist/` into `public_html/`.
+3) Add SPA `.htaccess` in `public_html/`:
 ```
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule . - [L]
+RewriteRule . /index.html [L]
+```
+4) Set API base URL in the frontend:
+   - For production: place `VITE_API_BASE_URL=https://your-api-host.com/api` in your build environment or `.env.production`.
+   - The frontend expects the Laravel API responses under `/api/*`.
 
-## Database Setup
-- In cPanel → phpMyAdmin → select your DB → Import `backend/php/sql/schema.sql`.
-- First request to API will ensure tables exist and seed default admin if needed.
+## Laravel API Hosting Notes
 
-## Frontend API URL
-- Production is set to use `VITE_API_BASE_URL=/api` via `.env.production` (already created).
-- With frontend and backend on the same domain, requests resolve to `https://yourdomain.com/api/...`.
+- Laravel requires `public/` as the web root. On shared hosting without custom document root, deploying full Laravel is not recommended.
+- Prefer VPS, Docker, or managed PHP hosting where you control document root and can run `composer install`.
+- See `backend/laravel-api/README_RUN_SERVER.md` for local/dev steps and environment hints.
 
 ## Post-Deploy Checks
-- Open `https://yourdomain.com/api/health` → expect `{ success: true, status: 'OK' }`.
-- `GET https://yourdomain.com/api/properties` → should return property list (may be empty initially).
-- Login Admin on the site → then change credentials via UI or `POST /api/admin/change-credentials`.
 
-## Notes & Tips
-- Replace `JWT_SECRET` with a strong random string.
-- Restrict `CORS_ORIGIN` to your domain, not `*`, if using cross-origin setups.
-- If you store image paths, ensure they are publicly accessible (e.g., under `public_html/uploads`).
-- If later adding file upload, configure PHP upload limits and directory permissions.
+- Frontend: open `https://yourdomain.com/` and navigate the SPA routes.
+- API: verify `GET https://your-api-host.com/api/properties` and `POST /api/auth/login` return JSON as expected.
 
-Happy deployment!
+## Status
+
+This document replaces the old "PHP + MySQL backend" mapping. Laravel is the official backend; the legacy PHP package is no longer supported.

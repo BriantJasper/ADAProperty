@@ -30,6 +30,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     whatsappNumber: property?.whatsappNumber || '',
     igUrl: property?.igUrl || '',
     tiktokUrl: property?.tiktokUrl || '',
+    // add tour url
+    tourUrl: property?.tourUrl || '',
     garage: false,
     financing: property?.financing || { dpPercent: 10, tenorYears: 20, fixedYears: 3, bookingFee: 15000000, ppnPercent: 11 },
   });
@@ -124,6 +126,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         whatsappNumber: trimmed(formData.whatsappNumber),
         igUrl: trimmed(formData.igUrl) || undefined,
         tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
+        // add tour url to payload
+        tourUrl: trimmed(formData.tourUrl) || undefined,
         financing: {
           dpPercent: Number(((formData as any).financing?.dpPercent ?? 10)),
           tenorYears: Number(((formData as any).financing?.tenorYears ?? 20)),
@@ -579,7 +583,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         </div>
 
         {/* Social Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Instagram (opsional)
@@ -603,6 +607,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               value={formData.tiktokUrl || ''}
               onChange={handleInputChange}
               placeholder="https://tiktok.com/@username"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              House Tour (opsional)
+            </label>
+            <input
+              type="url"
+              name="tourUrl"
+              value={formData.tourUrl || ''}
+              onChange={handleInputChange}
+              placeholder="https://facebook.com/... atau link lainnya"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

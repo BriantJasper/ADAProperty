@@ -218,7 +218,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
-      // Ensure required fields have default values
+      // Ensure required fields have default values and keep optional fields
       const safePropertyData = {
         ...propertyData,
         images: propertyData.images && propertyData.images.length > 0 ? propertyData.images : ['/images/p1.png'],
@@ -233,8 +233,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         bedrooms: typeof propertyData.bedrooms === 'number' ? propertyData.bedrooms : 1,
         bathrooms: typeof propertyData.bathrooms === 'number' ? propertyData.bathrooms : 1,
         area: typeof propertyData.area === 'number' ? propertyData.area : 0,
+        landArea: typeof (propertyData as any).landArea === 'number' ? (propertyData as any).landArea : undefined,
         floors: typeof (propertyData as any).floors === 'number' ? (propertyData as any).floors : undefined,
-        whatsappNumber: propertyData.whatsappNumber || '6281234567890'
+        whatsappNumber: propertyData.whatsappNumber || '6281234567890',
+        // keep social links and tour url
+        igUrl: (propertyData as any).igUrl || undefined,
+        tiktokUrl: (propertyData as any).tiktokUrl || undefined,
+        tourUrl: (propertyData as any).tourUrl || undefined,
+        // keep financing if provided
+        financing: (propertyData as any).financing || undefined,
       };
       
       const response = await ApiService.createProperty(safePropertyData);

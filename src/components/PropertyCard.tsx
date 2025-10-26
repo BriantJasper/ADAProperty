@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 import {
@@ -37,8 +37,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const { state, dispatch, updateProperty, deleteProperty } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(property);
-  const [depositPercentage, setDepositPercentage] = useState(10);
-  const [angsuranYears, setAngsuranYears] = useState(1);
+  const [depositPercentage, setDepositPercentage] = useState(
+    property.financing?.dpPercent ?? 10
+  );
+  const [angsuranYears, setAngsuranYears] = useState(
+    property.financing?.tenorYears ?? 1
+  );
   const [animationKey, setAnimationKey] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const images =
@@ -46,6 +50,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       ? property.images.slice(0, 5)
       : ["/images/p1.png"];
   const [slide, setSlide] = useState(0);
+
+  // Sync when property financing changes
+  useEffect(() => {
+    const dp = property.financing?.dpPercent;
+    const tenor = property.financing?.tenorYears;
+    if (typeof dp === "number") setDepositPercentage(dp);
+    if (typeof tenor === "number") setAngsuranYears(tenor);
+  }, [property.id, property.financing]);
 
   const isInComparison = state.comparisonCart.some(
     (item) => item.property.id === property.id

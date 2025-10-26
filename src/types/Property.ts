@@ -25,6 +25,7 @@ export interface Property {
   whatsappNumber: string;
   igUrl?: string;
   tiktokUrl?: string;
+  tourUrl?: string;
   financing?: FinancingParams;
   createdAt: Date;
   updatedAt: Date;

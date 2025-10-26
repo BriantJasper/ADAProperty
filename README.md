@@ -37,8 +37,24 @@ Aplikasi katalog properti dengan Admin Panel, komparasi properti (max 3), WhatsA
 
 ## Login Admin (Demo)
 
-- Username: `admin`
-- Password: `admin123`
+## Menjalankan Kedua Server (Frontend + Backend)
+
+- Prasyarat:
+  - `Node.js` 18+ dan `npm`
+  - `PHP` 8.2+ dan `composer`
+- Jalankan Backend (Laravel):
+  - `cd backend/laravel-api`
+  - `./run-server.ps1 -Host 127.0.0.1 -Port 8000`
+  - Alternatif manual: `composer install` → siapkan `.env` + `JWT_SECRET` → `php artisan key:generate` → `php artisan migrate --force` → `php artisan serve --host=127.0.0.1 --port=8000`
+- Jalankan Frontend (Vite):
+  - Dari root repo: `npm install` lalu `npm run dev`
+  - Buka `http://localhost:5173/` (atau port berikutnya jika 5173 sedang dipakai, misal `5174`)
+- Konfigurasi API Frontend:
+  - Default: saat dev di `localhost`, frontend otomatis fallback ke `http://127.0.0.1:8000/api`
+  - Opsi eksplisit: set di `.env` root → `VITE_API_BASE_URL=http://127.0.0.1:8000/api`
+- Verifikasi cepat:
+  - Login admin: `admin` / `admin123`
+  - Cek DevTools → `POST /api/auth/login` mengembalikan 200 dengan JSON `{ success: true, data: { token, user } }`
 
 ## Struktur Penting
 

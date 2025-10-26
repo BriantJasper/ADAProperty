@@ -1,4 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
+const API_BASE_URL = (() => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (envUrl) return envUrl;
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  if (isLocal) return 'http://127.0.0.1:8000/api';
+  return '/api';
+})();
 const USE_FALLBACK = false; // Nonaktifkan fallback agar menggunakan backend SQLite
 let nextFallbackId = 100; // ID untuk properti baru dalam fallback mode
 
@@ -430,21 +436,20 @@ class ApiService {
   // Property endpoints
   static async getProperties(filters = {}) {
     const queryParams = new URLSearchParams();
-    
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, value);
+        queryParams.append(key, value as any);
       }
     });
-
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/properties?${queryString}` : '/properties';
-    
-    return this.makeRequest(endpoint);
+    const res = await this.makeRequest(endpoint);
+    return ApiService.normalizeResponse(res);
   }
 
   static async getPropertyById(id) {
-    return this.makeRequest(`/properties/${id}`);
+    const res = await this.makeRequest(`/properties/${id}`);
+    return ApiService.normalizeResponse(res);
   }
 
   static async createProperty(propertyData) {
@@ -453,7 +458,6 @@ class ApiService {
       throw new Error('Authentication required');
     }
 
-    // Jika menggunakan fallback, buat ID baru dan tambahkan ke daftar properti
     if (USE_FALLBACK) {
       this.ensureFallbackLoaded();
       const newId = String(nextFallbackId++);
@@ -463,35 +467,25 @@ class ApiService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
-      // Tambahkan ke fallbackProperties untuk konsistensi data
       this.fallbackProperties.push(newProperty);
       this.persistFallback();
-      
-      return {
-        success: true,
-        data: newProperty
-      };
+      return ApiService.normalizeResponse({ success: true, data: newProperty });
     }
-    
+
     const res = await this.makeRequest('/properties', {
       method: 'POST',
       body: JSON.stringify(propertyData),
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
-    // Backend mengembalikan { success, data: { id } } → ambil properti lengkap
     if (res && res.success) {
       const newId = typeof res.data === 'object' ? res.data?.id : res.data;
       if (newId) {
         const full = await this.getPropertyById(String(newId));
         if (full && full.success) {
-          return full;
+          return ApiService.normalizeResponse(full);
         }
-        // Fallback jika fetch detail gagal: kembalikan gabungan input + id
-        return {
+        return ApiService.normalizeResponse({
           success: true,
           data: {
             ...propertyData,
@@ -499,10 +493,10 @@ class ApiService {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }
-        };
+        });
       }
     }
-    return res;
+    return ApiService.normalizeResponse(res);
   }
 
   static async updateProperty(id, propertyData) {
@@ -523,9 +517,9 @@ class ApiService {
         };
         this.fallbackProperties[propertyIndex] = updatedProperty;
         this.persistFallback();
-        return { success: true, data: updatedProperty };
+        return ApiService.normalizeResponse({ success: true, data: updatedProperty });
       } else {
-        return { success: false, error: 'Property not found' };
+        return { success: false, error: 'Property not found' } as any;
       }
     }
 
@@ -537,9 +531,9 @@ class ApiService {
 
     if (res && res.success) {
       const full = await this.getPropertyById(id);
-      if (full && full.success) return full;
+      if (full && full.success) return ApiService.normalizeResponse(full);
     }
-    return res;
+    return ApiService.normalizeResponse(res);
   }
 
   static async deleteProperty(id) {
@@ -572,7 +566,8 @@ class ApiService {
       throw new Error('Authentication required');
     }
     const form = new FormData();
-    files.forEach((f) => form.append('files', f, f.name));
+    // Gunakan 'files[]' agar PHP/Laravel mengenali sebagai array
+    files.forEach((f) => form.append('files[]', f, f.name));
     const res = await this.makeRequest('/upload', {
       method: 'POST',
       body: form,
@@ -580,6 +575,70 @@ class ApiService {
         'Authorization': `Bearer ${token}`,
       },
     });
+    return res;
+  }
+
+  // Normalisasi properti dari backend ke bentuk yang dipakai frontend
+  static normalizeProperty(record: any) {
+    const toNumber = (v: any) => {
+      const n = typeof v === 'number' ? v : Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const parseJSON = (v: any) => {
+      if (typeof v === 'string') {
+        try { return JSON.parse(v); } catch { return undefined; }
+      }
+      return v;
+    };
+
+    const financingRaw = record?.financing;
+    const financingParsed = parseJSON(financingRaw);
+    const financing = financingParsed && typeof financingParsed === 'object'
+      ? {
+          dpPercent: toNumber(financingParsed.dpPercent) ?? 10,
+          tenorYears: toNumber(financingParsed.tenorYears) ?? 1,
+          fixedYears: toNumber(financingParsed.fixedYears) ?? undefined,
+          bookingFee: toNumber(financingParsed.bookingFee) ?? undefined,
+          ppnPercent: toNumber(financingParsed.ppnPercent) ?? undefined,
+        }
+      : undefined;
+
+    const imagesRaw = record?.images;
+    const imagesParsed = parseJSON(imagesRaw);
+    const images = Array.isArray(imagesParsed)
+      ? imagesParsed
+      : (Array.isArray(imagesRaw) ? imagesRaw : ['/images/p1.png']);
+
+    const featuresRaw = record?.features;
+    const featuresParsed = parseJSON(featuresRaw);
+    const features = Array.isArray(featuresParsed)
+      ? featuresParsed
+      : (Array.isArray(featuresRaw) ? featuresRaw : []);
+
+    const tourUrl = (record?.tourUrl ?? record?.tour_url ?? '').toString().trim() || undefined;
+
+    return {
+      ...record,
+      price: toNumber(record.price) ?? 0,
+      bedrooms: toNumber(record.bedrooms) ?? record.bedrooms,
+      bathrooms: toNumber(record.bathrooms) ?? record.bathrooms,
+      area: toNumber(record.area) ?? record.area,
+      landArea: toNumber(record.landArea ?? record.land_area) ?? record.landArea,
+      floors: toNumber(record.floors) ?? record.floors,
+      images,
+      features,
+      tourUrl,
+      financing,
+    };
+  }
+
+  static normalizeResponse(res: any) {
+    if (!res || !res.success) return res;
+    if (Array.isArray(res.data)) {
+      return { ...res, data: res.data.map((r: any) => ApiService.normalizeProperty(r)) };
+    } else if (res.data && typeof res.data === 'object') {
+      return { ...res, data: ApiService.normalizeProperty(res.data) };
+    }
     return res;
   }
 }
