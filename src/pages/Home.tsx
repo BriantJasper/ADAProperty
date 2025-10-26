@@ -98,7 +98,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
-        <div className="relative z-10 h-full flex items-center justify-center px-4">
+        <div className="relative z-10 h-full flex items-center justify-center px-4 py-12 pt-38">
           <Container>
             <div className="text-center max-w-4xl mx-auto">
               <div className="mb-8">

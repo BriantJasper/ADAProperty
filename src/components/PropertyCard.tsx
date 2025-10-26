@@ -1,8 +1,23 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
-import { IoAdd, IoTrash, IoPencil, IoEyeOff, IoLogoInstagram, IoLogoTiktok } from "react-icons/io5";
-import { Home as HomeIcon, Building2, Bed, Bath, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  IoAdd,
+  IoTrash,
+  IoPencil,
+  IoEyeOff,
+  IoLogoInstagram,
+  IoLogoTiktok,
+  IoCart,
+} from "react-icons/io5";
+import {
+  Home as HomeIcon,
+  Building2,
+  Bed,
+  Bath,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import PropertyCatalogModal from "./PropertyCatalogModal";
 
@@ -22,6 +37,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const { state, dispatch, updateProperty, deleteProperty } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(property);
+  const [depositPercentage, setDepositPercentage] = useState(10);
+  const [angsuranYears, setAngsuranYears] = useState(1);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const images =
     property.images && property.images.length > 0
       ? property.images.slice(0, 5)
@@ -38,8 +57,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const openCatalog = () => setIsCatalogOpen(true);
   const closeCatalog = () => setIsCatalogOpen(false);
 
+  const hasTourLink = property.tourUrl && property.tourUrl.trim() !== "";
+
   const handleAddToComparison = () => {
     if (canAddToComparison) {
+      setAnimationKey((prev) => prev + 1);
       dispatch({ type: "ADD_TO_COMPARISON", payload: property });
     }
   };
@@ -113,13 +135,37 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   };
 
   const formatText = (text?: string): string => {
-    if (!text || typeof text !== 'string') return '-';
+    if (!text || typeof text !== "string") return "-";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
   const formatCurrency = (value?: number): string => {
-    const num = typeof value === 'number' ? value : 0;
-    return num.toLocaleString('id-ID');
+    const num = typeof value === "number" ? value : 0;
+    return num.toLocaleString("id-ID");
+  };
+
+  const calculateDeposit = (): number => {
+    return Math.round((property.price || 0) * (depositPercentage / 100));
+  };
+
+  const calculateAngsuran = (): number => {
+    const remaining = (property.price || 0) - calculateDeposit();
+    const totalMonths = angsuranYears * 12;
+    return Math.round(remaining / totalMonths);
+  };
+
+  const handleDepositPercentageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+    setDepositPercentage(value);
+  };
+
+  const handleAngsuranYearsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = Math.max(1, parseInt(e.target.value) || 1);
+    setAngsuranYears(value);
   };
 
   if (isEditing) {
@@ -320,6 +366,20 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              House Tour URL
+            </label>
+            <input
+              type="url"
+              value={editForm.tourUrl || ""}
+              onChange={(e) =>
+                setEditForm({ ...editForm, tourUrl: e.target.value })
+              }
+              placeholder="https://facebook.com/... atau link lainnya"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
           <div className="flex gap-2">
             <button
               onClick={handleSave}
@@ -348,241 +408,290 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         whileHover={{ y: -2, scale: 1.02 }}
         transition={{ type: "spring", stiffness: 300, damping: 22 }}
       >
-      <div className="relative">
-        {/* Image Slider */}
-        <div className="relative h-56 w-full overflow-hidden bg-gray-200">
-          {/* Main Image */}
-          <img
-            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
-            src={images[slide]}
-            alt={`${property.type} ${slide + 1}`}
-          />
+        <div className="relative">
+          {/* Image Slider */}
+          <div className="relative h-56 w-full overflow-hidden bg-gray-200">
+            {/* Main Image */}
+            <img
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
+              src={images[slide]}
+              alt={`${property.type} ${slide + 1}`}
+            />
 
-          {/* Previous Button */}
-          <button
-            onClick={goToPrevious}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 z-10"
-            aria-label="Previous image"
-          >
-            <ChevronLeft size={20} />
-          </button>
+            {/* Previous Button */}
+            <button
+              onClick={goToPrevious}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 z-10"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={20} />
+            </button>
 
-          {/* Next Button */}
-          <button
-            onClick={goToNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 z-10"
-            aria-label="Next image"
-          >
-            <ChevronRight size={20} />
-          </button>
+            {/* Next Button */}
+            <button
+              onClick={goToNext}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 z-10"
+              aria-label="Next image"
+            >
+              <ChevronRight size={20} />
+            </button>
 
-          {/* Image Counter - Top Right */}
-          <div className="absolute top-2 right-2 bg-black/60 text-white px-2.5 py-1 rounded-full text-xs font-semibold">
-            {slide + 1} / {images.length}
+            {/* Image Counter - Top Right */}
+            <div className="absolute top-2 right-2 bg-black/60 text-white px-2.5 py-1 rounded-full text-xs font-semibold">
+              {slide + 1} / {images.length}
+            </div>
+
+            {/* Location - Top Center */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none">
+              <p className="text-xs font-semibold text-gray-800">
+                {property.location}
+              </p>
+            </div>
+
+            {/* Badges - Bottom Left */}
+            <div className="absolute left-3 bottom-3 flex flex-col xl:flex-row gap-1.5 xl:gap-2 pointer-events-none">
+              <div
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
+                  property.status === "dijual" ? "bg-blue-600" : "bg-green-600"
+                }`}
+              >
+                {formatText(property.status)}
+              </div>
+              <div
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
+                  property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
+                } flex items-center gap-1.5`}
+              >
+                {property.type === "rumah" ? (
+                  <HomeIcon className="w-3.5 h-3.5" />
+                ) : (
+                  <Building2 className="w-3.5 h-3.5" />
+                )}
+                <span>{formatText(property.type)}</span>
+              </div>
+            </div>
+
+            {/* Social Links - Bottom Right */}
+            {(property.igUrl || property.tiktokUrl) && (
+              <div className="absolute right-3 bottom-16 flex items-center gap-2 pointer-events-auto">
+                {property.igUrl && (
+                  <a
+                    href={property.igUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-pink-600 hover:text-pink-700"
+                    title="Buka Instagram"
+                  >
+                    <IoLogoInstagram size={14} />
+                    <span className="text-xs font-medium">IG</span>
+                  </a>
+                )}
+                {property.tiktokUrl && (
+                  <a
+                    href={property.tiktokUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-gray-800 hover:text-black"
+                    title="Buka TikTok"
+                  >
+                    <IoLogoTiktok size={14} />
+                    <span className="text-xs font-medium">TikTok</span>
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Property Details - Bottom Right */}
+            <div className="absolute right-3 bottom-3 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1.5 shadow-md pointer-events-none">
+              <div className="flex gap-2 text-gray-700 text-xs font-medium">
+                <div className="flex items-center gap-0.5">
+                  <Bed className="w-3 h-3" />
+                  <span>{property.bedrooms}</span>
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <Bath className="w-3 h-3" />
+                  <span>{property.bathrooms}</span>
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[10px] font-bold">LB</span>
+                  <span>{property.area}m²</span>
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[10px] font-bold">LT</span>
+                  <span>{property.landArea || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Controls */}
+            {showAdminControls && (
+              <div className="absolute top-3 right-3 flex gap-2">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 shadow-lg transition-all duration-200 flex items-center gap-1"
+                  title="Edit Properti"
+                >
+                  <IoPencil size={18} />
+                  <span className="text-xs font-medium">Edit</span>
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 shadow-lg transition-all duration-200 flex items-center gap-1"
+                  title="Hapus Properti"
+                >
+                  <IoTrash size={18} />
+                  <span className="text-xs font-medium">Hapus</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card Content */}
+        <div className="p-5" onClick={(e) => e.stopPropagation()}>
+          {/* Price */}
+          <h3 className="text-2xl font-bold text-gray-900">
+            Rp {formatCurrency(property.price)}
+          </h3>
+
+          {/* DP Section with Percentage Input */}
+          <div className="mt-3 space-y-2">
+            {/* DP Percentage Input */}
+            <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-base font-semibold">DP</label>
+                <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={depositPercentage}
+                    onChange={handleDepositPercentageChange}
+                    onFocus={(e) => e.target.select()}
+                    className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
+                    %
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <span className="text-sm text-gray-600">Jumlah DP</span>
+                <span className="text-lg font-bold text-blue-700">
+                  Rp {formatCurrency(calculateDeposit())}
+                </span>
+              </div>
+            </div>
+
+            {/* Angsuran Input */}
+            <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-base font-semibold">Angsuran</label>
+                <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                  <input
+                    type="number"
+                    min="1"
+                    value={angsuranYears}
+                    onChange={handleAngsuranYearsChange}
+                    onFocus={(e) => e.target.select()}
+                    className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
+                    Tahun
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <span className="text-sm text-gray-600">Per Bulan</span>
+                <span className="text-lg font-bold text-blue-700">
+                  Rp {formatCurrency(calculateAngsuran())}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Location - Top Center */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none">
-            <p className="text-xs font-semibold text-gray-800">
-              {property.location}
+          {/* Detail singkat: tipe, lantai, kamar */}
+          <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3">
+            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 whitespace-normal">
+              {property.description || "Tidak ada deskripsi"}
             </p>
           </div>
 
-          {/* Badges - Bottom Left */}
-          <div className="absolute left-3 bottom-3 flex flex-col xl:flex-row gap-1.5 xl:gap-2 pointer-events-none">
-            <div
-              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
-                property.status === "dijual" ? "bg-blue-600" : "bg-green-600"
-              }`}
-            >
-              {formatText(property.status)}
-            </div>
-            <div
-              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
-                property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
-              } flex items-center gap-1.5`}
-            >
-              {property.type === "rumah" ? (
-                <HomeIcon className="w-3.5 h-3.5" />
-              ) : (
-                <Building2 className="w-3.5 h-3.5" />
-              )}
-              <span>{formatText(property.type)}</span>
-            </div>
-          </div>
-
-          {/* Social Links - Bottom Right */}
-          {(property.igUrl || property.tiktokUrl) && (
-            <div className="absolute right-3 bottom-16 flex items-center gap-2 pointer-events-auto">
-              {property.igUrl && (
-                <a
-                  href={property.igUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-pink-600 hover:text-pink-700"
-                  title="Buka Instagram"
-                >
-                  <IoLogoInstagram size={14} />
-                  <span className="text-xs font-medium">IG</span>
-                </a>
-              )}
-              {property.tiktokUrl && (
-                <a
-                  href={property.tiktokUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-gray-800 hover:text-black"
-                  title="Buka TikTok"
-                >
-                  <IoLogoTiktok size={14} />
-                  <span className="text-xs font-medium">TikTok</span>
-                </a>
-              )}
-            </div>
-          )}
-
-          {/* Property Details - Bottom Right */}
-          <div className="absolute right-3 bottom-3 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1.5 shadow-md pointer-events-none">
-            <div className="flex gap-2 text-gray-700 text-xs font-medium">
-              <div className="flex items-center gap-0.5">
-                <Bed className="w-3 h-3" />
-                <span>{property.bedrooms}</span>
-              </div>
-              <div className="flex items-center gap-0.5">
-                <Bath className="w-3 h-3" />
-                <span>{property.bathrooms}</span>
-              </div>
-              <div className="flex items-center gap-0.5">
-                <span className="text-[10px] font-bold">LB</span>
-                <span>{property.area}m²</span>
-              </div>
-              <div className="flex items-center gap-0.5">
-                <span className="text-[10px] font-bold">LT</span>
-                <span>{property.landArea || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin Controls */}
-          {showAdminControls && (
-            <div className="absolute top-3 right-3 flex gap-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 shadow-lg transition-all duration-200 flex items-center gap-1"
-                title="Edit Properti"
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4">
+            {hasTourLink ? (
+              <a
+                href={property.tourUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
               >
-                <IoPencil size={18} />
-                <span className="text-xs font-medium">Edit</span>
-              </button>
+                House Tour
+              </a>
+            ) : (
               <button
-                onClick={handleDelete}
-                className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 shadow-lg transition-all duration-200 flex items-center gap-1"
-                title="Hapus Properti"
+                disabled
+                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-gray-400 px-4 py-2 text-white cursor-not-allowed"
               >
-                <IoTrash size={18} />
-                <span className="text-xs font-medium">Hapus</span>
+                House Tour
               </button>
-            </div>
-          )}
+            )}
+            {showWhatsAppButton && (
+              <button
+                onClick={handleWhatsAppClick}
+                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+              >
+                WhatsApp
+              </button>
+            )}
+            {showComparisonButton && (
+              <>
+                {isInComparison ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFromComparison();
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center"
+                    title="Hapus dari perbandingan"
+                  >
+                    <IoCart size={20} />
+                  </button>
+                ) : (
+                  <motion.button
+                    key={animationKey}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToComparison();
+                    }}
+                    disabled={!canAddToComparison}
+                    initial={{ scale: 1 }}
+                    animate={{ scale: [1, 1.15, 0.95, 1.05, 1] }}
+                    transition={{
+                      duration: 0.5,
+                      ease: "easeInOut",
+                    }}
+                    className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                      canAddToComparison
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    }`}
+                    title="Tambah ke perbandingan"
+                  >
+                    <IoCart size={20} />
+                  </motion.button>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* Card Content */}
-      <div className="p-5" onClick={(e) => e.stopPropagation()}>
-        {/* Price */}
-        <h3 className="text-2xl font-bold text-gray-900">
-          Rp {formatCurrency(property.price)}
-        </h3>
-
-        {/* Harga & DP Section */}
-        <div className="mt-3 space-y-2">
-          <div className="bg-white text-gray-900 rounded-lg px-4 py-2 flex items-center justify-between border border-blue-600">
-            <span className="text-sm font-semibold">Harga</span>
-            <span className="text-sm">Rp {formatCurrency(property.price)}</span>
-          </div>
-          {/* DP sebagai header di bawah Harga */}
-          <div className="bg-white text-gray-900 rounded-lg px-4 py-3 flex items-center justify-between border border-blue-700">
-            <span className="text-base font-semibold">DP</span>
-            <span className="text-lg font-bold text-blue-700">Rp {formatCurrency(Math.round((property.price || 0) * 0.10))}</span>
-          </div>
-        </div>
-
-        {/* Detail singkat: tipe, lantai, kamar */}
-        <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Tipe</span>
-            <span className="font-semibold text-gray-900">{formatText(property.type)}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Lantai</span>
-            <span className="font-semibold text-gray-900">{property.floors ?? '-'}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Kamar Tidur</span>
-            <span className="font-semibold text-gray-900">{property.bedrooms}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Kamar Mandi</span>
-            <span className="font-semibold text-gray-900">{property.bathrooms}</span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={(e) => { e.stopPropagation(); setIsCatalogOpen(true); }}
-            className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-          >
-            Detail
-          </button>
-          {showWhatsAppButton && (
-            <button
-              onClick={handleWhatsAppClick}
-              className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-            >
-              WhatsApp
-            </button>
-          )}
-          {showComparisonButton && (
-            <>
-              {isInComparison ? (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveFromComparison();
-                  }}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-                >
-                  <IoEyeOff />
-                  Hapus
-                </button>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddToComparison();
-                  }}
-                  disabled={!canAddToComparison}
-                  className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                    canAddToComparison
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  }`}
-                >
-                  <IoAdd />
-                  Bandingkan
-                </button>
-              )}
-            </>
-          )}
-        </div>
-
-
-      </div>
-    </motion.div>
-    {isCatalogOpen && (
-      <PropertyCatalogModal property={property} onClose={() => setIsCatalogOpen(false)} />
-    )}
+      </motion.div>
+      {isCatalogOpen && (
+        <PropertyCatalogModal
+          property={property}
+          onClose={() => setIsCatalogOpen(false)}
+        />
+      )}
     </>
   );
 };

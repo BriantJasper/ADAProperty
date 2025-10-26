@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone, Instagram, Facebook, Music } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -15,45 +15,79 @@ export default function Footer() {
             Punya <span className="bg-yellow-300 px-1">pertanyaan?</span>
           </h2>
           {/* <p className="text-2xl mt-2">Kontak kami!</p> */}
-          <a
-                href="/contact"
-                className="text-2xl mt-2"
-              >
-                Kontak kami!
-              </a>
+          <a href="/contact" className="text-2xl mt-2">
+            Kontak kami!
+          </a>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-8 text-sm">
-          <div className="flex items-start gap-3">
-            <Phone className="w-5 h-5 mt-1" />
-            <div>
-              <p className="font-medium">Nomor Telepon</p>
-              <p>+62 82220005543</p>
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col sm:flex-row gap-8 text-sm">
+            <div className="flex items-start gap-3">
+              <Phone className="w-5 h-5 mt-1" />
+              <div>
+                <p className="font-medium">Nomor Telepon</p>
+                <p>+62 82220005543</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Mail className="w-5 h-5 mt-1" />
+              <div>
+                <p className="font-medium">Alamat Email</p>
+                <p>adaproperty8899@gmail.com</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 mt-1" />
+              <div>
+                <p className="font-medium">Alamat Kantor</p>
+                <p>
+                  Jl. Cimandiri 1B Blok V No.9
+                  <br />
+                  Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat
+                  17823
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <Mail className="w-5 h-5 mt-1" />
-            <div>
-              <p className="font-medium">Alamat Email</p>
-              <p>adaproperty8899@gmail.comgine</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 mt-1" />
-            <div>
-              <p className="font-medium">Alamat Kantor</p>
-              <p>
-                Jl. Cimandiri 1B Blok V No.9<br /> 
-                Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat 17823
-              </p>
-              {/* <a
-                href="#"
-                className="underline text-sm text-gray-800 hover:text-black"
+          {/* Social Media */}
+          <div>
+            <h3 className="font-semibold text-sm mb-3">Ikuti Kami</h3>
+            <div className="flex gap-4">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors text-sm"
+                title="Instagram"
               >
-                Get Direction
-              </a> */}
+                <Instagram className="w-5 h-5" />
+                <span>Instagram</span>
+              </a>
+
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors text-sm"
+                title="Facebook"
+              >
+                <Facebook className="w-5 h-5" />
+                <span>Facebook</span>
+              </a>
+
+              <a
+                href="https://tiktok.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors text-sm"
+                title="TikTok"
+              >
+                <Music className="w-5 h-5" />
+                <span>TikTok</span>
+              </a>
             </div>
           </div>
         </div>
@@ -61,57 +95,7 @@ export default function Footer() {
 
       {/* Bottom Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12">
-        {/* Products */}
-        {/* <div>
-          <h3 className="font-semibold text-xl mb-4">Products</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li>Filling Machines</li>
-            <li>Bottle Filling Series</li>
-            <li>Package Machines</li>
-            <li>Linear Machines</li>
-            <li>Rotary Machines</li>
-          </ul>
-        </div> */}
-
-        {/* Solutions */}
-        {/* <div>
-          <h3 className="font-semibold text-xl mb-4">Solutions</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li>End of Line Solutions</li>
-            <li>Food Industry Machines Software</li>
-            <li>Research Solutions</li>
-            <li>Conveyor Solutions</li>
-            <li>Special Solutions Your Needs</li>
-          </ul>
-        </div> */}
-
-        {/* Corporate */}
-        {/* <div>
-          <h3 className="font-semibold text-xl mb-4">Corporate</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li>About Us</li>
-            <li>Our Values</li>
-            <li>Human Resources</li>
-            <li>News</li>
-            <li>Contact</li>
-          </ul>
-        </div> */}
-
-        {/* Career Opportunities */}
-        {/* <div>
-          <h3 className="font-semibold text-xl mb-4">Career Opportunities</h3>
-          <p className="text-gray-700 text-sm mb-3">
-            Cake pudding lollipop pastry cupcake chocolate. Gummi bears halvah{" "}
-            <a href="#" className="underline">
-              sesame snaps
-            </a>
-            .
-          </p>
-          <button className="bg-yellow-400 hover:bg-yellow-500 text-black font-medium px-6 py-3 rounded-md flex items-center gap-2">
-            Opening Positions
-            <span className="text-lg">→</span>
-          </button>
-        </div> */}
+        {/* Placeholder for future content */}
       </div>
     </footer>
   );

@@ -29,7 +29,6 @@ const ComparisonPage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [catalogProperty, setCatalogProperty] = useState<Property | null>(null);
 
-
   useEffect(() => {
     setIsVisible(true);
   }, []);
@@ -45,10 +44,10 @@ const ComparisonPage: React.FC = () => {
     (item) => item.property
   );
 
-
-
   // Gunakan nomor WhatsApp admin jika tersedia dari env, fallback ke nomor properti
-  const adminWhatsApp = (import.meta as any).env?.VITE_ADMIN_WHATSAPP as string | undefined;
+  const adminWhatsApp = (import.meta as any).env?.VITE_ADMIN_WHATSAPP as
+    | string
+    | undefined;
 
   const sectionConfigs: SectionConfig[] = [
     {
@@ -234,20 +233,38 @@ const ComparisonPage: React.FC = () => {
       {comparisonProperties.map((prop) => {
         if (rowConfig.key === "whatsappNumber") {
           const targetNumber = adminWhatsApp || prop.whatsappNumber || "";
-          const normalized = typeof targetNumber === "string" ? targetNumber.replace(/\D/g, "") : "";
+          const normalized =
+            typeof targetNumber === "string"
+              ? targetNumber.replace(/\D/g, "")
+              : "";
           const formattedPrice = prop.price ? prop.price.toLocaleString() : "0";
-          const message = `Halo Admin ADAProperty, saya tertarik dengan properti ${prop.title} di ${prop.location}${prop.subLocation ? ` (${prop.subLocation})` : ""} dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
-          const waUrl = normalized ? `https://wa.me/${normalized}?text=${encodeURIComponent(message)}` : null;
+          const message = `Halo Admin ADAProperty, saya tertarik dengan properti ${
+            prop.title
+          } di ${prop.location}${
+            prop.subLocation ? ` (${prop.subLocation})` : ""
+          } dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
+          const waUrl = normalized
+            ? `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
+            : null;
 
           return (
-            <td key={prop.id} className="px-6 py-3 text-center text-gray-800 text-sm">
+            <td
+              key={prop.id}
+              className="px-6 py-3 text-center text-gray-800 text-sm"
+            >
               <div className="flex flex-col items-center gap-2">
-                <span className="font-medium">{prop.whatsappNumber || "-"}</span>
+                <span className="font-medium">
+                  {prop.whatsappNumber || "-"}
+                </span>
                 {waUrl && (
                   <button
                     onClick={() => window.open(waUrl, "_blank")}
                     className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
-                    title={adminWhatsApp ? "Chat Admin via WhatsApp" : "Chat via WhatsApp"}
+                    title={
+                      adminWhatsApp
+                        ? "Chat Admin via WhatsApp"
+                        : "Chat via WhatsApp"
+                    }
                   >
                     <FaWhatsapp className="text-lg" />
                     {adminWhatsApp ? "Chat Admin" : "Chat via WhatsApp"}
@@ -265,7 +282,10 @@ const ComparisonPage: React.FC = () => {
           >
             <span className="font-medium">
               {rowConfig.formatter
-                ? rowConfig.formatter(prop[rowConfig.key as keyof Property], prop)
+                ? rowConfig.formatter(
+                    prop[rowConfig.key as keyof Property],
+                    prop
+                  )
                 : (prop[rowConfig.key as keyof Property] as any) || "-"}
             </span>
           </td>
@@ -344,8 +364,6 @@ const ComparisonPage: React.FC = () => {
           </div>
         ) : (
           <>
-
-
             {/* Comparison Cards */}
             <div
               className={`transition-all duration-500 ${
@@ -390,12 +408,20 @@ const ComparisonPage: React.FC = () => {
                       <div className="mt-3 space-y-2">
                         <div className="bg-white text-gray-900 rounded-lg px-4 py-2 flex items-center justify-between border border-blue-600">
                           <span className="text-sm font-semibold">Harga</span>
-                          <span className="text-sm">Rp {prop.price?.toLocaleString() || "0"}</span>
+                          <span className="text-sm">
+                            Rp {prop.price?.toLocaleString() || "0"}
+                          </span>
                         </div>
                         {/* DP sebagai header di bawah Harga */}
                         <div className="bg-white text-gray-900 rounded-lg px-4 py-3 flex items-center justify-between border border-blue-700">
                           <span className="text-base font-semibold">DP</span>
-                          <span className="text-lg font-bold text-blue-700">Rp {Math.round((prop.price || 0) * ((prop.financing?.dpPercent ?? 10) / 100)).toLocaleString()}</span>
+                          <span className="text-lg font-bold text-blue-700">
+                            Rp{" "}
+                            {Math.round(
+                              (prop.price || 0) *
+                                ((prop.financing?.dpPercent ?? 10) / 100)
+                            ).toLocaleString()}
+                          </span>
                         </div>
                       </div>
 
@@ -403,29 +429,64 @@ const ComparisonPage: React.FC = () => {
                       <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Tipe</span>
-                          <span className="font-semibold text-gray-900">{prop.type || '-'}</span>
+                          <span className="font-semibold text-gray-900">
+                            {prop.type || "-"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Lantai</span>
-                          <span className="font-semibold text-gray-900">{prop.floors ?? '-'}</span>
+                          <span className="font-semibold text-gray-900">
+                            {prop.floors ?? "-"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Kamar Tidur</span>
-                          <span className="font-semibold text-gray-900">{prop.bedrooms}</span>
+                          <span className="font-semibold text-gray-900">
+                            {prop.bedrooms}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Kamar Mandi</span>
-                          <span className="font-semibold text-gray-900">{prop.bathrooms}</span>
+                          <span className="font-semibold text-gray-900">
+                            {prop.bathrooms}
+                          </span>
                         </div>
                       </div>
 
                       {/* Actions */}
                       <div className="flex gap-2 mt-4">
                         <button
-                          onClick={() => openCatalog(prop)}
-                          className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                          onClick={() => {
+                            const adminWhatsApp = (import.meta as any).env
+                              ?.VITE_ADMIN_WHATSAPP as string | undefined;
+                            const targetNumber =
+                              adminWhatsApp || prop.whatsappNumber || "";
+                            const normalized =
+                              typeof targetNumber === "string"
+                                ? targetNumber.replace(/\D/g, "")
+                                : "";
+                            const formattedPrice = prop.price
+                              ? prop.price.toLocaleString()
+                              : "0";
+                            const message = `Halo Admin ADAProperty, saya tertarik dengan properti ${
+                              prop.title
+                            } di ${prop.location}${
+                              prop.subLocation ? ` (${prop.subLocation})` : ""
+                            } dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
+                            const waUrl = normalized
+                              ? `https://wa.me/${normalized}?text=${encodeURIComponent(
+                                  message
+                                )}`
+                              : null;
+
+                            if (waUrl) {
+                              window.open(waUrl, "_blank");
+                            }
+                          }}
+                          className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
                         >
-                          Detail
+                          <FaWhatsapp className="text-lg" />
+                          WhatsApp
                         </button>
                       </div>
                     </div>
@@ -434,7 +495,10 @@ const ComparisonPage: React.FC = () => {
               </div>
 
               {catalogProperty && (
-                <PropertyCatalogModal property={catalogProperty} onClose={closeCatalog} />
+                <PropertyCatalogModal
+                  property={catalogProperty}
+                  onClose={closeCatalog}
+                />
               )}
             </div>
             {/* End Comparison Table */}
