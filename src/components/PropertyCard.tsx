@@ -50,6 +50,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       ? property.images.slice(0, 5)
       : ["/images/p1.png"];
   const [slide, setSlide] = useState(0);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   // Sync when property financing changes
   useEffect(() => {
@@ -154,6 +155,16 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const formatCurrency = (value?: number): string => {
     const num = typeof value === "number" ? value : 0;
     return num.toLocaleString("id-ID");
+  };
+
+  // New helper: format description into neat lines
+  const getDescriptionLines = (desc?: string): string[] => {
+    const text = (desc || "").trim();
+    if (!text) return ["Tidak ada deskripsi"];
+    return text
+      .split(/\r?\n|;|,/)
+      .map((s) => s.trim())
+      .filter(Boolean);
   };
 
   const calculateDeposit = (): number => {
@@ -295,76 +306,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               rows={3}
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Kamar Tidur
-              </label>
-              <input
-                type="number"
-                value={editForm.bedrooms}
-                onChange={(e) =>
-                  setEditForm({
-                    ...editForm,
-                    bedrooms: parseInt(e.target.value) || 1,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Kamar Mandi
-              </label>
-              <input
-                type="number"
-                value={editForm.bathrooms}
-                onChange={(e) =>
-                  setEditForm({
-                    ...editForm,
-                    bathrooms: parseInt(e.target.value) || 1,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                min="1"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Luas Bangunan (m²)
-            </label>
-            <input
-              type="number"
-              value={editForm.area}
-              onChange={(e) =>
-                setEditForm({
-                  ...editForm,
-                  area: parseInt(e.target.value) || 0,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              min="0"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Luas Tanah (m²)
-            </label>
-            <input
-              type="number"
-              value={editForm.landArea || 0}
-              onChange={(e) =>
-                setEditForm({
-                  ...editForm,
-                  landArea: parseInt(e.target.value) || 0,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              min="0"
-            />
-          </div>
+          {/* KT/KM dipindahkan ke deskripsi; input dihapus sesuai permintaan */}
+          {/* LB dipindahkan ke deskripsi; input dihapus */}
+          {/* LT dipindahkan ke deskripsi; input dihapus */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Nomor WhatsApp
@@ -513,27 +457,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               </div>
             )}
 
-            {/* Property Details - Bottom Right */}
-            <div className="absolute right-3 bottom-3 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1.5 shadow-md pointer-events-none">
-              <div className="flex gap-2 text-gray-700 text-xs font-medium">
-                <div className="flex items-center gap-0.5">
-                  <Bed className="w-3 h-3" />
-                  <span>{property.bedrooms}</span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  <Bath className="w-3 h-3" />
-                  <span>{property.bathrooms}</span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] font-bold">LB</span>
-                  <span>{property.area}m²</span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] font-bold">LT</span>
-                  <span>{property.landArea || 0}</span>
-                </div>
-              </div>
-            </div>
+            {/* Overlay deskripsi di foto dihapus sesuai permintaan */}
 
             {/* Admin Controls */}
             {showAdminControls && (
@@ -624,9 +548,18 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
           {/* Detail singkat: tipe, lantai, kamar */}
           <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3">
-            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 whitespace-normal">
+            <p className={`text-sm text-gray-700 leading-relaxed ${isDescExpanded ? 'whitespace-pre-line' : 'line-clamp-3 whitespace-normal'}`}>
               {property.description || "Tidak ada deskripsi"}
             </p>
+            {property.description && (property.description.length > 160 || property.description.split(/\r?\n/).length > 3) && (
+            <button
+              type="button"
+              onClick={() => setIsDescExpanded(v => !v)}
+              className="mt-2 text-xs text-blue-600 hover:underline"
+            >
+              {isDescExpanded ? 'Tutup' : 'Lihat selengkapnya'}
+            </button>
+            )}
           </div>
 
           {/* Action Buttons */}

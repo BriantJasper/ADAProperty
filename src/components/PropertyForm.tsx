@@ -101,6 +101,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     }));
   };
 
+  // Template deskripsi: diletakkan di dalam komponen agar punya akses ke setFormData
+  const buildDescriptionTemplateFrom = (p: Partial<Property>) => {
+    const b = Number(p.bedrooms ?? 0);
+    const m = Number(p.bathrooms ?? 0);
+    const lb = Number(p.area ?? 0);
+    const lt = Number(p.landArea ?? 0);
+    const fl = Number(p.floors ?? 0);
+    const loc = String((p.subLocation || p.location || '')).trim();
+    return `KT ${b}, KM ${m}, LB ${lb} m², LT ${lt} m²\nLantai ${fl}\nFasilitas: ...\nLokasi: ${loc}\nCatatan: ...`;
+  };
+
+  const handleInsertTemplate = () => {
+    setFormData(prev => ({
+      ...prev,
+      description: buildDescriptionTemplateFrom(prev as Partial<Property>),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -160,15 +178,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         validationErrors.push('Status harus salah satu dari: dijual, disewa');
       }
       const isNonNegInt = (n: any) => Number.isInteger(n) && n >= 0;
-      if (!isNonNegInt(propertyData.bedrooms)) {
-        validationErrors.push('Kamar tidur harus bilangan bulat ≥ 0');
-      }
-      if (!isNonNegInt(propertyData.bathrooms)) {
-        validationErrors.push('Kamar mandi harus bilangan bulat ≥ 0');
-      }
-      if (!isNonNegInt(propertyData.area)) {
-        validationErrors.push('Luas area harus bilangan bulat ≥ 0');
-      }
+      // Validasi KT/KM/LB dilonggarkan karena diarahkan ke Deskripsi
       if (!isNonNegInt(propertyData.floors)) {
         validationErrors.push('Jumlah lantai wajib diisi dan bilangan bulat ≥ 0');
       }
@@ -490,66 +500,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
         {/* Property Details */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kamar Tidur *
-            </label>
-            <input
-              type="number"
-              name="bedrooms"
-              value={formData.bedrooms}
-              onChange={handleInputChange}
-              min="0"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {/* Input KT/KM dihapus; arahkan info tersebut ke Deskripsi */}
+          {/* Input Luas Bangunan (LB) dihapus; arahkan detail LB ke Deskripsi */}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kamar Mandi *
-            </label>
-            <input
-              type="number"
-              name="bathrooms"
-              value={formData.bathrooms}
-              onChange={handleInputChange}
-              min="0"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Luas Bangunan (m²) *
-            </label>
-            <input
-              type="number"
-              name="area"
-              value={formData.area}
-              onChange={handleInputChange}
-              placeholder="Contoh: 180"
-              min="0"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Luas Tanah (m²)
-            </label>
-            <input
-              type="number"
-              name="landArea"
-              value={formData.landArea || 0}
-              onChange={handleInputChange}
-              placeholder="Contoh: 200"
-              min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {/* Input Luas Tanah (LT) dihapus; arahkan detail LT ke Deskripsi */}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -626,17 +580,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Deskripsi
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+            <button type="button" onClick={handleInsertTemplate} className="text-xs px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50">
+              Gunakan template
+            </button>
+          </div>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            rows={3}
-            placeholder="Deskripsi properti..."
+            rows={4}
+            placeholder={"Contoh format:\nKT 3, KM 2, LB 120 m², LT 150 m²\nLantai 2\nFasilitas: carport, taman, kitchen set\nLokasi: dekat tol, sekolah\nCatatan: bisa KPR, nego"}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <p className="text-xs text-gray-500 mt-1">Tips: pisahkan poin dengan baris baru atau koma; kartu akan merapikan otomatis.</p>
         </div>
 
         <div className="flex items-center">
