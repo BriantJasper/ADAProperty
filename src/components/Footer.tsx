@@ -57,7 +57,7 @@ export default function Footer() {
             <h3 className="font-semibold text-sm mb-3">Ikuti Kami</h3>
             <div className="flex gap-4">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/adaproperty8899?igsh=YXozYWo4bWhvcmNi"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors text-sm"
@@ -68,7 +68,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/share/1adZCfRby4/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors text-sm"
@@ -79,7 +79,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="https://tiktok.com"
+                href="https://tiktok.com/@adaproperty8899"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors text-sm"
