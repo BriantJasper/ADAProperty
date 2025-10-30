@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, Settings, LogOut, LogIn, Menu, X } from "lucide-react";
+import { ShoppingCart, Settings, LogOut, Menu, X } from "lucide-react";
 import { useApp } from "../context/AppContext";
 
 export default function Navbar() {
@@ -13,7 +13,11 @@ export default function Navbar() {
   const onAbout = location.pathname.startsWith("/about");
   const onComparison = location.pathname.startsWith("/comparison");
   const onContact = location.pathname.startsWith("/contact");
-  const useSolid = onAdmin || onAbout || onComparison || onContact;
+  const onLogin =
+    location.pathname.startsWith("/login") ||
+    location.pathname.startsWith("/ada-admin");
+  // Use solid (sticky) navbar on specific pages to avoid overlaying content
+  const useSolid = onAdmin || onAbout || onComparison || onContact || onLogin;
 
   const handleCompareClick = () => {
     navigate("/comparison");
@@ -22,8 +26,6 @@ export default function Navbar() {
   const handleAdminClick = () => {
     if (state.isAuthenticated && state.user?.role === "admin") {
       navigate("/admin");
-    } else {
-      navigate("/login");
     }
   };
 
@@ -32,9 +34,20 @@ export default function Navbar() {
     navigate("/");
   };
 
-  const handleLogin = () => {
-    navigate("/login");
-  };
+  // Hidden shortcut: Ctrl+Alt+A opens admin login via secret route
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.altKey &&
+        (e.code === "KeyA" || e.key.toLowerCase() === "a")
+      ) {
+        navigate("/ada-admin");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate]);
 
   const linkBase = useSolid
     ? "text-gray-700 hover:text-yellow-600"
@@ -99,8 +112,8 @@ export default function Navbar() {
 
           {/* Right Side Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Login/Logout Button */}
-            {state.isAuthenticated ? (
+            {/* Logout (only when authenticated) */}
+            {state.isAuthenticated && (
               <button
                 onClick={handleLogout}
                 className={
@@ -112,24 +125,18 @@ export default function Navbar() {
               >
                 <LogOut className="w-5 h-5" />
               </button>
-            ) : (
-              <button onClick={handleLogin} className={iconBtn} title="Login">
-                <LogIn className="w-5 h-5" />
-              </button>
             )}
 
-            {/* Admin Button */}
-            <button
-              onClick={handleAdminClick}
-              className={iconBtn}
-              title={
-                state.isAuthenticated && state.user?.role === "admin"
-                  ? "Admin Panel"
-                  : "Login Admin"
-              }
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+            {/* Admin Button: visible only for admins */}
+            {state.isAuthenticated && state.user?.role === "admin" && (
+              <button
+                onClick={handleAdminClick}
+                className={iconBtn}
+                title="Admin Panel"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            )}
 
             {/* Compare / Cart Button */}
             <button
@@ -181,66 +188,62 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden pb-4">
+          <div
+            className={`md:hidden pb-4 ${
+              useSolid ? "bg-white" : "bg-white/10 backdrop-blur-md"
+            }`}
+          >
             <div className="flex flex-col space-y-3">
               <Link
                 to="/"
-                className="text-white hover:text-yellow-300 font-medium"
+                className={`${linkBase} font-medium`}
                 onClick={() => setIsOpen(false)}
               >
                 Home
               </Link>
               <Link
                 to="/about"
-                className="text-white hover:text-yellow-300 font-medium"
+                className={`${linkBase} font-medium`}
                 onClick={() => setIsOpen(false)}
               >
                 Tentang Kami
               </Link>
               <Link
                 to="/properties"
-                className="text-white hover:text-yellow-300 font-medium"
+                className={`${linkBase} font-medium`}
                 onClick={() => setIsOpen(false)}
               >
                 Properti
               </Link>
               <Link
                 to="/contact"
-                className="text-white hover:text-yellow-300 font-medium"
+                className={`${linkBase} font-medium`}
                 onClick={() => setIsOpen(false)}
               >
                 Kontak Kami
               </Link>
-              <button
-                onClick={() => {
-                  handleAdminClick();
-                  setIsOpen(false);
-                }}
-                className="text-white hover:text-yellow-300 font-medium text-left"
-              >
-                {state.isAuthenticated && state.user?.role === "admin"
-                  ? "Admin Panel"
-                  : "Login Admin"}
-              </button>
-              {state.isAuthenticated ? (
+              {/* Admin Panel link only for admins */}
+              {state.isAuthenticated && state.user?.role === "admin" && (
+                <button
+                  onClick={() => {
+                    handleAdminClick();
+                    setIsOpen(false);
+                  }}
+                  className={`${linkBase} font-medium text-left`}
+                >
+                  Admin Panel
+                </button>
+              )}
+              {/* Logout for any authenticated user */}
+              {state.isAuthenticated && (
                 <button
                   onClick={() => {
                     handleLogout();
                     setIsOpen(false);
                   }}
-                  className="text-white hover:text-yellow-300 font-medium text-left"
+                  className={`${linkBase} font-medium text-left`}
                 >
                   Logout
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    handleLogin();
-                    setIsOpen(false);
-                  }}
-                  className="text-white hover:text-yellow-300 font-medium text-left"
-                >
-                  Login
                 </button>
               )}
               <button
@@ -248,7 +251,7 @@ export default function Navbar() {
                   handleCompareClick();
                   setIsOpen(false);
                 }}
-                className="text-white hover:text-yellow-300 font-medium text-left flex items-center gap-2"
+                className={`${linkBase} font-medium text-left flex items-center gap-2`}
               >
                 <ShoppingCart className="w-4 h-4" />
                 Komparasi ({compareCount})

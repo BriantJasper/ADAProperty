@@ -372,6 +372,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
               src={images[slide]}
               alt={`${property.type} ${slide + 1}`}
+              onError={(e) => {
+                const img = e.currentTarget as HTMLImageElement;
+                // Prevent infinite loop if placeholder also fails
+                if (img.dataset.fallbackApplied !== "1") {
+                  img.src = "/images/p1.png";
+                  img.dataset.fallbackApplied = "1";
+                }
+              }}
             />
 
             {/* Previous Button */}
@@ -548,18 +556,26 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
           {/* Detail singkat: tipe, lantai, kamar */}
           <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3">
-            <p className={`text-sm text-gray-700 leading-relaxed ${isDescExpanded ? 'whitespace-pre-line' : 'line-clamp-3 whitespace-normal'}`}>
+            <p
+              className={`text-sm text-gray-700 leading-relaxed ${
+                isDescExpanded
+                  ? "whitespace-pre-line"
+                  : "line-clamp-3 whitespace-normal"
+              }`}
+            >
               {property.description || "Tidak ada deskripsi"}
             </p>
-            {property.description && (property.description.length > 160 || property.description.split(/\r?\n/).length > 3) && (
-            <button
-              type="button"
-              onClick={() => setIsDescExpanded(v => !v)}
-              className="mt-2 text-xs text-blue-600 hover:underline"
-            >
-              {isDescExpanded ? 'Tutup' : 'Lihat selengkapnya'}
-            </button>
-            )}
+            {property.description &&
+              (property.description.length > 160 ||
+                property.description.split(/\r?\n/).length > 3) && (
+                <button
+                  type="button"
+                  onClick={() => setIsDescExpanded((v) => !v)}
+                  className="mt-2 text-xs text-blue-600 hover:underline"
+                >
+                  {isDescExpanded ? "Tutup" : "Lihat selengkapnya"}
+                </button>
+              )}
           </div>
 
           {/* Action Buttons */}

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import ApiService from '../services/api';
-import type { Property } from '../types/Property';
-import { IoAdd, IoClose, IoImage } from 'react-icons/io5';
+import React, { useState } from "react";
+import { useApp } from "../context/AppContext";
+import ApiService from "../services/api";
+import type { Property } from "../types/Property";
+import { IoAdd, IoClose, IoImage } from "react-icons/io5";
 
 interface PropertyFormProps {
   property?: Property;
@@ -10,16 +10,22 @@ interface PropertyFormProps {
   onCancel: () => void;
 }
 
-const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel }) => {
+const PropertyForm: React.FC<PropertyFormProps> = ({
+  property,
+  onSave,
+  onCancel,
+}) => {
   const { addProperty, updateProperty, state } = useApp();
-  const [formData, setFormData] = useState<Partial<Property> & { garage?: boolean }>({
-    title: property?.title || '',
-    description: property?.description || '',
+  const [formData, setFormData] = useState<
+    Partial<Property> & { garage?: boolean }
+  >({
+    title: property?.title || "",
+    description: property?.description || "",
     price: property?.price || 0,
-    location: property?.location || '',
-    subLocation: property?.subLocation || '',
-    type: property?.type || 'rumah',
-    status: property?.status || 'dijual',
+    location: property?.location || "",
+    subLocation: property?.subLocation || "",
+    type: property?.type || "rumah",
+    status: property?.status || "dijual",
     bedrooms: property?.bedrooms || 1,
     bathrooms: property?.bathrooms || 1,
     area: property?.area || 0,
@@ -27,33 +33,54 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     floors: property?.floors ?? 0,
     images: property?.images || [],
     features: property?.features || [],
-    whatsappNumber: property?.whatsappNumber || '',
-    igUrl: property?.igUrl || '',
-    tiktokUrl: property?.tiktokUrl || '',
+    whatsappNumber: property?.whatsappNumber || "",
+    igUrl: property?.igUrl || "",
+    tiktokUrl: property?.tiktokUrl || "",
     // add tour url
-    tourUrl: property?.tourUrl || '',
+    tourUrl: property?.tourUrl || "",
     garage: false,
-    financing: property?.financing || { dpPercent: 10, tenorYears: 20, fixedYears: 3, bookingFee: 15000000, ppnPercent: 11 },
+    financing: property?.financing || {
+      dpPercent: 10,
+      tenorYears: 20,
+      fixedYears: 3,
+      bookingFee: 15000000,
+      ppnPercent: 11,
+    },
   });
 
-  const [imagePreview, setImagePreview] = useState<string>(formData.images?.[0] || '');
+  const [imagePreview, setImagePreview] = useState<string>(
+    formData.images?.[0] || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else if (type === 'number') {
+    if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
+    } else if (type === "number") {
       const num = parseInt(value);
       // Clamp sesuai aturan backend: harga >=1, lainnya >=0
-      if (name === 'price') {
-        setFormData(prev => ({ ...prev, [name]: isNaN(num) ? 0 : Math.max(num, 1) }));
+      if (name === "price") {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: isNaN(num) ? 0 : Math.max(num, 1),
+        }));
       } else {
-        setFormData(prev => ({ ...prev, [name]: isNaN(num) ? 0 : Math.max(num, 0) }));
+        setFormData((prev) => ({
+          ...prev,
+          [name]: isNaN(num) ? 0 : Math.max(num, 0),
+        }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -64,30 +91,38 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     try {
       const res = await ApiService.uploadImages(files);
       if (res?.success && Array.isArray(res.data)) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           images: [...(prev.images || []), ...res.data],
         }));
       } else {
-        console.error('Upload image failed:', res);
-        alert(res?.error || 'Gagal mengunggah gambar');
+        console.error("Upload image failed:", res);
+        alert(res?.error || "Gagal mengunggah gambar");
       }
     } catch (err) {
-      console.error('Failed to upload image files:', err);
-      alert('Terjadi kesalahan saat mengunggah gambar');
+      console.error("Failed to upload image files:", err);
+      alert("Terjadi kesalahan saat mengunggah gambar");
     }
   };
 
   const handleRemoveImage = (index: number) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const imgs = (prev.images || []).slice();
       imgs.splice(index, 1);
       return { ...prev, images: imgs };
     });
   };
 
-  const updateFinancing = (patch: Partial<{ dpPercent: number; tenorYears: number; fixedYears: number; bookingFee: number; ppnPercent: number }>) => {
-    setFormData(prev => ({
+  const updateFinancing = (
+    patch: Partial<{
+      dpPercent: number;
+      tenorYears: number;
+      fixedYears: number;
+      bookingFee: number;
+      ppnPercent: number;
+    }>
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       financing: {
         dpPercent: 10,
@@ -108,12 +143,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     const lb = Number(p.area ?? 0);
     const lt = Number(p.landArea ?? 0);
     const fl = Number(p.floors ?? 0);
-    const loc = String((p.subLocation || p.location || '')).trim();
+    const loc = String(p.subLocation || p.location || "").trim();
     return `KT ${b}, KM ${m}, LB ${lb} m², LT ${lt} m²\nLantai ${fl}\nFasilitas: ...\nLokasi: ${loc}\nCatatan: ...`;
   };
 
   const handleInsertTemplate = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       description: buildDescriptionTemplateFrom(prev as Partial<Property>),
     }));
@@ -125,85 +160,145 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
     try {
       // Bangun payload yang sesuai validasi backend (tanpa placeholder default)
-      const trimmed = (v: any) => (typeof v === 'string' ? v.trim() : v);
+      const trimmed = (v: any) => (typeof v === "string" ? v.trim() : v);
       const propertyData = {
         title: trimmed(formData.title),
         description: trimmed(formData.description),
-        price: typeof formData.price === 'number' ? formData.price : parseInt(String(formData.price)) || 0,
+        price:
+          typeof formData.price === "number"
+            ? formData.price
+            : parseInt(String(formData.price)) || 0,
         location: trimmed(formData.location),
-        subLocation: trimmed(formData.subLocation) || trimmed(formData.location),
+        subLocation:
+          trimmed(formData.subLocation) || trimmed(formData.location),
         type: formData.type,
         status: formData.status,
-        bedrooms: typeof formData.bedrooms === 'number' ? formData.bedrooms : parseInt(String(formData.bedrooms)) || 0,
-        bathrooms: typeof formData.bathrooms === 'number' ? formData.bathrooms : parseInt(String(formData.bathrooms)) || 0,
-        area: typeof formData.area === 'number' ? formData.area : parseInt(String(formData.area)) || 0,
-        landArea: typeof formData.landArea === 'number' ? formData.landArea : parseInt(String(formData.landArea as any)) || 0,
-        floors: typeof formData.floors === 'number' ? formData.floors : parseInt(String(formData.floors as any)) || 0,
-        images: formData.images && formData.images.length > 0 ? formData.images : ['/images/p1.png'],
-        features: formData.garage ? [...(formData.features || []), 'Garasi'] : (formData.features || []),
+        bedrooms:
+          typeof formData.bedrooms === "number"
+            ? formData.bedrooms
+            : parseInt(String(formData.bedrooms)) || 0,
+        bathrooms:
+          typeof formData.bathrooms === "number"
+            ? formData.bathrooms
+            : parseInt(String(formData.bathrooms)) || 0,
+        area:
+          typeof formData.area === "number"
+            ? formData.area
+            : parseInt(String(formData.area)) || 0,
+        landArea:
+          typeof formData.landArea === "number"
+            ? formData.landArea
+            : parseInt(String(formData.landArea as any)) || 0,
+        floors:
+          typeof formData.floors === "number"
+            ? formData.floors
+            : parseInt(String(formData.floors as any)) || 0,
+        images:
+          formData.images && formData.images.length > 0
+            ? formData.images
+            : ["/images/p1.png"],
+        features: formData.garage
+          ? [...(formData.features || []), "Garasi"]
+          : formData.features || [],
         whatsappNumber: trimmed(formData.whatsappNumber),
         igUrl: trimmed(formData.igUrl) || undefined,
         tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
         // add tour url to payload
         tourUrl: trimmed(formData.tourUrl) || undefined,
         financing: {
-          dpPercent: Number(((formData as any).financing?.dpPercent ?? 10)),
-          tenorYears: Number(((formData as any).financing?.tenorYears ?? 20)),
-          fixedYears: Number(((formData as any).financing?.fixedYears ?? 3)),
-          bookingFee: Number(((formData as any).financing?.bookingFee ?? 15000000)),
-          ppnPercent: Number(((formData as any).financing?.ppnPercent ?? 11)),
+          dpPercent: Number((formData as any).financing?.dpPercent ?? 10),
+          tenorYears: Number((formData as any).financing?.tenorYears ?? 20),
+          fixedYears: Number((formData as any).financing?.fixedYears ?? 3),
+          bookingFee: Number(
+            (formData as any).financing?.bookingFee ?? 15000000
+          ),
+          ppnPercent: Number((formData as any).financing?.ppnPercent ?? 11),
         },
       } as Partial<Property>;
 
       // Validasi ringan di sisi klien agar sesuai aturan backend
       const validationErrors: string[] = [];
-      if (!propertyData.title || (propertyData.title as string).length < 1 || (propertyData.title as string).length > 255) {
-        validationErrors.push('Judul harus 1-255 karakter');
+      if (
+        !propertyData.title ||
+        (propertyData.title as string).length < 1 ||
+        (propertyData.title as string).length > 255
+      ) {
+        validationErrors.push("Judul harus 1-255 karakter");
       }
       if (!Number.isFinite(propertyData.price as number)) {
-        validationErrors.push('Harga harus berupa angka');
+        validationErrors.push("Harga harus berupa angka");
       } else if ((propertyData.price as number) <= 0) {
-        validationErrors.push('Harga harus lebih dari 0');
+        validationErrors.push("Harga harus lebih dari 0");
       }
       if (!propertyData.location) {
-        validationErrors.push('Lokasi wajib diisi');
+        validationErrors.push("Lokasi wajib diisi");
       }
       if (!propertyData.subLocation) {
-        validationErrors.push('Sub lokasi wajib diisi');
+        validationErrors.push("Sub lokasi wajib diisi");
       }
-      if (!['rumah', 'apartemen', 'tanah', 'ruko'].includes(propertyData.type as string)) {
-        validationErrors.push('Tipe harus salah satu dari: rumah, apartemen, tanah, ruko');
+      if (
+        !["rumah", "apartemen", "tanah", "ruko"].includes(
+          propertyData.type as string
+        )
+      ) {
+        validationErrors.push(
+          "Tipe harus salah satu dari: rumah, apartemen, tanah, ruko"
+        );
       }
-      if (!['dijual', 'disewa'].includes(propertyData.status as string)) {
-        validationErrors.push('Status harus salah satu dari: dijual, disewa');
+      if (!["dijual", "disewa"].includes(propertyData.status as string)) {
+        validationErrors.push("Status harus salah satu dari: dijual, disewa");
       }
       const isNonNegInt = (n: any) => Number.isInteger(n) && n >= 0;
       // Validasi KT/KM/LB dilonggarkan karena diarahkan ke Deskripsi
       if (!isNonNegInt(propertyData.floors)) {
-        validationErrors.push('Jumlah lantai wajib diisi dan bilangan bulat ≥ 0');
+        validationErrors.push(
+          "Jumlah lantai wajib diisi dan bilangan bulat ≥ 0"
+        );
       }
       if (!propertyData.whatsappNumber) {
-        validationErrors.push('Nomor WhatsApp wajib diisi');
+        validationErrors.push("Nomor WhatsApp wajib diisi");
       }
 
       // Validasi Parameter Pembiayaan
-      const fin = (propertyData as any).financing as { dpPercent: number; tenorYears: number; fixedYears: number; bookingFee: number; ppnPercent?: number };
+      const fin = (propertyData as any).financing as {
+        dpPercent: number;
+        tenorYears: number;
+        fixedYears: number;
+        bookingFee: number;
+        ppnPercent?: number;
+      };
       if (fin) {
-        if (!Number.isFinite(fin.dpPercent) || fin.dpPercent < 5 || fin.dpPercent > 50) {
-          validationErrors.push('DP harus antara 5–50%');
+        if (
+          !Number.isFinite(fin.dpPercent) ||
+          fin.dpPercent < 5 ||
+          fin.dpPercent > 50
+        ) {
+          validationErrors.push("DP harus antara 5–50%");
         }
-        if (!Number.isFinite(fin.tenorYears) || fin.tenorYears < 5 || fin.tenorYears > 30) {
-          validationErrors.push('Tenor harus antara 5–30 tahun');
+        if (
+          !Number.isFinite(fin.tenorYears) ||
+          fin.tenorYears < 5 ||
+          fin.tenorYears > 30
+        ) {
+          validationErrors.push("Tenor harus antara 5–30 tahun");
         }
-        if (!Number.isFinite(fin.fixedYears) || fin.fixedYears < 1 || fin.fixedYears > 10) {
-          validationErrors.push('Bunga fix harus antara 1–10 tahun');
+        if (
+          !Number.isFinite(fin.fixedYears) ||
+          fin.fixedYears < 1 ||
+          fin.fixedYears > 10
+        ) {
+          validationErrors.push("Bunga fix harus antara 1–10 tahun");
         }
         if (!Number.isFinite(fin.bookingFee) || fin.bookingFee < 0) {
-          validationErrors.push('Booking fee harus ≥ 0');
+          validationErrors.push("Booking fee harus ≥ 0");
         }
         if (fin.ppnPercent !== undefined) {
-          if (!Number.isFinite(fin.ppnPercent) || fin.ppnPercent < 0 || fin.ppnPercent > 100) {
-            validationErrors.push('PPN harus antara 0–100%');
+          if (
+            !Number.isFinite(fin.ppnPercent) ||
+            fin.ppnPercent < 0 ||
+            fin.ppnPercent > 100
+          ) {
+            validationErrors.push("PPN harus antara 0–100%");
           }
         }
       }
@@ -216,8 +311,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
       setErrors([]);
       onSave(propertyData as Property);
     } catch (error: any) {
-      console.error('Form submission error:', error);
-      alert(`An error occurred while saving the property: ${error.message || 'Unknown error'}`);
+      console.error("Form submission error:", error);
+      alert(
+        `An error occurred while saving the property: ${
+          error.message || "Unknown error"
+        }`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -227,7 +326,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
     <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">
-          {property ? 'Edit Properti' : 'Tambah Properti Baru'}
+          {property ? "Edit Properti" : "Tambah Properti Baru"}
         </h2>
         <button
           onClick={onCancel}
@@ -275,6 +374,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
                     src={img}
                     alt={`Preview ${idx + 1}`}
                     className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                    onError={(e) => {
+                      const el = e.currentTarget as HTMLImageElement;
+                      if (el.dataset.fallbackApplied !== "1") {
+                        el.src = "/images/p1.png";
+                        el.dataset.fallbackApplied = "1";
+                      }
+                    }}
                   />
                   <button
                     type="button"
@@ -395,21 +501,29 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
         {/* Parameter Pembiayaan */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Parameter Pembiayaan</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            Parameter Pembiayaan
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Persentase DP */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">Persentase DP</label>
-                <span className="text-lg font-bold text-blue-600">{((formData as any).financing?.dpPercent ?? 10)}%</span>
+                <label className="text-sm font-semibold text-gray-700">
+                  Persentase DP
+                </label>
+                <span className="text-lg font-bold text-blue-600">
+                  {(formData as any).financing?.dpPercent ?? 10}%
+                </span>
               </div>
               <input
                 type="range"
                 min={5}
                 max={50}
                 step={1}
-                value={((formData as any).financing?.dpPercent ?? 10)}
-                onChange={(e) => updateFinancing({ dpPercent: Number(e.target.value) })}
+                value={(formData as any).financing?.dpPercent ?? 10}
+                onChange={(e) =>
+                  updateFinancing({ dpPercent: Number(e.target.value) })
+                }
                 className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -421,16 +535,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             {/* Tenor Cicilan */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">Tenor Cicilan (Tahun)</label>
-                <span className="text-lg font-bold text-green-600">{((formData as any).financing?.tenorYears ?? 20)} Thn</span>
+                <label className="text-sm font-semibold text-gray-700">
+                  Tenor Cicilan (Tahun)
+                </label>
+                <span className="text-lg font-bold text-green-600">
+                  {(formData as any).financing?.tenorYears ?? 20} Thn
+                </span>
               </div>
               <input
                 type="range"
                 min={5}
                 max={30}
                 step={1}
-                value={((formData as any).financing?.tenorYears ?? 20)}
-                onChange={(e) => updateFinancing({ tenorYears: Number(e.target.value) })}
+                value={(formData as any).financing?.tenorYears ?? 20}
+                onChange={(e) =>
+                  updateFinancing({ tenorYears: Number(e.target.value) })
+                }
                 className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -442,16 +562,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             {/* Bunga Fix */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">Bunga Fix (Tahun)</label>
-                <span className="text-lg font-bold text-amber-600">{((formData as any).financing?.fixedYears ?? 3)} Thn</span>
+                <label className="text-sm font-semibold text-gray-700">
+                  Bunga Fix (Tahun)
+                </label>
+                <span className="text-lg font-bold text-amber-600">
+                  {(formData as any).financing?.fixedYears ?? 3} Thn
+                </span>
               </div>
               <input
                 type="range"
                 min={1}
                 max={10}
                 step={1}
-                value={((formData as any).financing?.fixedYears ?? 3)}
-                onChange={(e) => updateFinancing({ fixedYears: Number(e.target.value) })}
+                value={(formData as any).financing?.fixedYears ?? 3}
+                onChange={(e) =>
+                  updateFinancing({ fixedYears: Number(e.target.value) })
+                }
                 className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -463,16 +589,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             {/* PPN (%) */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">PPN (%)</label>
-                <span className="text-lg font-bold text-purple-600">{((formData as any).financing?.ppnPercent ?? 11)}%</span>
+                <label className="text-sm font-semibold text-gray-700">
+                  PPN (%)
+                </label>
+                <span className="text-lg font-bold text-purple-600">
+                  {(formData as any).financing?.ppnPercent ?? 11}%
+                </span>
               </div>
               <input
                 type="range"
                 min={0}
                 max={100}
                 step={1}
-                value={((formData as any).financing?.ppnPercent ?? 11)}
-                onChange={(e) => updateFinancing({ ppnPercent: Number(e.target.value) })}
+                value={(formData as any).financing?.ppnPercent ?? 11}
+                onChange={(e) =>
+                  updateFinancing({ ppnPercent: Number(e.target.value) })
+                }
                 className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -485,15 +617,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
           {/* Booking Fee */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
             <div>
-              <label className="text-sm font-semibold text-gray-700">Booking Fee (Rp)</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Booking Fee (Rp)
+              </label>
               <input
                 type="number"
                 min={0}
-                value={((formData as any).financing?.bookingFee ?? 15000000)}
-                onChange={(e) => updateFinancing({ bookingFee: Number(e.target.value) })}
+                value={(formData as any).financing?.bookingFee ?? 15000000}
+                onChange={(e) =>
+                  updateFinancing({ bookingFee: Number(e.target.value) })
+                }
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-              <p className="text-xs text-gray-500 mt-1">Masukkan nominal booking fee.</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Masukkan nominal booking fee.
+              </p>
             </div>
           </div>
         </div>
@@ -532,7 +670,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
               min="0"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            />
           </div>
         </div>
 
@@ -545,7 +683,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             <input
               type="url"
               name="igUrl"
-              value={formData.igUrl || ''}
+              value={formData.igUrl || ""}
               onChange={handleInputChange}
               placeholder="https://instagram.com/username"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -558,7 +696,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             <input
               type="url"
               name="tiktokUrl"
-              value={formData.tiktokUrl || ''}
+              value={formData.tiktokUrl || ""}
               onChange={handleInputChange}
               placeholder="https://tiktok.com/@username"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -571,7 +709,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             <input
               type="url"
               name="tourUrl"
-              value={formData.tourUrl || ''}
+              value={formData.tourUrl || ""}
               onChange={handleInputChange}
               placeholder="https://facebook.com/... atau link lainnya"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -581,8 +719,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
-            <button type="button" onClick={handleInsertTemplate} className="text-xs px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50">
+            <label className="block text-sm font-medium text-gray-700">
+              Deskripsi
+            </label>
+            <button
+              type="button"
+              onClick={handleInsertTemplate}
+              className="text-xs px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
               Gunakan template
             </button>
           </div>
@@ -591,10 +735,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             value={formData.description}
             onChange={handleInputChange}
             rows={4}
-            placeholder={"Contoh format:\nKT 3, KM 2, LB 120 m², LT 150 m²\nLantai 2\nFasilitas: carport, taman, kitchen set\nLokasi: dekat tol, sekolah\nCatatan: bisa KPR, nego"}
+            placeholder={
+              "Contoh format:\nKT 3, KM 2, LB 120 m², LT 150 m²\nLantai 2\nFasilitas: carport, taman, kitchen set\nLokasi: dekat tol, sekolah\nCatatan: bisa KPR, nego"
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <p className="text-xs text-gray-500 mt-1">Tips: pisahkan poin dengan baris baru atau koma; kartu akan merapikan otomatis.</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Tips: pisahkan poin dengan baris baru atau koma; kartu akan
+            merapikan otomatis.
+          </p>
         </div>
 
         <div className="flex items-center">
@@ -635,7 +784,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             </label>
             <select
               name="colorStatus"
-              value={(formData as any).colorStatus || ''}
+              value={(formData as any).colorStatus || ""}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -657,12 +806,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onSave, onCancel 
             {isSubmitting || state.loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4"></div>
-                {property ? 'Menyimpan...' : 'Menambahkan...'}
+                {property ? "Menyimpan..." : "Menambahkan..."}
               </>
             ) : (
               <>
                 <IoAdd className="w-4 h-4" />
-                {property ? 'Update Properti' : 'Tambah Properti'}
+                {property ? "Update Properti" : "Tambah Properti"}
               </>
             )}
           </button>
