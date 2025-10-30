@@ -10,6 +10,7 @@ import {
   IoKey,
   IoSave,
   IoClose,
+  IoReload,
 } from "react-icons/io5";
 import { useApp } from "../context/AppContext";
 import PropertyForm from "../components/PropertyForm";
@@ -18,7 +19,9 @@ import ComparisonCart from "../components/ComparisonCart";
 import type { Property } from "../types/Property";
 
 // Komponen form untuk mengubah kredensial admin
-const ChangeCredentialsForm = ({ onCancel }) => {
+const ChangeCredentialsForm: React.FC<{ onCancel: () => void }> = ({
+  onCancel,
+}) => {
   const { changeCredentials } = useApp();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
@@ -30,7 +33,7 @@ const ChangeCredentialsForm = ({ onCancel }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -57,8 +60,9 @@ const ChangeCredentialsForm = ({ onCancel }) => {
       } else {
         setError(result.error || "Gagal mengubah kredensial");
       }
-    } catch (err) {
-      setError("Terjadi kesalahan: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError("Terjadi kesalahan: " + message);
     } finally {
       setLoading(false);
     }
@@ -206,7 +210,7 @@ const ChangeCredentialsForm = ({ onCancel }) => {
 };
 
 const AdminPanel: React.FC = () => {
-  const { state, dispatch, deleteProperty } = useApp();
+  const { state, updateProperty, addProperty } = useApp();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showComparisonCart, setShowComparisonCart] = useState(false);
   const [showChangeCredentialsForm, setShowChangeCredentialsForm] =
@@ -229,7 +233,7 @@ const AdminPanel: React.FC = () => {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
       },
     },
@@ -241,7 +245,7 @@ const AdminPanel: React.FC = () => {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
         damping: 15,
       },
@@ -254,7 +258,7 @@ const AdminPanel: React.FC = () => {
       scale: 1,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
       },
     },
@@ -262,7 +266,7 @@ const AdminPanel: React.FC = () => {
       scale: 1.05,
       y: -5,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 400,
         damping: 10,
       },
@@ -274,7 +278,7 @@ const AdminPanel: React.FC = () => {
       scale: 1.05,
       boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 400,
         damping: 10,
       },
@@ -287,29 +291,12 @@ const AdminPanel: React.FC = () => {
     animate: {
       scale: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 500,
         damping: 15,
       },
     },
   };
-
-  const glowVariants = {
-    animate: {
-      boxShadow: [
-        "0 0 20px rgba(59, 130, 246, 0.5)",
-        "0 0 40px rgba(59, 130, 246, 0.8)",
-        "0 0 20px rgba(59, 130, 246, 0.5)",
-      ],
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  const { addProperty } = useApp();
 
   const handleAddProperty = async (property: Property) => {
     const result = await addProperty(property);
@@ -322,27 +309,16 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleEditProperty = (property: Property) => {
-    setEditingProperty(property);
-  };
-
   const handleUpdateProperty = async (property: Property) => {
     if (editingProperty) {
+      console.log("Starting update, state.loading:", state.loading);
       const result = await updateProperty(editingProperty.id, property);
+      console.log("Update complete, state.loading:", state.loading);
       if (result.success) {
         alert("Properti berhasil diupdate!");
         setEditingProperty(null);
       } else {
         alert(`Gagal mengupdate properti: ${result.error}`);
-      }
-    }
-  };
-
-  const handleDeleteProperty = async (id: string) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus properti ini?")) {
-      const result = await deleteProperty(id);
-      if (!result.success) {
-        alert(result.error || "Failed to delete property");
       }
     }
   };
@@ -535,7 +511,7 @@ const AdminPanel: React.FC = () => {
           <motion.div
             className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100"
             variants={itemVariants}
-            whileHover={{ y: -5, shadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+            whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -560,7 +536,7 @@ const AdminPanel: React.FC = () => {
           <motion.div
             className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100"
             variants={itemVariants}
-            whileHover={{ y: -5, shadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+            whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -587,16 +563,57 @@ const AdminPanel: React.FC = () => {
         <AnimatePresence>
           {showAddForm && (
             <motion.div
-              className="mb-6 sm:mb-8"
+              className="mb-6 sm:mb-8 relative"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <PropertyForm
-                onSave={handleAddProperty}
-                onCancel={handleCancelForm}
-              />
+              <div className="relative">
+                {/* Loading Overlay for Add Form */}
+                <AnimatePresence>
+                  {state.loading && (
+                    <motion.div
+                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl z-[9999] flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className="text-center">
+                        <motion.div
+                          className="inline-block"
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        >
+                          <IoReload className="text-5xl text-blue-600" />
+                        </motion.div>
+                        <motion.p
+                          className="mt-4 text-gray-700 font-semibold"
+                          animate={{ opacity: [1, 0.5, 1] }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          Menambahkan properti...
+                        </motion.p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Mohon tunggu sebentar
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <PropertyForm
+                  onSave={handleAddProperty}
+                  onCancel={handleCancelForm}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -768,16 +785,57 @@ const AdminPanel: React.FC = () => {
               exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full max-h-full overflow-y-auto my-auto"
+                className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full my-auto relative"
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
               >
-                <PropertyForm
-                  property={editingProperty}
-                  onSave={handleUpdateProperty}
-                  onCancel={handleCancelForm}
-                />
+                {/* Loading Overlay */}
+                <AnimatePresence>
+                  {state.loading && (
+                    <motion.div
+                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl z-[9999] flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className="text-center">
+                        <motion.div
+                          className="inline-block"
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        >
+                          <IoReload className="text-5xl text-blue-600" />
+                        </motion.div>
+                        <motion.p
+                          className="mt-4 text-gray-700 font-semibold"
+                          animate={{ opacity: [1, 0.5, 1] }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          Menyimpan perubahan...
+                        </motion.p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Mohon tunggu sebentar
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="max-h-[80vh] overflow-y-auto">
+                  <PropertyForm
+                    property={editingProperty}
+                    onSave={handleUpdateProperty}
+                    onCancel={handleCancelForm}
+                  />
+                </div>
               </motion.div>
             </motion.div>
           )}

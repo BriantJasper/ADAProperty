@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import ApiService from "../services/api";
 import type { Property } from "../types/Property";
-import { IoAdd, IoClose, IoImage } from "react-icons/io5";
+import { IoAdd, IoClose } from "react-icons/io5";
 
 interface PropertyFormProps {
   property?: Property;
-  onSave: (property: Property) => void;
+  onSave: (property: Property) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -15,7 +15,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   onSave,
   onCancel,
 }) => {
-  const { addProperty, updateProperty, state } = useApp();
+  const { state } = useApp();
   const [formData, setFormData] = useState<
     Partial<Property> & { garage?: boolean }
   >({
@@ -48,11 +48,45 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     },
   });
 
-  const [imagePreview, setImagePreview] = useState<string>(
-    formData.images?.[0] || ""
-  );
+  // Local display state for currency-formatted price input (visibility only)
+  const [priceDisplay, setPriceDisplay] = useState<string>(() => {
+    const n = Number(property?.price || 0);
+    return n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "";
+  });
+
+  // Removed unused imagePreview state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+
+  // Local display state for Booking Fee formatting
+  const [bookingFeeDisplay, setBookingFeeDisplay] = useState<string>(() => {
+    const n = Number((formData as any).financing?.bookingFee ?? 0);
+    return n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "";
+  });
+
+  // Keep formatted displays in sync when formData changes (e.g., on edit open)
+  React.useEffect(() => {
+    const n = Number(formData.price || 0);
+    setPriceDisplay(n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "");
+  }, [formData.price]);
+
+  React.useEffect(() => {
+    const n = Number((formData as any).financing?.bookingFee ?? 0);
+    setBookingFeeDisplay(n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "");
+  }, [(formData as any).financing?.bookingFee]);
+
+  // When switching between add/edit or editing a different property, ensure displays sync from prop
+  React.useEffect(() => {
+    if (property) {
+      const price = Number(property.price || 0);
+      setPriceDisplay(price > 0 ? `Rp ${price.toLocaleString("id-ID")}` : "");
+      const booking = Number(property.financing?.bookingFee ?? 0);
+      setBookingFeeDisplay(
+        booking > 0 ? `Rp ${booking.toLocaleString("id-ID")}` : ""
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [property?.id]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -82,6 +116,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Special handler for Harga (price) to format as currency while typing
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value || "";
+    const digitsOnly = raw.replace(/\D+/g, "");
+    const num = digitsOnly ? parseInt(digitsOnly, 10) : 0;
+    setFormData((prev) => ({ ...prev, price: num }));
+    setPriceDisplay(digitsOnly ? `Rp ${num.toLocaleString("id-ID")}` : "");
+  };
+
+  // Special handler for Booking Fee to format as currency while typing
+  const handleBookingFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value || "";
+    const digitsOnly = raw.replace(/\D+/g, "");
+    const num = digitsOnly ? parseInt(digitsOnly, 10) : 0;
+    updateFinancing({ bookingFee: num });
+    setBookingFeeDisplay(digitsOnly ? `Rp ${num.toLocaleString("id-ID")}` : "");
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,7 +361,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       }
 
       setErrors([]);
-      onSave(propertyData as Property);
+      await onSave(propertyData as Property);
     } catch (error: any) {
       console.error("Form submission error:", error);
       alert(
@@ -452,18 +504,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Harga *
+              Harga (Rp) *
             </label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               name="price"
-              value={formData.price}
-              onChange={handleInputChange}
-              placeholder="Contoh: 450000000"
-              min="1"
+              value={priceDisplay}
+              onChange={handlePriceChange}
+              placeholder="Contoh: Rp 450.000.000"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Angka akan diformat otomatis untuk memudahkan dibaca.
+            </p>
           </div>
         </div>
 
@@ -621,16 +676,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 Booking Fee (Rp)
               </label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 min={0}
-                value={(formData as any).financing?.bookingFee ?? 15000000}
-                onChange={(e) =>
-                  updateFinancing({ bookingFee: Number(e.target.value) })
-                }
+                value={bookingFeeDisplay}
+                onChange={handleBookingFeeChange}
+                placeholder="Contoh: Rp 15.000.000"
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Masukkan nominal booking fee.
+                Nominal diformat otomatis untuk memudahkan dibaca.
               </p>
             </div>
           </div>
@@ -767,7 +822,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             </label>
             <select
               name="colorType"
-              value={formData.colorType}
+              value={(formData as any).colorType || ""}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >

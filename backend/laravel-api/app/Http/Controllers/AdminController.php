@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -27,9 +28,22 @@ class AdminController extends Controller
             }
 
             $token = substr($authHeader, 7);
-            
+
             try {
-                $decoded = JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
+                // Get JWT secret from env if provided; otherwise fallback to APP_KEY (base64 decoded if needed)
+                $secret = env('JWT_SECRET');
+                if (!$secret || !is_string($secret) || $secret === '') {
+                    $appKey = config('app.key');
+                    if (is_string($appKey) && Str::startsWith($appKey, 'base64:')) {
+                        $secret = base64_decode(substr($appKey, 7));
+                    } else {
+                        $secret = is_string($appKey) ? $appKey : '';
+                    }
+                }
+                if ($secret === '') {
+                    return response()->json(['success' => false, 'error' => 'JWT secret not configured'], 500);
+                }
+                $decoded = JWT::decode($token, new Key($secret, 'HS256'));
                 $username = $decoded->sub;
             } catch (\Exception $e) {
                 return response()->json(['success' => false, 'error' => 'Invalid token'], 401);
@@ -51,7 +65,7 @@ class AdminController extends Controller
                 ->where('username', $request->newUsername)
                 ->where('id', '!=', $user->id)
                 ->first();
-            
+
             if ($existingUser) {
                 return response()->json(['success' => false, 'error' => 'Username already exists'], 409);
             }
@@ -66,18 +80,17 @@ class AdminController extends Controller
                 ]);
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Credentials updated successfully'
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'error' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'error' => 'Server error: ' . $e->getMessage()
             ], 500);
         }

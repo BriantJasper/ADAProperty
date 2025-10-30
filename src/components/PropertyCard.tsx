@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 import {
-  IoAdd,
   IoTrash,
   IoPencil,
-  IoEyeOff,
   IoLogoInstagram,
   IoLogoTiktok,
   IoCart,
@@ -13,8 +11,6 @@ import {
 import {
   Home as HomeIcon,
   Building2,
-  Bed,
-  Bath,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -37,6 +33,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const { state, dispatch, updateProperty, deleteProperty } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(property);
+  // Local display state to format price nicely in inline edit form
+  const [editPriceDisplay, setEditPriceDisplay] = useState<string>(() => {
+    const n = Number(property.price || 0);
+    return n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "";
+  });
   const [depositPercentage, setDepositPercentage] = useState(
     property.financing?.dpPercent ?? 10
   );
@@ -44,7 +45,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     property.financing?.tenorYears ?? 1
   );
   const [animationKey, setAnimationKey] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
   const images =
     property.images && property.images.length > 0
       ? property.images.slice(0, 5)
@@ -60,6 +60,20 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     if (typeof tenor === "number") setAngsuranYears(tenor);
   }, [property.id, property.financing]);
 
+  // Sync inline edit price display when toggling edit or when price changes
+  useEffect(() => {
+    const n = Number((isEditing ? editForm.price : property.price) || 0);
+    setEditPriceDisplay(n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "");
+  }, [isEditing, editForm.price, property.price]);
+
+  const handleEditPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value || "";
+    const digitsOnly = raw.replace(/\D+/g, "");
+    const num = digitsOnly ? parseInt(digitsOnly, 10) : 0;
+    setEditForm({ ...editForm, price: num });
+    setEditPriceDisplay(digitsOnly ? `Rp ${num.toLocaleString("id-ID")}` : "");
+  };
+
   const isInComparison = state.comparisonCart.some(
     (item) => item.property.id === property.id
   );
@@ -67,8 +81,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
   // Catalog modal state
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const openCatalog = () => setIsCatalogOpen(true);
-  const closeCatalog = () => setIsCatalogOpen(false);
 
   const hasTourLink = property.tourUrl && property.tourUrl.trim() !== "";
 
@@ -143,9 +155,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     setSlide((s) => (s + 1) % images.length);
   };
 
-  const goToSlide = (index: number) => {
-    setSlide(index);
-  };
+  // Removed unused goToSlide (reserved if dots navigation added)
 
   const formatText = (text?: string): string => {
     if (!text || typeof text !== "string") return "-";
@@ -157,24 +167,25 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     return num.toLocaleString("id-ID");
   };
 
-  // New helper: format description into neat lines
-  const getDescriptionLines = (desc?: string): string[] => {
-    const text = (desc || "").trim();
-    if (!text) return ["Tidak ada deskripsi"];
-    return text
-      .split(/\r?\n|;|,/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  };
+  // Removed unused getDescriptionLines helper
 
   const calculateDeposit = (): number => {
     return Math.round((property.price || 0) * (depositPercentage / 100));
   };
 
+  // KPI Mortgage formula: A = P * [r(1+r)^n] / [(1+r)^n - 1]
+  // Adjustable interest rate (annual, in percent)
+  const [annualRate, setAnnualRate] = useState(5); // default 7%
   const calculateAngsuran = (): number => {
-    const remaining = (property.price || 0) - calculateDeposit();
+    const principal = (property.price || 0) - calculateDeposit();
     const totalMonths = angsuranYears * 12;
-    return Math.round(remaining / totalMonths);
+    const rate = Number(annualRate) / 100;
+    const monthlyRate = rate / 12;
+    if (principal <= 0 || totalMonths <= 0 || monthlyRate <= 0) return 0;
+    const numerator =
+      principal * monthlyRate * Math.pow(1 + monthlyRate, totalMonths);
+    const denominator = Math.pow(1 + monthlyRate, totalMonths) - 1;
+    return Math.round(numerator / denominator);
   };
 
   const handleDepositPercentageChange = (
@@ -256,14 +267,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               Harga
             </label>
             <input
-              type="number"
-              value={editForm.price}
-              onChange={(e) =>
-                setEditForm({
-                  ...editForm,
-                  price: parseInt(e.target.value) || 0,
-                })
-              }
+              type="text"
+              inputMode="numeric"
+              value={editPriceDisplay}
+              onChange={handleEditPriceChange}
+              placeholder="Contoh: Rp 450.000.000"
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
@@ -492,9 +500,18 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         </div>
 
         {/* Card Content */}
-        <div className="p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="relative p-5" onClick={(e) => e.stopPropagation()}>
+          {/* Watermark Logo */}
+          <div className="absolute inset-0 flex justify-center items-center pointer-events-none select-none z-0">
+            <img
+              src="/logo.png"
+              alt="ADAProperty Logo Watermark"
+              className="opacity-10 w-3/4 max-w-xs object-contain"
+              draggable="false"
+            />
+          </div>
           {/* Price */}
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 className="text-2xl font-bold text-gray-900 relative z-10">
             Rp {formatCurrency(property.price)}
           </h3>
 
@@ -529,20 +546,41 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
             {/* Angsuran Input */}
             <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-base font-semibold">Angsuran</label>
-                <div className="flex items-center border border-gray-300 rounded overflow-hidden">
-                  <input
-                    type="number"
-                    min="1"
-                    value={angsuranYears}
-                    onChange={handleAngsuranYearsChange}
-                    onFocus={(e) => e.target.select()}
-                    className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
-                    Tahun
-                  </span>
+              <div className="flex flex-col gap-2 mb-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold">Angsuran</label>
+                  <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                    <input
+                      type="number"
+                      min="1"
+                      value={angsuranYears}
+                      onChange={handleAngsuranYearsChange}
+                      onFocus={(e) => e.target.select()}
+                      className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
+                      Tahun
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Bunga (%)
+                  </label>
+                  <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.01"
+                      value={annualRate}
+                      onChange={(e) => setAnnualRate(Number(e.target.value))}
+                      onFocus={(e) => e.target.select()}
+                      className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
+                      %/thn
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">

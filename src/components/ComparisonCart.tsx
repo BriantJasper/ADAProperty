@@ -4,7 +4,11 @@ import { IoClose, IoTrash } from "react-icons/io5";
 import { FaWhatsapp } from "react-icons/fa";
 import { Bed, Bath, Maximize, Home } from "lucide-react";
 
-const ComparisonCart: React.FC = () => {
+interface ComparisonCartProps {
+  onClose?: () => void;
+}
+
+const ComparisonCart: React.FC<ComparisonCartProps> = ({ onClose }) => {
   const { state, dispatch } = useApp();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
@@ -17,8 +21,12 @@ const ComparisonCart: React.FC = () => {
   };
 
   const handleWhatsAppClick = (property: any) => {
-    const message = `Halo, saya tertarik dengan properti ${property.title} di ${property.location} dengan harga Rp ${property.price.toLocaleString()}. Apakah masih tersedia?`;
-    const whatsappUrl = `https://wa.me/${property.whatsappNumber}?text=${encodeURIComponent(message)}`;
+    const message = `Halo, saya tertarik dengan properti ${property.title} di ${
+      property.location
+    } dengan harga Rp ${property.price.toLocaleString()}. Apakah masih tersedia?`;
+    const whatsappUrl = `https://wa.me/${
+      property.whatsappNumber
+    }?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -56,13 +64,24 @@ const ComparisonCart: React.FC = () => {
               {state.comparisonCart.length} dari 3 properti dipilih
             </p>
           </div>
-          <button
-            onClick={handleClearAll}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200 font-medium"
-          >
-            <IoTrash size={18} />
-            Hapus Semua
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleClearAll}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200 font-medium"
+            >
+              <IoTrash size={18} />
+              Hapus Semua
+            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200"
+                title="Tutup"
+              >
+                <IoClose size={24} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -83,7 +102,7 @@ const ComparisonCart: React.FC = () => {
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden bg-gray-200">
               <img
-                src={item.property.images?.[0] || '/images/p1.png'}
+                src={item.property.images?.[0] || "/images/p1.png"}
                 alt={item.property.title}
                 className={`w-full h-full object-cover transition-transform duration-500 ${
                   hoveredCard === item.property.id ? "scale-105" : "scale-100"
@@ -160,7 +179,9 @@ const ComparisonCart: React.FC = () => {
               {/* Features Info */}
               {item.property.features && item.property.features.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-4">
-                  <div className="text-sm text-blue-700 font-medium mb-1">Fitur:</div>
+                  <div className="text-sm text-blue-700 font-medium mb-1">
+                    Fitur:
+                  </div>
                   <div className="text-xs text-blue-600">
                     {item.property.features.join(", ")}
                   </div>
