@@ -89,6 +89,12 @@ export default function Navbar() {
                 Properti
               </Link>
               <Link
+                to="/consign"
+                className={`${linkBase} font-medium transition-colors whitespace-nowrap`}
+              >
+                Titip Jual
+              </Link>
+              <Link
                 to="/contact"
                 className={`${linkBase} font-medium transition-colors whitespace-nowrap`}
               >
@@ -210,6 +216,13 @@ export default function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 Kontak Kami
+              </Link>
+              <Link
+                to="/consign"
+                className="text-white hover:text-yellow-300 font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Titip Jual
               </Link>
               <button
                 onClick={() => {

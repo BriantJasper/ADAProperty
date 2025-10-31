@@ -546,6 +546,71 @@ const AdminPanel: React.FC = () => {
           </motion.div>
         </motion.div>
 
+        {/* Consignment Inbox */}
+        <motion.div
+          className="mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="flex justify-between items-center mb-4" variants={itemVariants}>
+            <h2 className="text-2xl font-bold text-gray-900">Inbox Titip Jual
+              <span className="ml-3 text-lg text-emerald-600 font-normal">({state.consignmentInbox.length})</span>
+            </h2>
+            <p className="text-sm text-gray-600">Pengajuan dari pengguna untuk ditinjau admin</p>
+          </motion.div>
+          {state.consignmentInbox.length === 0 ? (
+            <motion.div className="bg-white rounded-2xl shadow p-6 border border-gray-100 text-center" variants={itemVariants}>
+              <p className="text-gray-600">Belum ada pengajuan titip jual.</p>
+            </motion.div>
+          ) : (
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants}>
+              {state.consignmentInbox.map((c, idx) => (
+                <motion.div key={c.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden" variants={cardVariants} whileHover="hover" custom={idx}>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{c.title}</h3>
+                        <p className="text-sm text-gray-600">{c.location}{c.subLocation ? ` • ${c.subLocation}` : ''}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded ${c.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : c.status === 'reviewed' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                        {c.status === 'pending' ? 'Menunggu' : c.status === 'reviewed' ? 'Ditinjau' : 'Disetujui'}
+                      </span>
+                    </div>
+
+                    {c.images && c.images.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        {c.images.slice(0,3).map((src, i) => (
+                          <img key={i} src={src} alt={`cs-${i}`} className="w-full h-24 object-cover rounded" />
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="text-sm text-gray-700 space-y-1 mb-3">
+                      <p><span className="font-medium">Penjual:</span> {c.sellerName}</p>
+                      <p><span className="font-medium">WA:</span> {c.sellerWhatsapp}</p>
+                      {typeof c.price === 'number' && <p><span className="font-medium">Harga:</span> Rp {c.price.toLocaleString('id-ID')}</p>}
+                      {c.bedrooms !== undefined && <p><span className="font-medium">KT:</span> {c.bedrooms} • <span className="font-medium">KM:</span> {c.bathrooms ?? 0}</p>}
+                      {c.area !== undefined && <p><span className="font-medium">LB:</span> {c.area} m² {c.landArea ? `• LT: ${c.landArea} m²` : ''}</p>}
+                    </div>
+
+                    {c.description && (
+                      <p className="text-sm text-gray-600 line-clamp-3 mb-3">{c.description}</p>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <a href={`https://wa.me/${c.sellerWhatsapp}`} target="_blank" rel="noreferrer" className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Hubungi WA</a>
+                      <button onClick={() => dispatch({ type: 'MARK_CONSIGNMENT_STATUS', payload: { id: c.id, status: 'reviewed' } })} className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Tandai Ditinjau</button>
+                      <button onClick={() => dispatch({ type: 'MARK_CONSIGNMENT_STATUS', payload: { id: c.id, status: 'approved' } })} className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded">Terima</button>
+                      <button onClick={() => dispatch({ type: 'REMOVE_CONSIGNMENT', payload: c.id })} className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Hapus</button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </motion.div>
+
         {/* Add Form Section */}
         <AnimatePresence>
           {showAddForm && (

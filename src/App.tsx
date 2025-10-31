@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage'
 import PropertiesPage from './pages/PropertiesPage'
 import About from './pages/About'
 import ContactPage from './pages/ContactPage'
+import ConsignPage from './pages/ConsignPage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -21,6 +22,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/consign" element={<ConsignPage />} />
             <Route 
               path="/admin" 
               element={

@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Property, ComparisonItem } from '../types/Property';
+import type { ConsignmentRequest, ConsignmentStatus } from '../types/Consignment';
 import ApiService from '../services/api';
 
 interface AppState {
@@ -15,6 +16,7 @@ interface AppState {
   selectedLocation: string;
   loading: boolean;
   error: string | null;
+  consignmentInbox: ConsignmentRequest[];
 }
 
 type AppAction =
@@ -31,7 +33,10 @@ type AppAction =
   | { type: 'SET_SELECTED_LOCATION'; payload: string }
   | { type: 'HYDRATE_STATE'; payload: Partial<AppState> }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'ADD_CONSIGNMENT'; payload: ConsignmentRequest }
+  | { type: 'REMOVE_CONSIGNMENT'; payload: string }
+  | { type: 'MARK_CONSIGNMENT_STATUS'; payload: { id: string; status: ConsignmentStatus } };
 
 const initialState: AppState = {
   properties: [],
@@ -42,6 +47,7 @@ const initialState: AppState = {
   selectedLocation: '',
   loading: false,
   error: null,
+  consignmentInbox: [],
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -135,6 +141,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         error: action.payload,
       };
+    case 'ADD_CONSIGNMENT':
+      if (state.consignmentInbox.some(c => c.id === action.payload.id)) {
+        return state;
+      }
+      return {
+        ...state,
+        consignmentInbox: [action.payload, ...state.consignmentInbox],
+      };
+    case 'REMOVE_CONSIGNMENT':
+      return {
+        ...state,
+        consignmentInbox: state.consignmentInbox.filter(c => c.id !== action.payload),
+      };
+    case 'MARK_CONSIGNMENT_STATUS':
+      return {
+        ...state,
+        consignmentInbox: state.consignmentInbox.map(c =>
+          c.id === action.payload.id ? { ...c, status: action.payload.status } : c
+        ),
+      };
     default:
       return state;
   }
@@ -149,6 +175,9 @@ const AppContext = createContext<{
   addProperty: (propertyData: Omit<Property, 'id' | 'createdAt' | 'updatedAt'>) => Promise<{ success: boolean; error?: string }>;
   updateProperty: (id: string, propertyData: Partial<Property>) => Promise<{ success: boolean; error?: string }>;
   deleteProperty: (id: string) => Promise<{ success: boolean; error?: string }>;
+  addConsignment: (data: Omit<ConsignmentRequest, 'id' | 'createdAt' | 'status'>) => Promise<{ success: boolean; error?: string }>;
+  removeConsignment: (id: string) => void;
+  markConsignmentStatus: (id: string, status: ConsignmentStatus) => void;
 } | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -310,6 +339,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Consignment helpers (local-only)
+  const addConsignment = async (
+    data: Omit<ConsignmentRequest, 'id' | 'createdAt' | 'status'>
+  ) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      const id = `consign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const createdAt = new Date();
+      const payload: ConsignmentRequest = {
+        ...data,
+        id,
+        createdAt,
+        status: 'pending',
+        images: Array.isArray(data.images) ? data.images.slice(0, 5) : [],
+      };
+      dispatch({ type: 'ADD_CONSIGNMENT', payload });
+      return { success: true };
+    } catch (e: any) {
+      dispatch({ type: 'SET_ERROR', payload: e?.message || 'Failed to add consignment' });
+      return { success: false, error: e?.message || 'Failed to add consignment' };
+    }
+  };
+
+  const removeConsignment = (id: string) => {
+    dispatch({ type: 'REMOVE_CONSIGNMENT', payload: id });
+  };
+
+  const markConsignmentStatus = (id: string, status: ConsignmentStatus) => {
+    dispatch({ type: 'MARK_CONSIGNMENT_STATUS', payload: { id, status } });
+  };
+
   const changeCredentials = async (currentPassword: string, newCredentials: { username: string; password: string }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -378,6 +438,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [state.selectedLocation]);
 
+  // Hydrate consignment inbox from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('consignment_inbox');
+      if (raw) {
+        const parsed = JSON.parse(raw) as ConsignmentRequest[];
+        // revive dates
+        const revived = parsed.map(c => ({ ...c, createdAt: new Date(c.createdAt) }));
+        revived.forEach(c => dispatch({ type: 'ADD_CONSIGNMENT', payload: c }));
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist consignment inbox to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('consignment_inbox', JSON.stringify(state.consignmentInbox));
+    } catch {
+      // ignore
+    }
+  }, [state.consignmentInbox]);
+
   return (
     <AppContext.Provider value={{ 
       state, 
@@ -388,7 +473,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addProperty,
       updateProperty,
       deleteProperty,
-      changeCredentials
+      changeCredentials,
+      addConsignment,
+      removeConsignment,
+      markConsignmentStatus
     }}>
       {children}
     </AppContext.Provider>
