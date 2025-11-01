@@ -155,9 +155,11 @@ export default function ConsignPage() {
             <label className="block text-sm font-medium mb-1">Tipe</label>
             <select name="type" value={form.type ?? 'rumah'} onChange={handleChange} className="w-full border rounded px-3 py-2">
               <option value="rumah">Rumah</option>
-              <option value="apartemen">Apartemen</option>
-              <option value="tanah">Tanah</option>
               <option value="ruko">Ruko</option>
+              <option value="apartemen">Apartement</option>
+              <option value="kavling">Kavling</option>
+              <option value="gudang">Gudang</option>
+              <option value="pabrik">Pabrik</option>
             </select>
           </div>
           <div>

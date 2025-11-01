@@ -9,7 +9,7 @@ export interface ConsignmentRequest {
   price?: number;
   location: string;
   subLocation?: string;
-  type?: "rumah" | "apartemen" | "tanah" | "ruko";
+  type?: "rumah" | "ruko" | "apartemen" | "kavling" | "gudang" | "pabrik";
   bedrooms?: number;
   bathrooms?: number;
   area?: number;
