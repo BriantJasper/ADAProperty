@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import type { ConsignmentRequest } from '../types/Consignment';
 
@@ -19,9 +19,11 @@ function readFilesAsDataUrls(files: FileList): Promise<string[]> {
 
 export default function ConsignPage() {
   const { addConsignment } = useApp();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState<Omit<ConsignmentRequest, 'id' | 'createdAt' | 'status'>>({
     sellerName: '',
     sellerWhatsapp: '',
+    sellerEmail: '',
     title: '',
     description: '',
     price: undefined,
@@ -38,6 +40,7 @@ export default function ConsignPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -50,20 +53,64 @@ export default function ConsignPage() {
   const handleImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    if (files.length > 5) {
-      setError('Maksimal 5 foto yang diunggah.');
-      return;
-    }
     setUploading(true);
     try {
-      const urls = await readFilesAsDataUrls(files);
-      setForm(prev => ({ ...prev, images: urls }));
+      const newUrls = await readFilesAsDataUrls(files);
+      setForm(prev => {
+        const existing = prev.images ?? [];
+        const merged = [...existing, ...newUrls];
+        if (merged.length > 5) {
+          setError('Maksimal 5 foto. Foto tambahan diabaikan.');
+        }
+        return { ...prev, images: merged.slice(0, 5) };
+      });
+      // reset input agar bisa memilih file yang sama lagi jika perlu
+      e.target.value = '';
       setError(null);
     } catch (err: any) {
       setError('Gagal membaca file gambar.');
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const newUrls = await readFilesAsDataUrls(files);
+      setForm(prev => {
+        const existing = prev.images ?? [];
+        const merged = [...existing, ...newUrls];
+        if (merged.length > 5) {
+          setError('Maksimal 5 foto. Foto tambahan diabaikan.');
+        }
+        return { ...prev, images: merged.slice(0, 5) };
+      });
+      setError(null);
+    } catch (err: any) {
+      setError('Gagal membaca file gambar.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
+  const handleRemoveImage = (index: number) => {
+    setForm(prev => {
+      const imgs = (prev.images ?? []).slice();
+      imgs.splice(index, 1);
+      return { ...prev, images: imgs };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,6 +173,11 @@ export default function ConsignPage() {
             <label className="block text-sm font-medium mb-1">Nomor WhatsApp *</label>
             <input name="sellerWhatsapp" value={form.sellerWhatsapp} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="62812xxxx" />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input name="sellerEmail" type="email" value={form.sellerEmail ?? ''} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="nama@contoh.com" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,13 +246,37 @@ export default function ConsignPage() {
 
         <div>
           <label className="block text-sm font-medium mb-1">Foto (maks 5) — Admin akan unggah ulang saat disetujui</label>
-          <input type="file" accept="image/*" multiple onChange={handleImages} className="w-full" />
-          {uploading && <p className="text-sm text-gray-500 mt-1">Memproses gambar...</p>}
+          <div
+            className={`relative border-2 ${isDragging ? 'border-blue-500' : 'border-dashed border-gray-300'} rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition`}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <p className="text-gray-600">Klik untuk memilih foto atau seret & jatuhkan ke sini</p>
+            <p className="text-xs text-gray-500 mt-1">Maksimal 5 foto. Format: JPG/PNG</p>
+            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImages} className="hidden" />
+          </div>
+
+          {uploading && <p className="text-sm text-gray-500 mt-2">Memproses gambar...</p>}
           {form.images && form.images.length > 0 && (
-            <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
-              {form.images.slice(0,5).map((src, idx) => (
-                <img key={idx} src={src} alt={`upload-${idx}`} className="w-full h-24 object-cover rounded border" />
-              ))}
+            <div className="mt-3">
+              <p className="text-sm text-gray-600 mb-2">Foto terpilih: {form.images.length}/5</p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                {form.images.slice(0,5).map((src, idx) => (
+                  <div key={idx} className="relative group">
+                    <img src={src} alt={`upload-${idx}`} className="w-full h-24 object-cover rounded border" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-1 right-1 bg-white/80 hover:bg-white text-gray-700 px-2 py-1 text-xs rounded shadow opacity-0 group-hover:opacity-100 transition"
+                      title="Hapus foto"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

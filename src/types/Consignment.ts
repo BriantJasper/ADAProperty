@@ -4,6 +4,7 @@ export interface ConsignmentRequest {
   id: string;
   sellerName: string;
   sellerWhatsapp: string;
+  sellerEmail?: string;
   title: string;
   description: string;
   price?: number;
