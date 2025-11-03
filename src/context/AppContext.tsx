@@ -1,7 +1,10 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { Property, ComparisonItem } from "../types/Property";
-import type { ConsignmentRequest, ConsignmentStatus } from "../types/Consignment";
+import type {
+  ConsignmentRequest,
+  ConsignmentStatus,
+} from "../types/Consignment";
 import ApiService from "../services/api";
 
 interface AppState {
@@ -38,7 +41,10 @@ type AppAction =
   | { type: "SET_AUTH_INITIALIZED"; payload: boolean }
   | { type: "ADD_CONSIGNMENT"; payload: ConsignmentRequest }
   | { type: "REMOVE_CONSIGNMENT"; payload: string }
-  | { type: "MARK_CONSIGNMENT_STATUS"; payload: { id: string; status: ConsignmentStatus } };
+  | {
+      type: "MARK_CONSIGNMENT_STATUS";
+      payload: { id: string; status: ConsignmentStatus };
+    };
 
 const initialState: AppState = {
   properties: [],
@@ -469,7 +475,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         createdAt: new Date(),
         status: "pending",
       };
-      
+
       dispatch({ type: "ADD_CONSIGNMENT", payload: newConsignment });
       return { success: true };
     } catch (error: any) {

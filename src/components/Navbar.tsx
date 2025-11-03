@@ -13,11 +13,13 @@ export default function Navbar() {
   const onAbout = location.pathname.startsWith("/about");
   const onComparison = location.pathname.startsWith("/comparison");
   const onContact = location.pathname.startsWith("/contact");
+  const onConsign = location.pathname.startsWith("/consign");
   const onLogin =
     location.pathname.startsWith("/login") ||
     location.pathname.startsWith("/ada-admin");
   // Use solid (sticky) navbar on specific pages to avoid overlaying content
-  const useSolid = onAdmin || onAbout || onComparison || onContact || onLogin;
+  const useSolid =
+    onAdmin || onAbout || onComparison || onContact || onConsign || onLogin;
 
   const handleCompareClick = () => {
     navigate("/comparison");
