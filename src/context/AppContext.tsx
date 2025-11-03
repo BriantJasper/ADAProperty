@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { Property, ComparisonItem } from "../types/Property";
+import type { ConsignmentRequest, ConsignmentStatus } from "../types/Consignment";
 import ApiService from "../services/api";
 
 interface AppState {
@@ -16,6 +17,7 @@ interface AppState {
   loading: boolean;
   error: string | null;
   authInitialized: boolean;
+  consignmentInbox: ConsignmentRequest[];
 }
 
 type AppAction =
@@ -33,7 +35,10 @@ type AppAction =
   | { type: "HYDRATE_STATE"; payload: Partial<AppState> }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
-  | { type: "SET_AUTH_INITIALIZED"; payload: boolean };
+  | { type: "SET_AUTH_INITIALIZED"; payload: boolean }
+  | { type: "ADD_CONSIGNMENT"; payload: ConsignmentRequest }
+  | { type: "REMOVE_CONSIGNMENT"; payload: string }
+  | { type: "MARK_CONSIGNMENT_STATUS"; payload: { id: string; status: ConsignmentStatus } };
 
 const initialState: AppState = {
   properties: [],
@@ -45,6 +50,7 @@ const initialState: AppState = {
   loading: false,
   error: null,
   authInitialized: false,
+  consignmentInbox: [],
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -156,6 +162,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         authInitialized: action.payload,
       };
+    case "ADD_CONSIGNMENT":
+      return {
+        ...state,
+        consignmentInbox: [...state.consignmentInbox, action.payload],
+      };
+    case "REMOVE_CONSIGNMENT":
+      return {
+        ...state,
+        consignmentInbox: state.consignmentInbox.filter(
+          (item) => item.id !== action.payload
+        ),
+      };
+    case "MARK_CONSIGNMENT_STATUS":
+      return {
+        ...state,
+        consignmentInbox: state.consignmentInbox.map((item) =>
+          item.id === action.payload.id
+            ? { ...item, status: action.payload.status }
+            : item
+        ),
+      };
     default:
       return state;
   }
@@ -182,6 +209,11 @@ const AppContext = createContext<{
     currentPassword: string,
     newCredentials: { username: string; password: string }
   ) => Promise<{ success: boolean; message?: string; error?: string }>;
+  addConsignment: (
+    data: Omit<ConsignmentRequest, "id" | "createdAt" | "status">
+  ) => Promise<{ success: boolean; error?: string }>;
+  removeConsignment: (id: string) => void;
+  markConsignmentStatus: (id: string, status: ConsignmentStatus) => void;
 } | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -426,6 +458,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addConsignment = async (
+    data: Omit<ConsignmentRequest, "id" | "createdAt" | "status">
+  ) => {
+    try {
+      // Generate a unique ID (you might want to use UUID library for production)
+      const newConsignment: ConsignmentRequest = {
+        ...data,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+        status: "pending",
+      };
+      
+      dispatch({ type: "ADD_CONSIGNMENT", payload: newConsignment });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const removeConsignment = (id: string) => {
+    dispatch({ type: "REMOVE_CONSIGNMENT", payload: id });
+  };
+
+  const markConsignmentStatus = (id: string, status: ConsignmentStatus) => {
+    dispatch({ type: "MARK_CONSIGNMENT_STATUS", payload: { id, status } });
+  };
+
   // Load properties from API on mount
   useEffect(() => {
     // Hydrate auth state from localStorage on first load
@@ -558,6 +617,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateProperty,
         deleteProperty,
         changeCredentials,
+        addConsignment,
+        removeConsignment,
+        markConsignmentStatus,
       }}
     >
       {children}

@@ -11,6 +11,7 @@ import {
   IoSave,
   IoClose,
   IoReload,
+  IoDownload,
 } from "react-icons/io5";
 import { useApp } from "../context/AppContext";
 import PropertyForm from "../components/PropertyForm";
@@ -557,6 +558,113 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
           </motion.div>
+        </motion.div>
+
+        {/* Consignment Inbox Section */}
+        <motion.div
+          className="mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="flex justify-between items-center mb-4" variants={itemVariants}>
+            <h2 className="text-2xl font-bold text-gray-900">Inbox Titip Jual
+              <span className="ml-3 text-lg text-emerald-600 font-normal">({state.consignmentInbox.length})</span>
+            </h2>
+            <p className="text-sm text-gray-600">Pengajuan dari pengguna untuk ditinjau admin</p>
+          </motion.div>
+          {state.consignmentInbox.length === 0 ? (
+            <motion.div className="bg-white rounded-2xl shadow p-6 border border-gray-100 text-center" variants={itemVariants}>
+              <p className="text-gray-600">Belum ada pengajuan titip jual.</p>
+            </motion.div>
+          ) : (
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants}>
+              {state.consignmentInbox.map((c, idx) => (
+                <motion.div key={c.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden" variants={cardVariants} whileHover="hover" custom={idx}>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{c.title}</h3>
+                        <p className="text-sm text-gray-600">{c.location}{c.subLocation ? ` • ${c.subLocation}` : ''}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded ${c.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : c.status === 'reviewed' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                        {c.status === 'pending' ? 'Menunggu' : c.status === 'reviewed' ? 'Ditinjau' : 'Disetujui'}
+                      </span>
+                    </div>
+
+                    {c.images && c.images.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+                        {c.images.slice(0,5).map((src, i) => (
+                          <div key={i} className="relative group">
+                            <img src={src} alt={`cs-${i}`} className="w-full h-24 object-cover rounded border" />
+                            <a
+                              href={src}
+                              download={`consign-${idx + 1}-${i + 1}.jpg`}
+                              className="absolute top-1 right-1 bg-white/80 hover:bg-white text-gray-700 p-1 rounded shadow opacity-0 group-hover:opacity-100 transition"
+                              title="Unduh foto"
+                            >
+                              <IoDownload className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="text-sm text-gray-700 space-y-1 mb-3">
+                      <p><span className="font-medium">Penjual:</span> {c.sellerName}</p>
+                      <p><span className="font-medium">WA:</span> {c.sellerWhatsapp}</p>
+                      {c.sellerEmail && <p><span className="font-medium">Email:</span> {c.sellerEmail}</p>}
+                      {typeof c.price === 'number' && <p><span className="font-medium">Harga:</span> Rp {c.price.toLocaleString('id-ID')}</p>}
+                      {c.bedrooms !== undefined && <p><span className="font-medium">KT:</span> {c.bedrooms} • <span className="font-medium">KM:</span> {c.bathrooms ?? 0}</p>}
+                      {c.area !== undefined && <p><span className="font-medium">LB:</span> {c.area} m² {c.landArea ? `• LT: ${c.landArea} m²` : ''}</p>}
+                    </div>
+
+                    {c.description && (
+                      <p className="text-sm text-gray-600 line-clamp-3 mb-3">{c.description}</p>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <a href={`https://wa.me/${c.sellerWhatsapp}`} target="_blank" rel="noreferrer" className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Hubungi WA</a>
+                      {c.sellerEmail && (
+                        <a
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(c.sellerEmail)}&su=${encodeURIComponent(`Pengajuan Titip Jual: ${c.title}`)}&body=${encodeURIComponent(`Halo ${c.sellerName},\n\nKami menindaklanjuti pengajuan titip jual untuk \"${c.title}\" di lokasi ${c.location}${c.subLocation ? `, ${c.subLocation}` : ''}.\n\nSilakan balas email ini untuk diskusi lebih lanjut.\n\nTerima kasih,\nADA Property\nWA: ${c.sellerWhatsapp}`)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+                        >
+                          Hubungi Email
+                        </a>
+                      )}
+                      {c.images && c.images.length > 0 && (
+                        <button
+                          onClick={() => {
+                            const slug = (s: string) => s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                            const base = slug(c.title || 'foto');
+                            c.images!.forEach((src, i) => {
+                              try {
+                                const a = document.createElement('a');
+                                a.href = src;
+                                const match = src.match(/^data:(image\/\w+);/);
+                                const ext = match ? match[1].split('/')[1] : 'jpg';
+                                a.download = `${base}-${i + 1}.${ext}`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                              } catch {}
+                            });
+                          }}
+                          className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded"
+                        >
+                          Unduh Semua Foto
+                        </button>
+                      )}
+                      <button onClick={() => dispatch({ type: 'REMOVE_CONSIGNMENT', payload: c.id })} className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Hapus</button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Add Form Section */}

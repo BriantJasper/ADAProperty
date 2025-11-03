@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import About from "./pages/About";
 import ContactPage from "./pages/ContactPage";
+import ConsignPage from "./pages/ConsignPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { useLocation } from "react-router-dom";
@@ -29,6 +30,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             {/* Hidden admin login route */}
             <Route path="/ada-admin" element={<LoginPage />} />
+            <Route path="/consign" element={<ConsignPage />} />
             <Route
               path="/admin"
               element={
