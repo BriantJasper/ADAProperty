@@ -211,7 +211,7 @@ const ChangeCredentialsForm: React.FC<{ onCancel: () => void }> = ({
 };
 
 const AdminPanel: React.FC = () => {
-  const { state, updateProperty, addProperty } = useApp();
+  const { state, updateProperty, addProperty, removeConsignment } = useApp();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showComparisonCart, setShowComparisonCart] = useState(false);
   const [showChangeCredentialsForm, setShowChangeCredentialsForm] =
@@ -658,7 +658,7 @@ const AdminPanel: React.FC = () => {
                           Unduh Semua Foto
                         </button>
                       )}
-                      <button onClick={() => dispatch({ type: 'REMOVE_CONSIGNMENT', payload: c.id })} className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Hapus</button>
+                      <button onClick={() => removeConsignment(c.id)} className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Hapus</button>
                     </div>
                   </div>
                 </motion.div>
