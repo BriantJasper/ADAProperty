@@ -26,30 +26,37 @@ const PropertiesPage: React.FC = () => {
 
   const location = state.selectedLocation;
 
-  const locations = ["Cikarang", "Bekasi", "Jakarta", "Karawang", "Bandung"];
+  const locations = [
+    "Semua Lokasi",
+    "Cikarang",
+    "Bekasi",
+    "Jakarta",
+    "Karawang",
+    "Bandung",
+  ];
 
   // Mendukung harga bertipe number (dari backend) maupun string (contoh data lama)
   const parsePriceToNumber = (price: string | number): number => {
-    if (typeof price === 'number') {
+    if (typeof price === "number") {
       return price;
     }
-    const clean = price.replace(/\s+/g, ' ').toLowerCase();
+    const clean = price.replace(/\s+/g, " ").toLowerCase();
     const matchRange = clean.match(/([\d.,]+)\s*-\s*([\d.,]+)/);
     const matchSingle = clean.match(/([\d.,]+)/);
     let base = 0;
     if (matchRange) {
-      base = parseFloat(matchRange[1].replace(',', '.'));
+      base = parseFloat(matchRange[1].replace(",", "."));
     } else if (matchSingle) {
-      base = parseFloat(matchSingle[1].replace(',', '.'));
+      base = parseFloat(matchSingle[1].replace(",", "."));
     }
-    if (clean.includes('miliar')) base = base * 1_000_000_000;
+    if (clean.includes("miliar")) base = base * 1_000_000_000;
     else base = base * 1_000_000;
     return base;
   };
 
   const { subLocations, filteredByLocation } = useMemo(() => {
     const list = state.properties.filter((p) => {
-      if (!location) return true;
+      if (!location || location === "Semua Lokasi") return true;
       const city = (p.location.split(",")[1] || "").trim().toLowerCase();
       return city.includes(location.toLowerCase());
     });
@@ -72,8 +79,14 @@ const PropertiesPage: React.FC = () => {
     }
 
     if (activeSub) list = list.filter((p) => p.location.startsWith(activeSub));
-    if (statusFilter) list = list.filter((p) => p.status?.toLowerCase() === statusFilter.toLowerCase());
-    if (typeFilter) list = list.filter((p) => p.type?.toLowerCase() === typeFilter.toLowerCase());
+    if (statusFilter)
+      list = list.filter(
+        (p) => p.status?.toLowerCase() === statusFilter.toLowerCase()
+      );
+    if (typeFilter)
+      list = list.filter(
+        (p) => p.type?.toLowerCase() === typeFilter.toLowerCase()
+      );
 
     const min = minPrice ? Number(minPrice) : undefined;
     const max = maxPrice ? Number(maxPrice) : undefined;
@@ -151,7 +164,9 @@ const PropertiesPage: React.FC = () => {
               <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-bold mb-6 drop-shadow-lg leading-tight">
                 Jelajahi Properti Pilihan
                 <br />
-                {location ? `di ${location}` : "di Seluruh Area"}
+                {location && location !== "Semua Lokasi"
+                  ? `di ${location}`
+                  : "di Seluruh Area"}
               </h1>
 
               <p className="text-white text-lg md:text-xl mb-8 drop-shadow-md max-w-3xl mx-auto">

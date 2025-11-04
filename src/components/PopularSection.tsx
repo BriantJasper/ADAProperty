@@ -1,14 +1,17 @@
-import { useApp } from '../context/AppContext';
-import PropertyCard from '../components/PropertyCard';
+import { useApp } from "../context/AppContext";
+import PropertyCard from "../components/PropertyCard";
 
 export default function PopularSection() {
   const { state, dispatch } = useApp();
 
-  const filtered = state.selectedLocation
-    ? state.properties.filter(p =>
-        p.location.toLowerCase().includes(state.selectedLocation.toLowerCase())
-      )
-    : state.properties;
+  const filtered =
+    state.selectedLocation && state.selectedLocation !== "Semua Lokasi"
+      ? state.properties.filter((p) =>
+          p.location
+            .toLowerCase()
+            .includes(state.selectedLocation.toLowerCase())
+        )
+      : state.properties;
 
   return (
     <section className="py-16 bg-white">

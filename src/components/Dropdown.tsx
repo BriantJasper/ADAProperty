@@ -23,7 +23,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   selected,
   onChange,
   onSelect,
-  placeholder = "Pilih opsi",
+  placeholder = "Pilih Lokasi",
   label,
   className = "",
 }) => {

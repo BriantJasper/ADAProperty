@@ -8,7 +8,14 @@ import type { Property } from "../types/Property";
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const { dispatch, state } = useApp();
-  const locations = ["Cikarang", "Bekasi", "Jakarta", "Karawang", "Bandung"];
+  const locations = [
+    "Semua Lokasi",
+    "Cikarang",
+    "Bekasi",
+    "Jakarta",
+    "Karawang",
+    "Bandung",
+  ];
 
   // Initialize with sample data if no properties exist
   useEffect(() => {
