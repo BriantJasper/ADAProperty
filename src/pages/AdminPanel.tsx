@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IoAdd,
@@ -18,6 +18,7 @@ import PropertyForm from "../components/PropertyForm";
 import PropertyCard from "../components/PropertyCard";
 import ComparisonCart from "../components/ComparisonCart";
 import type { Property } from "../types/Property";
+import { COMPANY_INFO } from "../constants/company";
 
 // Komponen form untuk mengubah kredensial admin
 const ChangeCredentialsForm: React.FC<{ onCancel: () => void }> = ({
@@ -211,12 +212,25 @@ const ChangeCredentialsForm: React.FC<{ onCancel: () => void }> = ({
 };
 
 const AdminPanel: React.FC = () => {
-  const { state, updateProperty, addProperty, removeConsignment } = useApp();
+  const {
+    state,
+    updateProperty,
+    addProperty,
+    removeConsignment,
+    loadConsignments,
+  } = useApp();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showComparisonCart, setShowComparisonCart] = useState(false);
   const [showChangeCredentialsForm, setShowChangeCredentialsForm] =
     useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+
+  // Load consignments when component mounts
+  useEffect(() => {
+    if (state.isAuthenticated && state.user?.role === "admin") {
+      loadConsignments();
+    }
+  }, [state.isAuthenticated, state.user?.role, loadConsignments]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -312,9 +326,7 @@ const AdminPanel: React.FC = () => {
 
   const handleUpdateProperty = async (property: Property) => {
     if (editingProperty) {
-      console.log("Starting update, state.loading:", state.loading);
       const result = await updateProperty(editingProperty.id, property);
-      console.log("Update complete, state.loading:", state.loading);
       if (result.success) {
         alert("Properti berhasil diupdate!");
         setEditingProperty(null);
@@ -437,7 +449,7 @@ const AdminPanel: React.FC = () => {
               </motion.button>
 
               <motion.button
-                onClick={() => setShowAddForm(true)}
+                onClick={() => setShowAddForm(!showAddForm)}
                 className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
                 variants={buttonVariants}
                 whileHover="hover"
@@ -487,7 +499,7 @@ const AdminPanel: React.FC = () => {
               </motion.button>
 
               <motion.button
-                onClick={() => setShowAddForm(true)}
+                onClick={() => setShowAddForm(!showAddForm)}
                 className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 rounded-lg hover:shadow-xl flex items-center gap-1 text-xs font-semibold"
                 variants={buttonVariants}
                 whileHover="hover"
@@ -571,12 +583,21 @@ const AdminPanel: React.FC = () => {
             className="flex justify-between items-center mb-4"
             variants={itemVariants}
           >
-            <h2 className="text-2xl font-bold text-gray-900">
-              Inbox Titip Jual
-              <span className="ml-3 text-lg text-emerald-600 font-normal">
-                ({state.consignmentInbox.length})
-              </span>
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Inbox Titip Jual
+                <span className="ml-3 text-lg text-emerald-600 font-normal">
+                  ({state.consignmentInbox.length})
+                </span>
+              </h2>
+              <button
+                onClick={() => loadConsignments()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <IoReload className="w-4 h-4" />
+                Muat Ulang
+              </button>
+            </div>
             <p className="text-sm text-gray-600">
               Pengajuan dari pengguna untuk ditinjau admin
             </p>
@@ -715,9 +736,9 @@ const AdminPanel: React.FC = () => {
                               c.title
                             }\" di lokasi ${c.location}${
                               c.subLocation ? `, ${c.subLocation}` : ""
-                            }.\n\nSilakan balas email ini untuk diskusi lebih lanjut.\n\nTerima kasih,\nADA Property\nWA: ${
-                              c.sellerWhatsapp
-                            }`
+                            }.\n\nSilakan balas email ini untuk diskusi lebih lanjut.\n\nTerima kasih,\n${
+                              COMPANY_INFO.name
+                            }\nWA: ${COMPANY_INFO.whatsapp.displayNumber}`
                           )}`}
                           target="_blank"
                           rel="noreferrer"
@@ -756,7 +777,22 @@ const AdminPanel: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => removeConsignment(c.id)}
+                        onClick={async () => {
+                          if (
+                            confirm(
+                              "Apakah Anda yakin ingin menghapus pengajuan ini?"
+                            )
+                          ) {
+                            const result = await removeConsignment(c.id);
+                            if (result.success) {
+                              alert("Pengajuan berhasil dihapus!");
+                            } else {
+                              alert(
+                                `Gagal menghapus pengajuan: ${result.error}`
+                              );
+                            }
+                          }
+                        }}
                         className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
                       >
                         Hapus
@@ -768,65 +804,6 @@ const AdminPanel: React.FC = () => {
             </motion.div>
           )}
         </motion.div>
-
-        {/* Add Form Section */}
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              className="mb-6 sm:mb-8 relative"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="relative">
-                {/* Loading Overlay for Add Form */}
-                <AnimatePresence>
-                  {state.loading && (
-                    <motion.div
-                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl z-[9999] flex items-center justify-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <div className="text-center">
-                        <motion.div
-                          className="inline-block"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        >
-                          <IoReload className="text-5xl text-blue-600" />
-                        </motion.div>
-                        <motion.p
-                          className="mt-4 text-gray-700 font-semibold"
-                          animate={{ opacity: [1, 0.5, 1] }}
-                          transition={{
-                            duration: 1.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        >
-                          Menambahkan properti...
-                        </motion.p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Mohon tunggu sebentar
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <PropertyForm
-                  onSave={handleAddProperty}
-                  onCancel={handleCancelForm}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Properties Section */}
         <motion.div
@@ -984,27 +961,119 @@ const AdminPanel: React.FC = () => {
             </div>
           </motion.div>
         </AnimatePresence>
+      </div>
 
-        {/* Edit Form Section */}
-        <AnimatePresence>
-          {editingProperty && (
+      {/* Modals - Outside main content container */}
+      {/* Add Form Modal */}
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCancelForm}
+          >
             <motion.div
-              className="fixed top-[100px] left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[100] p-4 overflow-y-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full my-auto relative"
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-              >
-                {/* Loading Overlay */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Tambah Properti Baru
+                </h2>
+                <button
+                  onClick={handleCancelForm}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <IoClose className="w-6 h-6 text-gray-500" />
+                </button>
+              </div>
+              <div className="p-6 relative">
                 <AnimatePresence>
                   {state.loading && (
                     <motion.div
-                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl z-[9999] flex items-center justify-center"
+                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-2xl z-[9999] flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className="text-center">
+                        <motion.div
+                          className="inline-block"
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        >
+                          <IoReload className="text-5xl text-blue-600" />
+                        </motion.div>
+                        <motion.p
+                          className="mt-4 text-gray-700 font-semibold"
+                          animate={{ opacity: [1, 0.5, 1] }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          Menambahkan properti...
+                        </motion.p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Mohon tunggu sebentar
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <PropertyForm
+                  onSave={handleAddProperty}
+                  onCancel={handleCancelForm}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Form Modal */}
+      <AnimatePresence>
+        {editingProperty && (
+          <motion.div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCancelForm}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Edit Properti
+                </h2>
+                <button
+                  onClick={handleCancelForm}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <IoClose className="w-6 h-6 text-gray-500" />
+                </button>
+              </div>
+              <div className="p-6 relative">
+                <AnimatePresence>
+                  {state.loading && (
+                    <motion.div
+                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-2xl z-[9999] flex items-center justify-center"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -1039,62 +1108,64 @@ const AdminPanel: React.FC = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                <div className="max-h-[80vh] overflow-y-auto">
-                  <PropertyForm
-                    property={editingProperty}
-                    onSave={handleUpdateProperty}
-                    onCancel={handleCancelForm}
-                  />
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Change Credentials Form */}
-        <AnimatePresence>
-          {showChangeCredentialsForm && (
-            <motion.div
-              className="fixed top-[100px] left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[100] p-4 overflow-y-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-md w-full max-h-full overflow-y-auto my-auto"
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-              >
-                <ChangeCredentialsForm
-                  onCancel={() => setShowChangeCredentialsForm(false)}
+                <PropertyForm
+                  property={editingProperty}
+                  onSave={handleUpdateProperty}
+                  onCancel={handleCancelForm}
                 />
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Comparison Cart */}
-        <AnimatePresence>
-          {showComparisonCart && (
+      {/* Change Credentials Form */}
+      <AnimatePresence>
+        {showChangeCredentialsForm && (
+          <motion.div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowChangeCredentialsForm(false)}
+          >
             <motion.div
-              className="fixed top-[100px] left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[100] p-4 overflow-y-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full max-h-full overflow-y-auto my-auto"
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-              >
-                <ComparisonCart onClose={() => setShowComparisonCart(false)} />
-              </motion.div>
+              <ChangeCredentialsForm
+                onCancel={() => setShowChangeCredentialsForm(false)}
+              />
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Comparison Cart */}
+      <AnimatePresence>
+        {showComparisonCart && (
+          <motion.div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowComparisonCart(false)}
+          >
+            <motion.div
+              className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ComparisonCart onClose={() => setShowComparisonCart(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

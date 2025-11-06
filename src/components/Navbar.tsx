@@ -105,9 +105,9 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/consign"
-                className={`${linkBase} font-medium transition-colors whitespace-nowrap`}
+                className={`${linkBase} font-medium text-yellow-500 hover:text-yellow-700 whitespace-nowrap`}
               >
-                Titip Jual
+                Jual Properti
               </Link>
               <Link
                 to="/contact"
@@ -235,7 +235,7 @@ export default function Navbar() {
                 className={`${linkBase} font-medium`}
                 onClick={() => setIsOpen(false)}
               >
-                Titip Jual
+                Jual Properti
               </Link>
               {/* Admin Panel link only for admins */}
               {state.isAuthenticated && state.user?.role === "admin" && (

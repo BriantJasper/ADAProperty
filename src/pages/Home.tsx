@@ -131,7 +131,6 @@ export default function Home() {
 
               <div className="max-w-md mx-auto">
                 <Dropdown
-                  label="Pilih Lokasi"
                   options={locations}
                   selected={selectedLocation}
                   onSelect={setSelectedLocation}

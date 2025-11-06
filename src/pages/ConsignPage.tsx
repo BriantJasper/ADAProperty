@@ -71,6 +71,12 @@ export default function ConsignPage() {
     >
   ) => {
     const { name, value } = e.target;
+    // Special handling for WhatsApp: keep only digits for cleaner UX
+    if (name === "sellerWhatsapp") {
+      const digitsOnly = value.replace(/\D/g, "");
+      setForm((prev) => ({ ...prev, sellerWhatsapp: digitsOnly }));
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       [name]:
@@ -164,7 +170,19 @@ export default function ConsignPage() {
       return;
     }
 
-    const resp = await addConsignment(form);
+    // Normalize WhatsApp number to start with country code 62
+    const rawWa = (form.sellerWhatsapp || "").replace(/\D/g, "");
+    let nationalWa = rawWa;
+    if (rawWa.startsWith("+62")) {
+      nationalWa = rawWa.slice(3);
+    } else if (rawWa.startsWith("62")) {
+      nationalWa = rawWa.slice(2);
+    } else if (rawWa.startsWith("0")) {
+      nationalWa = rawWa.slice(1);
+    }
+    const payload = { ...form, sellerWhatsapp: `62${nationalWa}` };
+
+    const resp = await addConsignment(payload);
     if (resp.success) {
       setSuccess("Pengajuan titip jual berhasil dikirim. Admin akan meninjau.");
       // reset minimal fields
@@ -226,13 +244,23 @@ export default function ConsignPage() {
             <label className="block text-sm font-medium mb-1">
               Nomor WhatsApp *
             </label>
-            <input
-              name="sellerWhatsapp"
-              value={form.sellerWhatsapp}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              placeholder="62812xxxx"
-            />
+            <div className="flex">
+              <span className="inline-flex items-center px-3 rounded-l border border-r-0 bg-gray-50 text-gray-600 text-sm">
+                +62
+              </span>
+              <input
+                name="sellerWhatsapp"
+                value={form.sellerWhatsapp}
+                onChange={handleChange}
+                className="w-full border border-l-0 rounded-r px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="812xxxxxxx"
+                inputMode="numeric"
+                pattern="\d*"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Masukkan nomor tanpa awalan 0
+            </p>
           </div>
         </div>
 

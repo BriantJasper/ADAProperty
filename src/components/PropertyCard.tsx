@@ -38,8 +38,20 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     const n = Number(property.price || 0);
     return n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "";
   });
+
+  // Get default DP based on property type
+  const getDefaultDPPercentage = (type: string): number => {
+    const normalizedType = type.toLowerCase();
+    // Ruko, Pabrik, Gudang = 10%
+    if (["ruko", "pabrik", "gudang"].includes(normalizedType)) {
+      return 10;
+    }
+    // Rumah, Apartemen, Tanah/Kavling = 5%
+    return 5;
+  };
+
   const [depositPercentage, setDepositPercentage] = useState(
-    property.financing?.dpPercent ?? 10
+    property.financing?.dpPercent ?? getDefaultDPPercentage(property.type)
   );
   const [angsuranYears, setAngsuranYears] = useState(
     property.financing?.tenorYears ?? 1
@@ -83,6 +95,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   const hasTourLink = property.tourUrl && property.tourUrl.trim() !== "";
+  const isForSale = (property.status || "").toLowerCase() === "dijual";
 
   const handleAddToComparison = () => {
     if (canAddToComparison) {
@@ -193,13 +206,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   ) => {
     const value = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
     setDepositPercentage(value);
-  };
-
-  const handleAngsuranYearsChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = Math.max(1, parseInt(e.target.value) || 1);
-    setAngsuranYears(value);
   };
 
   if (isEditing) {
@@ -515,82 +521,99 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             Rp {formatCurrency(property.price)}
           </h3>
 
-          {/* DP Section with Percentage Input */}
-          <div className="mt-3 space-y-2">
-            {/* DP Percentage Input */}
-            <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-base font-semibold">DP</label>
-                <div className="flex items-center border border-gray-300 rounded overflow-hidden">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={depositPercentage}
-                    onChange={handleDepositPercentageChange}
-                    onFocus={(e) => e.target.select()}
-                    className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
-                    %
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Jumlah DP</span>
-                <span className="text-lg font-bold text-blue-700">
-                  Rp {formatCurrency(calculateDeposit())}
-                </span>
-              </div>
-            </div>
-
-            {/* Angsuran Input */}
-            <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
-              <div className="flex flex-col gap-2 mb-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-base font-semibold">Angsuran</label>
+          {/* Financing (DP & Tenor) only for properties that are for sale */}
+          {isForSale && (
+            <div className="mt-3 space-y-2">
+              {/* DP Percentage Input */}
+              <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-base font-semibold">DP</label>
                   <div className="flex items-center border border-gray-300 rounded overflow-hidden">
                     <input
                       type="number"
-                      min="1"
-                      value={angsuranYears}
-                      onChange={handleAngsuranYearsChange}
+                      min="0"
+                      max="100"
+                      value={depositPercentage}
+                      onChange={handleDepositPercentageChange}
                       onFocus={(e) => e.target.select()}
                       className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
-                      Tahun
+                      %
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Bunga (%)
-                  </label>
-                  <div className="flex items-center border border-gray-300 rounded overflow-hidden">
-                    <input
-                      type="number"
-                      min="0.1"
-                      step="0.01"
-                      value={annualRate}
-                      onChange={(e) => setAnnualRate(Number(e.target.value))}
-                      onFocus={(e) => e.target.select()}
-                      className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
-                      %/thn
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                  <span className="text-sm text-gray-600">Jumlah DP</span>
+                  <span className="text-lg font-bold text-blue-700">
+                    Rp {formatCurrency(calculateDeposit())}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Per Bulan</span>
-                <span className="text-lg font-bold text-blue-700">
-                  Rp {formatCurrency(calculateAngsuran())}
-                </span>
+
+              {/* Angsuran Input */}
+              <div className="bg-white text-gray-900 rounded-lg px-4 py-3 border border-blue-700">
+                <div className="flex flex-col gap-2 mb-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold">Tenor</label>
+                    <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                      <select
+                        value={angsuranYears}
+                        onChange={(e) =>
+                          setAngsuranYears(parseInt(e.target.value))
+                        }
+                        className="px-2 py-1 w-20 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                          backgroundPosition: "right 0.25rem center",
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "1.25rem 1.25rem",
+                        }}
+                      >
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                      </select>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
+                        Tahun
+                      </span>
+                    </div>
+                  </div>
+                  {showAdminControls && (
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-gray-700">
+                        Bunga (%)
+                      </label>
+                      <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.01"
+                          value={annualRate}
+                          onChange={(e) =>
+                            setAnnualRate(Number(e.target.value))
+                          }
+                          onFocus={(e) => e.target.select()}
+                          className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
+                          %/thn
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                  <span className="text-sm text-gray-600">Angsuran</span>
+                  <span className="text-lg font-bold text-blue-700">
+                    Rp {formatCurrency(calculateAngsuran())}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Detail singkat: tipe, lantai, kamar */}
           <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3">

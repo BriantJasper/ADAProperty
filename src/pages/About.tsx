@@ -160,7 +160,7 @@ export default function About() {
               </p>
 
               {/* Stats with icons */}
-              <motion.div
+              {/* <motion.div
                 className="grid grid-cols-3 gap-6 mt-10 pt-8 border-t border-yellow-400/20"
                 initial="hidden"
                 whileInView="visible"
@@ -192,7 +192,7 @@ export default function About() {
                     </motion.div>
                   );
                 })}
-              </motion.div>
+              </motion.div> */}
             </div>
           </motion.div>
 
@@ -213,7 +213,7 @@ export default function About() {
             </motion.div>
 
             {/* Floating badge with glow */}
-            <motion.div
+            {/* <motion.div
               className="absolute top-8 right-8 bg-white/95 backdrop-blur-md rounded-full px-6 py-3 shadow-lg border border-yellow-400/50"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -224,7 +224,7 @@ export default function About() {
               <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-600 to-orange-600">
                 🏆 Trusted Since 2014
               </span>
-            </motion.div>
+            </motion.div> */}
           </motion.div>
         </motion.div>
 

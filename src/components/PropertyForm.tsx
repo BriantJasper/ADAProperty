@@ -39,13 +39,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     // add tour url
     tourUrl: property?.tourUrl || "",
     garage: false,
-    financing: property?.financing || {
-      dpPercent: 10,
-      tenorYears: 20,
-      fixedYears: 3,
-      bookingFee: 15000000,
-      ppnPercent: 11,
-    },
   });
 
   // Local display state for currency-formatted price input (visibility only)
@@ -58,11 +51,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Local display state for Booking Fee formatting
-  const [bookingFeeDisplay, setBookingFeeDisplay] = useState<string>(() => {
-    const n = Number((formData as any).financing?.bookingFee ?? 0);
-    return n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "";
-  });
+  // State for custom property types
+  const [customTypes, setCustomTypes] = useState<string[]>([]);
+  const [isAddingCustomType, setIsAddingCustomType] = useState(false);
+  const [customTypeInput, setCustomTypeInput] = useState("");
+
+  // Default property types
+  const defaultTypes = [
+    "rumah",
+    "apartemen",
+    "tanah",
+    "ruko",
+    "kavling",
+    "gudang",
+    "pabrik",
+  ];
+
+  // Combine default and custom types
+  const allTypes = [...defaultTypes, ...customTypes];
 
   // Keep formatted displays in sync when formData changes (e.g., on edit open)
   React.useEffect(() => {
@@ -70,20 +76,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     setPriceDisplay(n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "");
   }, [formData.price]);
 
-  React.useEffect(() => {
-    const n = Number((formData as any).financing?.bookingFee ?? 0);
-    setBookingFeeDisplay(n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "");
-  }, [(formData as any).financing?.bookingFee]);
-
   // When switching between add/edit or editing a different property, ensure displays sync from prop
   React.useEffect(() => {
     if (property) {
       const price = Number(property.price || 0);
       setPriceDisplay(price > 0 ? `Rp ${price.toLocaleString("id-ID")}` : "");
-      const booking = Number(property.financing?.bookingFee ?? 0);
-      setBookingFeeDisplay(
-        booking > 0 ? `Rp ${booking.toLocaleString("id-ID")}` : ""
-      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property?.id]);
@@ -127,13 +124,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     setPriceDisplay(digitsOnly ? `Rp ${num.toLocaleString("id-ID")}` : "");
   };
 
-  // Special handler for Booking Fee to format as currency while typing
-  const handleBookingFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value || "";
-    const digitsOnly = raw.replace(/\D+/g, "");
-    const num = digitsOnly ? parseInt(digitsOnly, 10) : 0;
-    updateFinancing({ bookingFee: num });
-    setBookingFeeDisplay(digitsOnly ? `Rp ${num.toLocaleString("id-ID")}` : "");
+  const handleAddCustomType = () => {
+    const trimmed = customTypeInput.trim().toLowerCase();
+    if (trimmed && !allTypes.includes(trimmed)) {
+      setCustomTypes([...customTypes, trimmed]);
+      setFormData((prev) => ({ ...prev, type: trimmed as any }));
+      setCustomTypeInput("");
+      setIsAddingCustomType(false);
+    }
+  };
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === "__custom__") {
+      setIsAddingCustomType(true);
+    } else {
+      setFormData((prev) => ({ ...prev, type: value as any }));
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,29 +170,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       imgs.splice(index, 1);
       return { ...prev, images: imgs };
     });
-  };
-
-  const updateFinancing = (
-    patch: Partial<{
-      dpPercent: number;
-      tenorYears: number;
-      fixedYears: number;
-      bookingFee: number;
-      ppnPercent: number;
-    }>
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      financing: {
-        dpPercent: 10,
-        tenorYears: 20,
-        fixedYears: 3,
-        bookingFee: 15000000,
-        ppnPercent: 11,
-        ...(prev as any).financing,
-        ...patch,
-      },
-    }));
   };
 
   // Template deskripsi: diletakkan di dalam komponen agar punya akses ke setFormData
@@ -257,15 +241,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
         tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
         // add tour url to payload
         tourUrl: trimmed(formData.tourUrl) || undefined,
-        financing: {
-          dpPercent: Number((formData as any).financing?.dpPercent ?? 10),
-          tenorYears: Number((formData as any).financing?.tenorYears ?? 20),
-          fixedYears: Number((formData as any).financing?.fixedYears ?? 3),
-          bookingFee: Number(
-            (formData as any).financing?.bookingFee ?? 15000000
-          ),
-          ppnPercent: Number((formData as any).financing?.ppnPercent ?? 11),
-        },
       } as Partial<Property>;
 
       // Validasi ringan di sisi klien agar sesuai aturan backend
@@ -288,14 +263,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       if (!propertyData.subLocation) {
         validationErrors.push("Sub lokasi wajib diisi");
       }
-      if (
-        !["rumah", "apartemen", "tanah", "ruko"].includes(
-          propertyData.type as string
-        )
-      ) {
-        validationErrors.push(
-          "Tipe harus salah satu dari: rumah, apartemen, tanah, ruko"
-        );
+      if (!propertyData.type || (propertyData.type as string).trim() === "") {
+        validationErrors.push("Tipe properti wajib diisi");
       }
       if (!["dijual", "disewa"].includes(propertyData.status as string)) {
         validationErrors.push("Status harus salah satu dari: dijual, disewa");
@@ -309,50 +278,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       }
       if (!propertyData.whatsappNumber) {
         validationErrors.push("Nomor WhatsApp wajib diisi");
-      }
-
-      // Validasi Parameter Pembiayaan
-      const fin = (propertyData as any).financing as {
-        dpPercent: number;
-        tenorYears: number;
-        fixedYears: number;
-        bookingFee: number;
-        ppnPercent?: number;
-      };
-      if (fin) {
-        if (
-          !Number.isFinite(fin.dpPercent) ||
-          fin.dpPercent < 5 ||
-          fin.dpPercent > 50
-        ) {
-          validationErrors.push("DP harus antara 5–50%");
-        }
-        if (
-          !Number.isFinite(fin.tenorYears) ||
-          fin.tenorYears < 5 ||
-          fin.tenorYears > 30
-        ) {
-          validationErrors.push("Tenor harus antara 5–30 tahun");
-        }
-        if (
-          !Number.isFinite(fin.fixedYears) ||
-          fin.fixedYears < 1 ||
-          fin.fixedYears > 10
-        ) {
-          validationErrors.push("Bunga fix harus antara 1–10 tahun");
-        }
-        if (!Number.isFinite(fin.bookingFee) || fin.bookingFee < 0) {
-          validationErrors.push("Booking fee harus ≥ 0");
-        }
-        if (fin.ppnPercent !== undefined) {
-          if (
-            !Number.isFinite(fin.ppnPercent) ||
-            fin.ppnPercent < 0 ||
-            fin.ppnPercent > 100
-          ) {
-            validationErrors.push("PPN harus antara 0–100%");
-          }
-        }
       }
 
       if (validationErrors.length > 0) {
@@ -469,19 +394,76 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tipe Properti *
             </label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Pilih Tipe</option>
-              <option value="rumah">Rumah</option>
-              <option value="apartemen">Apartemen</option>
-              <option value="tanah">Tanah</option>
-              <option value="ruko">Ruko</option>
-            </select>
+            {isAddingCustomType ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customTypeInput}
+                  onChange={(e) => setCustomTypeInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCustomType();
+                    }
+                  }}
+                  placeholder="Masukkan tipe properti baru..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomType}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  title="Tambah tipe"
+                >
+                  <IoAdd className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCustomType(false);
+                    setCustomTypeInput("");
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                  title="Batal"
+                >
+                  <IoClose className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleTypeChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Pilih Tipe</option>
+                <option value="rumah">Rumah</option>
+                <option value="apartemen">Apartemen</option>
+                <option value="tanah">Tanah</option>
+                <option value="ruko">Ruko</option>
+                <option value="kavling">Kavling</option>
+                <option value="gudang">Gudang</option>
+                <option value="pabrik">Pabrik</option>
+                {customTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </option>
+                ))}
+                <option
+                  value="__custom__"
+                  className="text-blue-600 font-semibold"
+                >
+                  + Tambah Tipe Baru...
+                </option>
+              </select>
+            )}
+            {!isAddingCustomType && (
+              <p className="text-xs text-gray-500 mt-1">
+                Tidak menemukan tipe yang sesuai? Pilih "+ Tambah Tipe Baru..."
+              </p>
+            )}
           </div>
         </div>
 
@@ -551,143 +533,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-        </div>
-
-        {/* Parameter Pembiayaan */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            Parameter Pembiayaan
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Persentase DP */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Persentase DP
-                </label>
-                <span className="text-lg font-bold text-blue-600">
-                  {(formData as any).financing?.dpPercent ?? 10}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min={5}
-                max={50}
-                step={1}
-                value={(formData as any).financing?.dpPercent ?? 10}
-                onChange={(e) =>
-                  updateFinancing({ dpPercent: Number(e.target.value) })
-                }
-                className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>5%</span>
-                <span>50%</span>
-              </div>
-            </div>
-
-            {/* Tenor Cicilan */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Tenor Cicilan (Tahun)
-                </label>
-                <span className="text-lg font-bold text-green-600">
-                  {(formData as any).financing?.tenorYears ?? 20} Thn
-                </span>
-              </div>
-              <input
-                type="range"
-                min={5}
-                max={30}
-                step={1}
-                value={(formData as any).financing?.tenorYears ?? 20}
-                onChange={(e) =>
-                  updateFinancing({ tenorYears: Number(e.target.value) })
-                }
-                className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>5 Thn</span>
-                <span>30 Thn</span>
-              </div>
-            </div>
-
-            {/* Bunga Fix */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Bunga Fix (Tahun)
-                </label>
-                <span className="text-lg font-bold text-amber-600">
-                  {(formData as any).financing?.fixedYears ?? 3} Thn
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={10}
-                step={1}
-                value={(formData as any).financing?.fixedYears ?? 3}
-                onChange={(e) =>
-                  updateFinancing({ fixedYears: Number(e.target.value) })
-                }
-                className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>1 Thn</span>
-                <span>10 Thn</span>
-              </div>
-            </div>
-
-            {/* PPN (%) */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  PPN (%)
-                </label>
-                <span className="text-lg font-bold text-purple-600">
-                  {(formData as any).financing?.ppnPercent ?? 11}%
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={(formData as any).financing?.ppnPercent ?? 11}
-                onChange={(e) =>
-                  updateFinancing({ ppnPercent: Number(e.target.value) })
-                }
-                className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>0%</span>
-                <span>100%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Booking Fee */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-            <div>
-              <label className="text-sm font-semibold text-gray-700">
-                Booking Fee (Rp)
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                min={0}
-                value={bookingFeeDisplay}
-                onChange={handleBookingFeeChange}
-                placeholder="Contoh: Rp 15.000.000"
-                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Nominal diformat otomatis untuk memudahkan dibaca.
-              </p>
-            </div>
           </div>
         </div>
 

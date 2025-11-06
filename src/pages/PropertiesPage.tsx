@@ -11,7 +11,6 @@ import {
   MapPin,
   Home,
   Building2,
-  DollarSign,
   X,
 } from "lucide-react";
 
@@ -23,6 +22,8 @@ const PropertiesPage: React.FC = () => {
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [minPriceDisplay, setMinPriceDisplay] = useState<string>("");
+  const [maxPriceDisplay, setMaxPriceDisplay] = useState<string>("");
 
   const location = state.selectedLocation;
 
@@ -34,6 +35,26 @@ const PropertiesPage: React.FC = () => {
     "Karawang",
     "Bandung",
   ];
+
+  // Handler for formatting min price
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value || "";
+    const digitsOnly = raw.replace(/\D+/g, "");
+    setMinPrice(digitsOnly);
+    setMinPriceDisplay(
+      digitsOnly ? `Rp ${Number(digitsOnly).toLocaleString("id-ID")}` : ""
+    );
+  };
+
+  // Handler for formatting max price
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value || "";
+    const digitsOnly = raw.replace(/\D+/g, "");
+    setMaxPrice(digitsOnly);
+    setMaxPriceDisplay(
+      digitsOnly ? `Rp ${Number(digitsOnly).toLocaleString("id-ID")}` : ""
+    );
+  };
 
   // Mendukung harga bertipe number (dari backend) maupun string (contoh data lama)
   const parsePriceToNumber = (price: string | number): number => {
@@ -91,10 +112,10 @@ const PropertiesPage: React.FC = () => {
     const min = minPrice ? Number(minPrice) : undefined;
     const max = maxPrice ? Number(maxPrice) : undefined;
     if (min !== undefined && !Number.isNaN(min)) {
-      list = list.filter((p) => parsePriceToNumber(p.price) >= min * 1_000_000);
+      list = list.filter((p) => parsePriceToNumber(p.price) >= min);
     }
     if (max !== undefined && !Number.isNaN(max)) {
-      list = list.filter((p) => parsePriceToNumber(p.price) <= max * 1_000_000);
+      list = list.filter((p) => parsePriceToNumber(p.price) <= max);
     }
     return list;
   }, [
@@ -120,6 +141,8 @@ const PropertiesPage: React.FC = () => {
     setTypeFilter("");
     setMinPrice("");
     setMaxPrice("");
+    setMinPriceDisplay("");
+    setMaxPriceDisplay("");
     setActiveSub("");
     setSearchQuery("");
   };
@@ -130,11 +153,20 @@ const PropertiesPage: React.FC = () => {
     { value: "Disewa", label: "Disewa" },
   ];
 
-  const typeOptions = [
-    { value: "", label: "Semua Tipe" },
-    { value: "Rumah", label: "Rumah" },
-    { value: "Apartemen", label: "Apartemen" },
-  ];
+  // Dynamically generate type options from actual property types
+  const typeOptions = useMemo(() => {
+    const uniqueTypes = Array.from(
+      new Set(state.properties.map((p) => p.type).filter(Boolean))
+    ).sort();
+
+    return [
+      { value: "", label: "Semua Tipe" },
+      ...uniqueTypes.map((type) => ({
+        value: type,
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+      })),
+    ];
+  }, [state.properties]);
 
   return (
     <div className="relative min-h-screen">
@@ -179,7 +211,6 @@ const PropertiesPage: React.FC = () => {
               {/* Location Dropdown */}
               <div className="max-w-md mx-auto mb-6">
                 <Dropdown
-                  label="Pilih Lokasi"
                   options={locations}
                   selected={location}
                   onSelect={(value) =>
@@ -269,30 +300,28 @@ const PropertiesPage: React.FC = () => {
                   {/* Price Min */}
                   <div>
                     <label className="flex items-center gap-2 text-sm text-white/90 mb-2 font-medium">
-                      <DollarSign className="w-4 h-4" />
-                      Harga Min (Juta)
+                      Harga Min (Rp)
                     </label>
                     <input
-                      type="number"
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
+                      type="text"
+                      value={minPriceDisplay}
+                      onChange={handleMinPriceChange}
                       className="w-full px-4 py-3 rounded-lg bg-white/95 backdrop-blur-sm text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-                      placeholder="300"
+                      placeholder="Rp 300.000.000"
                     />
                   </div>
 
                   {/* Price Max */}
                   <div>
                     <label className="flex items-center gap-2 text-sm text-white/90 mb-2 font-medium">
-                      <DollarSign className="w-4 h-4" />
-                      Harga Max (Juta)
+                      Harga Max (Rp)
                     </label>
                     <input
-                      type="number"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
+                      type="text"
+                      value={maxPriceDisplay}
+                      onChange={handleMaxPriceChange}
                       className="w-full px-4 py-3 rounded-lg bg-white/95 backdrop-blur-sm text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-                      placeholder="2000"
+                      placeholder="Rp 2.000.000.000"
                     />
                   </div>
                 </div>

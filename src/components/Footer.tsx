@@ -1,4 +1,5 @@
 import { Mail, MapPin, Phone, Instagram, Facebook, Music } from "lucide-react";
+import { COMPANY_INFO } from "../constants/company";
 
 export default function Footer() {
   return (
@@ -26,7 +27,7 @@ export default function Footer() {
               <Phone className="w-5 h-5 mt-1" />
               <div>
                 <p className="font-medium">Nomor Telepon</p>
-                <p>+62 82220005543</p>
+                <p>{COMPANY_INFO.whatsapp.displayNumber}</p>
               </div>
             </div>
 
@@ -34,7 +35,7 @@ export default function Footer() {
               <Mail className="w-5 h-5 mt-1" />
               <div>
                 <p className="font-medium">Alamat Email</p>
-                <p>adaproperty8899@gmail.com</p>
+                <p>{COMPANY_INFO.email}</p>
               </div>
             </div>
 
@@ -43,10 +44,11 @@ export default function Footer() {
               <div>
                 <p className="font-medium">Alamat Kantor</p>
                 <p>
-                  Jl. Cimandiri 1B Blok V No.9
+                  {COMPANY_INFO.address.street}
                   <br />
-                  Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat
-                  17823
+                  {COMPANY_INFO.address.area}, {COMPANY_INFO.address.city},{" "}
+                  {COMPANY_INFO.address.province}{" "}
+                  {COMPANY_INFO.address.postalCode}
                 </p>
               </div>
             </div>
@@ -57,7 +59,7 @@ export default function Footer() {
             <h3 className="font-semibold text-sm mb-3">Ikuti Kami</h3>
             <div className="flex gap-4">
               <a
-                href="https://www.instagram.com/adaproperty8899?igsh=YXozYWo4bWhvcmNi"
+                href={COMPANY_INFO.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors text-sm"
@@ -68,7 +70,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="https://www.facebook.com/share/1adZCfRby4/"
+                href={COMPANY_INFO.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors text-sm"
@@ -79,7 +81,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="https://tiktok.com/@adaproperty8899"
+                href={COMPANY_INFO.social.tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors text-sm"

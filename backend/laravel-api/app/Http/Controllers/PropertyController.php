@@ -7,20 +7,20 @@ use Illuminate\Http\Request;
 
 class PropertyController extends Controller
 {
-    private array $allowedTypes = ['rumah','apartemen','tanah','ruko'];
-    private array $allowedStatuses = ['dijual','disewa'];
+    // Allow any non-empty type string for flexibility
+    private array $allowedStatuses = ['dijual', 'disewa'];
 
     public function index()
     {
         $props = Property::query()->orderByDesc('id')->get();
-        return response()->json(['success'=>true,'data'=>$props->map(fn($p)=>$this->toFrontend($p))]);
+        return response()->json(['success' => true, 'data' => $props->map(fn($p) => $this->toFrontend($p))]);
     }
 
     public function show($id)
     {
         $p = Property::find($id);
-        if (!$p) return response()->json(['success'=>false,'error'=>'Not found'],404);
-        return response()->json(['success'=>true,'data'=>$this->toFrontend($p)]);
+        if (!$p) return response()->json(['success' => false, 'error' => 'Not found'], 404);
+        return response()->json(['success' => true, 'data' => $this->toFrontend($p)]);
     }
 
     public function store(Request $r)
@@ -28,11 +28,11 @@ class PropertyController extends Controller
         $data = $r->all();
         $type = strtolower(trim((string)($data['type'] ?? '')));
         $status = strtolower(trim((string)($data['status'] ?? '')));
-        if (!in_array($type,$this->allowedTypes) || !in_array($status,$this->allowedStatuses)) {
-            return response()->json(['success'=>false,'error'=>'Invalid property data'],400);
+        if (empty($type) || !in_array($status, $this->allowedStatuses)) {
+            return response()->json(['success' => false, 'error' => 'Invalid property data'], 400);
         }
         if (($data['price'] ?? 0) <= 0 || empty($data['title']) || empty($data['location']) || empty($data['subLocation'])) {
-            return response()->json(['success'=>false,'error'=>'Invalid property data'],400);
+            return response()->json(['success' => false, 'error' => 'Invalid property data'], 400);
         }
 
         $p = Property::create([
@@ -57,23 +57,23 @@ class PropertyController extends Controller
             'financing' => isset($data['financing']) ? json_encode($data['financing']) : null,
         ]);
 
-        return response()->json(['success'=>true,'data'=>$this->toFrontend($p)]);
+        return response()->json(['success' => true, 'data' => $this->toFrontend($p)]);
     }
 
     public function update($id, Request $r)
     {
         $p = Property::find($id);
-        if (!$p) return response()->json(['success'=>false,'error'=>'Not found'],404);
+        if (!$p) return response()->json(['success' => false, 'error' => 'Not found'], 404);
 
         $payload = $r->all();
         if (isset($payload['type'])) {
             $t = strtolower(trim((string)$payload['type']));
-            if (!in_array($t,$this->allowedTypes)) return response()->json(['success'=>false,'error'=>'Invalid type'],400);
+            if (empty($t)) return response()->json(['success' => false, 'error' => 'Invalid type'], 400);
             $payload['type'] = $t;
         }
         if (isset($payload['status'])) {
             $s = strtolower(trim((string)$payload['status']));
-            if (!in_array($s,$this->allowedStatuses)) return response()->json(['success'=>false,'error'=>'Invalid status'],400);
+            if (!in_array($s, $this->allowedStatuses)) return response()->json(['success' => false, 'error' => 'Invalid status'], 400);
             $payload['status'] = $s;
         }
 
@@ -96,7 +96,7 @@ class PropertyController extends Controller
             'tourUrl' => 'tour_url',
         ];
 
-        foreach ($map as $k=>$col) {
+        foreach ($map as $k => $col) {
             if (array_key_exists($k, $payload)) {
                 $p->$col = $payload[$k];
             }
@@ -106,15 +106,15 @@ class PropertyController extends Controller
         if (array_key_exists('financing', $payload)) $p->financing = json_encode($payload['financing']);
 
         $p->save();
-        return response()->json(['success'=>true,'data'=>$this->toFrontend($p)]);
+        return response()->json(['success' => true, 'data' => $this->toFrontend($p)]);
     }
 
     public function destroy($id)
     {
         $p = Property::find($id);
-        if (!$p) return response()->json(['success'=>false,'error'=>'Not found'],404);
+        if (!$p) return response()->json(['success' => false, 'error' => 'Not found'], 404);
         $p->delete();
-        return response()->json(['success'=>true,'message'=>'Property deleted successfully']);
+        return response()->json(['success' => true, 'message' => 'Property deleted successfully']);
     }
 
     private function toFrontend(Property $p)
@@ -153,6 +153,11 @@ class PropertyController extends Controller
     {
         if (!$raw) return $fallback;
         if (is_array($raw)) return $raw;
-        try { $j = json_decode($raw, true); return $j ?? $fallback; } catch (\Throwable $e) { return $fallback; }
+        try {
+            $j = json_decode($raw, true);
+            return $j ?? $fallback;
+        } catch (\Throwable $e) {
+            return $fallback;
+        }
     }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
+import { COMPANY_INFO } from "../constants/company";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -244,10 +245,10 @@ export default function ContactPage() {
                     Hubungi kami langsung untuk konsultasi cepat
                   </p>
                   <a
-                    href="tel:+6282220005543"
+                    href={`tel:${COMPANY_INFO.whatsapp.number}`}
                     className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
                   >
-                    +62 82220005543
+                    {COMPANY_INFO.whatsapp.displayNumber}
                   </a>
                 </div>
               </div>
@@ -271,10 +272,10 @@ export default function ContactPage() {
                     Kirim email untuk pertanyaan detail
                   </p>
                   <a
-                    href="mailto:adaproperty8899@gmail.com"
+                    href={`mailto:${COMPANY_INFO.email}`}
                     className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
                   >
-                    adaproperty8899@gmail.com
+                    {COMPANY_INFO.email}
                   </a>
                 </div>
               </div>
@@ -298,8 +299,10 @@ export default function ContactPage() {
                     Kunjungi kantor kami untuk konsultasi tatap muka
                   </p>
                   <p className="text-gray-700 font-medium">
-                    Jl. Cimandiri 1B Blok V No.9<br />
-                    Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat 17823
+                    Jl. Cimandiri 1B Blok V No.9
+                    <br />
+                    Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat
+                    17823
                   </p>
                 </div>
               </div>

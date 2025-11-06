@@ -41,6 +41,7 @@ type AppAction =
   | { type: "SET_AUTH_INITIALIZED"; payload: boolean }
   | { type: "ADD_CONSIGNMENT"; payload: ConsignmentRequest }
   | { type: "REMOVE_CONSIGNMENT"; payload: string }
+  | { type: "SET_CONSIGNMENTS"; payload: ConsignmentRequest[] }
   | {
       type: "MARK_CONSIGNMENT_STATUS";
       payload: { id: string; status: ConsignmentStatus };
@@ -173,6 +174,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         consignmentInbox: [...state.consignmentInbox, action.payload],
       };
+    case "SET_CONSIGNMENTS":
+      return {
+        ...state,
+        consignmentInbox: action.payload,
+      };
     case "REMOVE_CONSIGNMENT":
       return {
         ...state,
@@ -218,8 +224,14 @@ const AppContext = createContext<{
   addConsignment: (
     data: Omit<ConsignmentRequest, "id" | "createdAt" | "status">
   ) => Promise<{ success: boolean; error?: string }>;
-  removeConsignment: (id: string) => void;
-  markConsignmentStatus: (id: string, status: ConsignmentStatus) => void;
+  removeConsignment: (
+    id: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  markConsignmentStatus: (
+    id: string,
+    status: ConsignmentStatus
+  ) => Promise<{ success: boolean; error?: string }>;
+  loadConsignments: () => Promise<void>;
 } | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -468,27 +480,121 @@ export function AppProvider({ children }: { children: ReactNode }) {
     data: Omit<ConsignmentRequest, "id" | "createdAt" | "status">
   ) => {
     try {
-      // Generate a unique ID (you might want to use UUID library for production)
-      const newConsignment: ConsignmentRequest = {
-        ...data,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-        status: "pending",
+      // Convert field names to snake_case for API
+      const apiData = {
+        seller_name: data.sellerName,
+        seller_whatsapp: data.sellerWhatsapp,
+        seller_email: data.sellerEmail,
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        location: data.location,
+        sub_location: data.subLocation,
+        type: data.type,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        area: data.area,
+        land_area: data.landArea,
+        floors: data.floors,
+        images: data.images,
       };
 
-      dispatch({ type: "ADD_CONSIGNMENT", payload: newConsignment });
-      return { success: true };
+      const response = await ApiService.createConsignment(apiData);
+
+      if (response.success && response.data) {
+        // Convert API response back to camelCase for local state
+        const newConsignment: ConsignmentRequest = {
+          id: response.data.id.toString(),
+          sellerName: response.data.seller_name,
+          sellerWhatsapp: response.data.seller_whatsapp,
+          sellerEmail: response.data.seller_email,
+          title: response.data.title,
+          description: response.data.description,
+          price: response.data.price,
+          location: response.data.location,
+          subLocation: response.data.sub_location,
+          type: response.data.type,
+          bedrooms: response.data.bedrooms,
+          bathrooms: response.data.bathrooms,
+          area: response.data.area,
+          landArea: response.data.land_area,
+          floors: response.data.floors,
+          images: response.data.images || [],
+          status: response.data.status,
+          createdAt: new Date(response.data.created_at),
+        };
+
+        dispatch({ type: "ADD_CONSIGNMENT", payload: newConsignment });
+        return { success: true };
+      }
+
+      return {
+        success: false,
+        error: response.error || "Failed to create consignment",
+      };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
   };
 
-  const removeConsignment = (id: string) => {
-    dispatch({ type: "REMOVE_CONSIGNMENT", payload: id });
+  const removeConsignment = async (id: string) => {
+    try {
+      const response = await ApiService.deleteConsignment(id);
+      if (response.success) {
+        dispatch({ type: "REMOVE_CONSIGNMENT", payload: id });
+        return { success: true };
+      }
+      return { success: false, error: response.error };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   };
 
-  const markConsignmentStatus = (id: string, status: ConsignmentStatus) => {
-    dispatch({ type: "MARK_CONSIGNMENT_STATUS", payload: { id, status } });
+  const markConsignmentStatus = async (
+    id: string,
+    status: ConsignmentStatus
+  ) => {
+    try {
+      const response = await ApiService.updateConsignment(id, status);
+      if (response.success) {
+        dispatch({ type: "MARK_CONSIGNMENT_STATUS", payload: { id, status } });
+        return { success: true };
+      }
+      return { success: false, error: response.error };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const loadConsignments = async () => {
+    try {
+      const response = await ApiService.getConsignments();
+      if (response.success && Array.isArray(response.data)) {
+        const consignments = response.data.map((item: any) => ({
+          id: item.id.toString(),
+          sellerName: item.seller_name,
+          sellerWhatsapp: item.seller_whatsapp,
+          sellerEmail: item.seller_email,
+          title: item.title,
+          description: item.description,
+          price: item.price,
+          location: item.location,
+          subLocation: item.sub_location,
+          type: item.type,
+          bedrooms: item.bedrooms,
+          bathrooms: item.bathrooms,
+          area: item.area,
+          landArea: item.land_area,
+          floors: item.floors,
+          images: item.images || [],
+          status: item.status,
+          createdAt: new Date(item.created_at),
+        }));
+        dispatch({ type: "SET_CONSIGNMENTS", payload: consignments });
+      }
+    } catch (error) {
+      console.error("Failed to load consignments:", error);
+    }
   };
 
   // Load properties from API on mount
@@ -626,6 +732,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addConsignment,
         removeConsignment,
         markConsignmentStatus,
+        loadConsignments,
       }}
     >
       {children}
