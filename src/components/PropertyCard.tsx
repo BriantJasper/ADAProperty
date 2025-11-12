@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 import {
@@ -8,6 +8,7 @@ import {
   IoLogoTiktok,
   IoCart,
 } from "react-icons/io5";
+import { FaBed, FaBath } from "react-icons/fa";
 import {
   Home as HomeIcon,
   Building2,
@@ -15,6 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import PropertyCatalogModal from "./PropertyCatalogModal";
 
 interface PropertyCardProps {
@@ -66,6 +68,16 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       : ["/images/p1.png"];
   const [slide, setSlide] = useState(0);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [overlayPos, setOverlayPos] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  }>({
+    left: 0,
+    top: 0,
+    width: 0,
+  });
 
   // Sync when property financing changes
   useEffect(() => {
@@ -76,6 +88,42 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     if (typeof tenor === "number") setAngsuranYears(tenor);
     if (typeof rate === "number") setAnnualRate(rate);
   }, [property.id, property.financing]);
+
+  // Close expanded description when clicking outside (portal)
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!isDescExpanded) return;
+      const target = e.target as Node;
+      // If click is outside the card and overlay, close
+      if (cardRef.current && !cardRef.current.contains(target)) {
+        setIsDescExpanded(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [isDescExpanded]);
+
+  // Position overlay when expanded
+  useEffect(() => {
+    if (!isDescExpanded) return;
+    const update = () => {
+      const el = cardRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setOverlayPos({
+        left: r.left + window.scrollX,
+        top: r.bottom + window.scrollY,
+        width: r.width,
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, [isDescExpanded]);
 
   // Sync inline edit price display when toggling edit or when price changes
   useEffect(() => {
@@ -413,13 +461,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   return (
     <>
       <motion.div
-        className="max-w-sm overflow-hidden rounded-lg bg-white shadow-lg font-sans"
+        className="max-w-sm overflow-hidden rounded-lg bg-white shadow-lg font-sans flex flex-col h-full"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -2, scale: 1.02 }}
         transition={{ type: "spring", stiffness: 300, damping: 22 }}
       >
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           {/* Image Slider */}
           <div className="relative h-56 w-full overflow-hidden bg-gray-200">
             {/* Main Image */}
@@ -460,10 +508,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               {slide + 1} / {images.length}
             </div>
 
-            {/* Location - Top Center */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none">
-              <p className="text-xs font-semibold text-gray-800">
-                {property.location}
+            {/* Title - Top Center (show listing title) */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none max-w-[70%]">
+              <p className="text-xs font-semibold text-gray-800 truncate">
+                {property.title}
               </p>
             </div>
 
@@ -547,7 +595,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         </div>
 
         {/* Card Content */}
-        <div className="relative p-5" onClick={(e) => e.stopPropagation()}>
+        <div
+          ref={cardRef}
+          className="relative p-5 flex flex-col flex-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Watermark Logo */}
           <div className="absolute inset-0 flex justify-center items-center pointer-events-none select-none z-0">
             <img
@@ -561,6 +613,29 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           <h3 className="text-2xl font-bold text-gray-900 relative z-10">
             Rp {formatCurrency(property.price)}
           </h3>
+
+          {/* Location & SubLocation (above DP) with KM/KT badges to the right */}
+          <div className="mt-2 flex items-start justify-between relative z-10">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">
+                {property.location}
+              </span>
+              <span className="text-xs text-gray-500">
+                {property.subLocation || "-"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                <FaBath size={16} className="text-gray-700" />
+                <span>{property.bathrooms}</span>
+              </div>
+              <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                <FaBed size={16} className="text-gray-700" />
+                <span>{property.bedrooms}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Financing (DP & Tenor) only for properties that are for sale */}
           {isForSale && (
@@ -659,7 +734,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           )}
 
           {/* Detail singkat: tipe, lantai, kamar */}
-          <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3">
+          <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 min-h-[5.5rem]">
             <p
               className={`text-sm text-gray-700 leading-relaxed ${
                 isDescExpanded
@@ -683,7 +758,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-auto">
             {hasTourLink ? (
               <a
                 href={property.tourUrl}
@@ -751,6 +826,33 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
         </div>
       </motion.div>
+      {isDescExpanded &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            style={{
+              left: overlayPos.left,
+              top: overlayPos.top,
+              width: overlayPos.width,
+            }}
+            className="fixed z-50 bg-white border rounded-lg shadow-xl p-4 max-h-[70vh] overflow-auto"
+          >
+            <div className="flex justify-between items-start gap-2 mb-2">
+              <h4 className="text-lg font-semibold">{property.title}</h4>
+              <button
+                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setIsDescExpanded(false)}
+                aria-label="Tutup deskripsi"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="text-sm text-gray-700 whitespace-pre-line">
+              {property.description}
+            </div>
+          </div>,
+          document.body
+        )}
       {isCatalogOpen && (
         <PropertyCatalogModal
           property={property}
