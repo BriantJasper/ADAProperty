@@ -1,4 +1,10 @@
-import { createContext, useContext, useReducer, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import type { Property, ComparisonItem } from "../types/Property";
 import type {
@@ -566,7 +572,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loadConsignments = async () => {
+  const loadConsignments = useCallback(async () => {
     try {
       const response = await ApiService.getConsignments();
       if (response.success && Array.isArray(response.data)) {
@@ -595,7 +601,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to load consignments:", error);
     }
-  };
+  }, [dispatch]);
 
   // Load properties from API on mount
   useEffect(() => {

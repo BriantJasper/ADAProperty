@@ -7,6 +7,31 @@ use App\Http\Controllers\UploadController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ConsignmentController;
 
+// Handle all OPTIONS requests (CORS preflight)
+Route::options('/{any}', function () {
+    return response('', 200);
+})->where('any', '.*');
+
+// Lightweight health check (no auth)
+Route::get('/health', function () {
+    return response()->json([
+        'ok' => true,
+        'env' => app()->environment(),
+        'time' => now()->toIso8601String(),
+    ]);
+});
+
+// Debug: Test CORS middleware is loaded
+Route::get('/debug/middleware', function () {
+    $apiMiddleware = app(\Illuminate\Foundation\Configuration\Middleware::class);
+    return response()->json([
+        'cors_middleware_exists' => class_exists(\App\Http\Middleware\CorsMiddleware::class),
+        'cors_file_path' => class_exists(\App\Http\Middleware\CorsMiddleware::class)
+            ? (new ReflectionClass(\App\Http\Middleware\CorsMiddleware::class))->getFileName()
+            : 'not found',
+    ]);
+});
+
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/verify', [AuthController::class, 'verify']);
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -29,6 +54,8 @@ Route::middleware('jwt')->group(function () {
 
     // Consignment management (admin only)
     Route::get('/consignments', [ConsignmentController::class, 'index']);
+    Route::get('/consignments/download', [ConsignmentController::class, 'downloadImage']);
+    Route::get('/consignments/{id}', [ConsignmentController::class, 'show']);
     Route::put('/consignments/{id}', [ConsignmentController::class, 'update']);
     Route::delete('/consignments/{id}', [ConsignmentController::class, 'destroy']);
 

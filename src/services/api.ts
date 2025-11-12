@@ -1,4 +1,6 @@
-const API_BASE_URL = (() => {
+// @ts-nocheck
+
+export const API_BASE_URL = (() => {
   const envUrl = import.meta.env.VITE_API_BASE_URL?.trim();
   if (envUrl) return envUrl;
   const isLocal =
@@ -31,7 +33,6 @@ class ApiService {
     try {
       // Gunakan fallback hanya jika diaktifkan secara eksplisit
       if (USE_FALLBACK) {
-        console.log("Using fallback data for endpoint:", endpoint);
         this.ensureFallbackLoaded();
         return this.getFallbackResponse(endpoint, options);
       }
@@ -49,19 +50,16 @@ class ApiService {
           data = { success: false, error: text || "Invalid response format" };
         }
       } catch (parseError) {
-        console.error("Failed to parse response:", parseError);
         return { success: false, error: "Failed to parse response" };
       }
 
       // Jika status tidak OK, kembalikan data error dari server tanpa fallback
       if (!response.ok) {
-        console.error("API Error:", data?.error || "API request failed");
         return data || { success: false, error: "API request failed" };
       }
 
       return data;
     } catch (error: any) {
-      console.error("API Error:", error);
       // Jangan menulis ke localStorage; kembalikan error saja
       return { success: false, error: error?.message || "Network error" };
     }
@@ -157,7 +155,7 @@ class ApiService {
         nextFallbackId = maxId + 1;
       }
     } catch (e) {
-      console.error("Failed to load fallback properties from localStorage:", e);
+      // Failed to load fallback properties
     }
   }
 
@@ -169,10 +167,7 @@ class ApiService {
         JSON.stringify(this.fallbackProperties)
       );
     } catch (e) {
-      console.error(
-        "Failed to persist fallback properties to localStorage:",
-        e
-      );
+      // Failed to persist fallback properties
     }
   }
 
@@ -392,7 +387,7 @@ class ApiService {
           const credentials = JSON.parse(storedAdminCredentials);
           adminPassword = credentials.password;
         } catch (e) {
-          console.error("Error parsing stored admin credentials:", e);
+          // Error parsing stored admin credentials
         }
       }
 
@@ -672,6 +667,7 @@ class ApiService {
             fixedYears: toNumber(financingParsed.fixedYears) ?? undefined,
             bookingFee: toNumber(financingParsed.bookingFee) ?? undefined,
             ppnPercent: toNumber(financingParsed.ppnPercent) ?? undefined,
+            interestRate: toNumber(financingParsed.interestRate) ?? undefined,
           }
         : undefined;
 
@@ -732,6 +728,30 @@ class ApiService {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
     });
+  }
+
+  static async downloadConsignmentImage(
+    imagePath: string,
+    filename?: string
+  ): Promise<Response> {
+    const params = new URLSearchParams({ path: imagePath });
+    if (filename) {
+      params.append("filename", filename);
+    }
+
+    const url = `${API_BASE_URL}/consignments/download?${params.toString()}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response;
   }
 
   static async createConsignment(consignmentData: any) {

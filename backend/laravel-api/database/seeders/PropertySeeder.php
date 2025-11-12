@@ -29,7 +29,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p1.png']),
                 'features' => json_encode(['Carport', 'Taman', 'Air PAM']),
                 'whatsapp_number' => '6281234567890',
-                'financing' => 'KPR tersedia dengan DP 10%',
+                'financing' => json_encode([
+                    'dpPercent' => 10,
+                    'tenorYears' => 15,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.5,
+                ]),
             ],
             [
                 'title' => 'Ruko 3 Lantai Lippo Cikarang',
@@ -47,7 +53,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p2.png']),
                 'features' => json_encode(['Parkir Luas', 'Lokasi Strategis', 'AC']),
                 'whatsapp_number' => '6281234567891',
-                'financing' => 'Cash keras atau KPR dengan DP 30%',
+                'financing' => json_encode([
+                    'dpPercent' => 15,
+                    'tenorYears' => 10,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 6.0,
+                ]),
             ],
             [
                 'title' => 'Rumah Minimalis Bekasi Timur',
@@ -65,7 +77,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p3.png']),
                 'features' => json_encode(['Garasi', 'Taman Belakang', 'Smart Home']),
                 'whatsapp_number' => '6281234567892',
-                'financing' => 'KPR tersedia dengan berbagai bank',
+                'financing' => json_encode([
+                    'dpPercent' => 10,
+                    'tenorYears' => 20,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.25,
+                ]),
             ],
             [
                 'title' => 'Apartemen Grand Galaxy City',
@@ -83,7 +101,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p4.png']),
                 'features' => json_encode(['Furnished', 'Swimming Pool', 'Security 24/7', 'Gym']),
                 'whatsapp_number' => '6281234567893',
-                'financing' => 'Cash atau KPR tersedia',
+                'financing' => json_encode([
+                    'dpPercent' => 15,
+                    'tenorYears' => 10,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.75,
+                ]),
             ],
             [
                 'title' => 'Rumah Mewah Pondok Indah',
@@ -121,7 +145,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p6.png']),
                 'features' => json_encode(['Sertifikat SHM', 'Akses Jalan Lebar', 'Dekat Tol']),
                 'whatsapp_number' => '6281234567895',
-                'financing' => 'Cash bertahap atau KPR tanah',
+                'financing' => json_encode([
+                    'dpPercent' => 15,
+                    'tenorYears' => 15,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.5,
+                ]),
             ],
             [
                 'title' => 'Gudang Industri Jababeka',
@@ -139,7 +169,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p7.png']),
                 'features' => json_encode(['Loading Dock', 'Parkir Truk', 'Security', 'Listrik 3 Phase']),
                 'whatsapp_number' => '6281234567896',
-                'financing' => 'Cash atau kredit bank corporate',
+                'financing' => json_encode([
+                    'dpPercent' => 20,
+                    'tenorYears' => 10,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 6.25,
+                ]),
             ],
             [
                 'title' => 'Rumah Cluster Bandung Utara',
@@ -157,7 +193,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p8.png']),
                 'features' => json_encode(['Cluster Security', 'Playground', 'Jogging Track']),
                 'whatsapp_number' => '6281234567897',
-                'financing' => 'KPR tersedia dengan DP 20%',
+                'financing' => json_encode([
+                    'dpPercent' => 20,
+                    'tenorYears' => 15,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.4,
+                ]),
             ],
             [
                 'title' => 'Ruko Dijual Cepat Karawang',
@@ -175,7 +217,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p9.png']),
                 'features' => json_encode(['Parkir Depan', 'Listrik Besar', 'Lokasi Ramai']),
                 'whatsapp_number' => '6281234567898',
-                'financing' => 'Nego sampai deal',
+                'financing' => json_encode([
+                    'dpPercent' => 10,
+                    'tenorYears' => 12,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.9,
+                ]),
             ],
             [
                 'title' => 'Rumah Disewakan Bekasi',
@@ -193,7 +241,7 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p10.png']),
                 'features' => json_encode(['Furnished', 'AC', 'Water Heater']),
                 'whatsapp_number' => '6281234567899',
-                'financing' => 'Sewa tahunan, bayar 2 tahun dapat diskon',
+                'financing' => null,
             ],
             [
                 'title' => 'Pabrik Dijual di EJIP Cikarang',
@@ -211,7 +259,13 @@ class PropertySeeder extends Seeder
                 'images' => json_encode(['/images/p11.png']),
                 'features' => json_encode(['Mesin Lengkap', 'Genset', 'Office Area', 'Canteen']),
                 'whatsapp_number' => '6281234567800',
-                'financing' => 'Cash atau kredit bank dengan jaminan aset',
+                'financing' => json_encode([
+                    'dpPercent' => 25,
+                    'tenorYears' => 10,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 6.5,
+                ]),
             ],
             [
                 'title' => 'Apartemen Kemang Village Jakarta',
@@ -230,7 +284,13 @@ class PropertySeeder extends Seeder
                 'features' => json_encode(['Fully Furnished', 'Sky Garden', 'Concierge', 'Premium Location']),
                 'whatsapp_number' => '6281234567801',
                 'tour_url' => 'https://example.com/virtual-tour',
-                'financing' => 'Cash atau KPR',
+                'financing' => json_encode([
+                    'dpPercent' => 15,
+                    'tenorYears' => 15,
+                    'fixedYears' => 1,
+                    'bookingFee' => 0,
+                    'interestRate' => 5.6,
+                ]),
             ],
         ];
 

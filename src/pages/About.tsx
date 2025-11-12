@@ -1,14 +1,4 @@
-import React, { useEffect, useRef } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useInView,
-  useSpring,
-} from "framer-motion";
-import { Linkedin, Twitter, Award, Users, TrendingUp } from "lucide-react";
-
-const members: never[] = [];
+import { motion } from "framer-motion";
 
 // Animation variants
 const fadeInUp = {
@@ -16,7 +6,7 @@ const fadeInUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6 },
   },
 };
 
@@ -25,7 +15,7 @@ const fadeInScale = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.5, ease: "easeOut" },
+    transition: { duration: 0.5 },
   },
 };
 
@@ -41,23 +31,10 @@ const staggerContainer = {
 };
 
 export default function About() {
-  const heroRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.8, 0.6]);
-
-  const springConfig = { stiffness: 100, damping: 30 };
-  const ySpring = useSpring(y, springConfig);
-
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* Hero Section */}
       <motion.div
-        ref={heroRef}
         className="relative overflow-hidden pt-32 pb-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -203,14 +180,14 @@ export default function About() {
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
           >
-            <motion.div style={{ y: ySpring, opacity }} className="relative">
+            <div className="relative">
               <img
                 src="/images/hero-bg.png"
                 alt="Tentang ADA Property"
                 className="w-full h-[500px] object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-yellow-600/5 to-transparent" />
-            </motion.div>
+            </div>
 
             {/* Floating badge with glow */}
             {/* <motion.div

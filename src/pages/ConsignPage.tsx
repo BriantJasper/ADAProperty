@@ -1,23 +1,7 @@
 import { useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
+import ApiService from "../services/api";
 import type { ConsignmentRequest } from "../types/Consignment";
-
-function readFilesAsDataUrls(files: FileList): Promise<string[]> {
-  const max = Math.min(files.length, 5);
-  const readers = [] as Promise<string>[];
-  for (let i = 0; i < max; i++) {
-    const file = files[i];
-    readers.push(
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      })
-    );
-  }
-  return Promise.all(readers);
-}
 
 export default function ConsignPage() {
   const { addConsignment } = useApp();
@@ -44,6 +28,7 @@ export default function ConsignPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [priceDisplay, setPriceDisplay] = useState<string>("");
 
@@ -91,22 +76,33 @@ export default function ConsignPage() {
   const handleImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
     setUploading(true);
     try {
-      const newUrls = await readFilesAsDataUrls(files);
-      setForm((prev) => {
-        const existing = prev.images ?? [];
-        const merged = [...existing, ...newUrls];
-        if (merged.length > 5) {
-          setError("Maksimal 5 foto. Foto tambahan diabaikan.");
-        }
-        return { ...prev, images: merged.slice(0, 5) };
-      });
-      // reset input agar bisa memilih file yang sama lagi jika perlu
-      e.target.value = "";
-      setError(null);
+      // Convert FileList to Array and limit to 5 files
+      const filesArray = Array.from(files).slice(0, 5);
+
+      // Upload files to server
+      const res = await ApiService.uploadImages(filesArray);
+
+      if (res?.success && Array.isArray(res.data)) {
+        setForm((prev) => {
+          const existing = prev.images ?? [];
+          const merged = [...existing, ...res.data];
+          if (merged.length > 5) {
+            setError("Maksimal 5 foto. Foto tambahan diabaikan.");
+            return { ...prev, images: merged.slice(0, 5) };
+          }
+          return { ...prev, images: merged };
+        });
+        // reset input agar bisa memilih file yang sama lagi jika perlu
+        e.target.value = "";
+        setError(null);
+      } else {
+        setError(res?.error || "Gagal mengunggah gambar.");
+      }
     } catch (err: any) {
-      setError("Gagal membaca file gambar.");
+      setError("Gagal mengunggah gambar.");
     } finally {
       setUploading(false);
     }
@@ -117,20 +113,31 @@ export default function ConsignPage() {
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (!files || files.length === 0) return;
+
     setUploading(true);
     try {
-      const newUrls = await readFilesAsDataUrls(files);
-      setForm((prev) => {
-        const existing = prev.images ?? [];
-        const merged = [...existing, ...newUrls];
-        if (merged.length > 5) {
-          setError("Maksimal 5 foto. Foto tambahan diabaikan.");
-        }
-        return { ...prev, images: merged.slice(0, 5) };
-      });
-      setError(null);
+      // Convert FileList to Array and limit to 5 files
+      const filesArray = Array.from(files).slice(0, 5);
+
+      // Upload files to server
+      const res = await ApiService.uploadImages(filesArray);
+
+      if (res?.success && Array.isArray(res.data)) {
+        setForm((prev) => {
+          const existing = prev.images ?? [];
+          const merged = [...existing, ...res.data];
+          if (merged.length > 5) {
+            setError("Maksimal 5 foto. Foto tambahan diabaikan.");
+            return { ...prev, images: merged.slice(0, 5) };
+          }
+          return { ...prev, images: merged };
+        });
+        setError(null);
+      } else {
+        setError(res?.error || "Gagal mengunggah gambar.");
+      }
     } catch (err: any) {
-      setError("Gagal membaca file gambar.");
+      setError("Gagal mengunggah gambar.");
     } finally {
       setUploading(false);
     }
@@ -170,39 +177,53 @@ export default function ConsignPage() {
       return;
     }
 
-    // Normalize WhatsApp number to start with country code 62
-    const rawWa = (form.sellerWhatsapp || "").replace(/\D/g, "");
-    let nationalWa = rawWa;
-    if (rawWa.startsWith("+62")) {
-      nationalWa = rawWa.slice(3);
-    } else if (rawWa.startsWith("62")) {
-      nationalWa = rawWa.slice(2);
-    } else if (rawWa.startsWith("0")) {
-      nationalWa = rawWa.slice(1);
-    }
-    const payload = { ...form, sellerWhatsapp: `62${nationalWa}` };
+    // Set submitting state
+    setSubmitting(true);
 
-    const resp = await addConsignment(payload);
-    if (resp.success) {
-      setSuccess("Pengajuan titip jual berhasil dikirim. Admin akan meninjau.");
-      // reset minimal fields
-      setPriceDisplay("");
-      setForm((prev) => ({
-        ...prev,
-        title: "",
-        description: "",
-        price: undefined,
-        location: "",
-        subLocation: "",
-        bedrooms: undefined,
-        bathrooms: undefined,
-        area: undefined,
-        landArea: undefined,
-        floors: undefined,
-        images: [],
-      }));
-    } else {
-      setError(resp.error || "Gagal mengirim pengajuan.");
+    try {
+      // Normalize WhatsApp number to start with country code 62
+      const rawWa = (form.sellerWhatsapp || "").replace(/\D/g, "");
+      let nationalWa = rawWa;
+      if (rawWa.startsWith("+62")) {
+        nationalWa = rawWa.slice(3);
+      } else if (rawWa.startsWith("62")) {
+        nationalWa = rawWa.slice(2);
+      } else if (rawWa.startsWith("0")) {
+        nationalWa = rawWa.slice(1);
+      }
+      const payload = { ...form, sellerWhatsapp: `62${nationalWa}` };
+
+      const resp = await addConsignment(payload);
+      if (resp.success) {
+        setSuccess(
+          "Pengajuan titip jual berhasil dikirim! Admin akan menghubungi Anda segera."
+        );
+        // reset minimal fields
+        setPriceDisplay("");
+        setForm((prev) => ({
+          ...prev,
+          title: "",
+          description: "",
+          price: undefined,
+          location: "",
+          subLocation: "",
+          bedrooms: undefined,
+          bathrooms: undefined,
+          area: undefined,
+          landArea: undefined,
+          floors: undefined,
+          images: [],
+        }));
+
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        setError(resp.error || "Gagal mengirim pengajuan. Silakan coba lagi.");
+      }
+    } catch (err: any) {
+      setError("Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -216,13 +237,38 @@ export default function ConsignPage() {
       </p>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-4 rounded mb-6 flex items-start gap-3">
+          <svg
+            className="w-6 h-6 flex-shrink-0 mt-0.5"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <div className="flex-1">{error}</div>
         </div>
       )}
       {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          {success}
+        <div className="bg-green-50 border-l-4 border-green-400 text-green-700 px-4 py-4 rounded mb-6 flex items-start gap-3">
+          <svg
+            className="w-6 h-6 flex-shrink-0 mt-0.5"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="font-semibold mb-1">Berhasil!</p>
+            <p>{success}</p>
+          </div>
         </div>
       )}
 
@@ -492,10 +538,50 @@ export default function ConsignPage() {
         <div className="pt-2">
           <button
             type="submit"
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow"
+            disabled={submitting || uploading}
+            className={`px-6 py-3 rounded shadow font-medium transition-all ${
+              submitting || uploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700 text-white"
+            }`}
           >
-            Kirim Pengajuan
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Mengirim...
+              </span>
+            ) : uploading ? (
+              "Menunggu upload gambar..."
+            ) : (
+              "Kirim Pengajuan"
+            )}
           </button>
+          {(submitting || uploading) && (
+            <p className="text-sm text-gray-500 mt-2">
+              {uploading
+                ? "Sedang mengunggah gambar, mohon tunggu..."
+                : "Sedang memproses pengajuan Anda..."}
+            </p>
+          )}
         </div>
       </form>
     </div>

@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, Settings, LogOut, Menu, X } from "lucide-react";
+import {
+  ShoppingCart,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Home,
+  Info,
+  Building2,
+  Phone,
+  PlusSquare,
+} from "lucide-react";
 import { useApp } from "../context/AppContext";
 
 export default function Navbar() {
@@ -55,8 +66,8 @@ export default function Navbar() {
     ? "text-gray-700 hover:text-yellow-600"
     : "text-white hover:text-yellow-300";
   const headerClass = useSolid
-    ? "sticky top-0 left-0 right-0 z-50 bg-white border-b shadow"
-    : "absolute top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md";
+    ? "sticky top-0 left-0 right-0 z-50 bg-white border-b shadow rounded-b-2xl md:rounded-none overflow-hidden"
+    : "absolute top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md rounded-b-2xl md:rounded-none overflow-hidden";
   const iconBtn = useSolid
     ? "p-2.5 rounded-lg bg-gray-100 hover:bg-yellow-100 text-gray-700 hover:text-yellow-600 transition-all duration-200"
     : "p-2.5 rounded-lg bg-white/20 hover:bg-yellow-400/30 text-white transition-all duration-200";
@@ -198,44 +209,46 @@ export default function Navbar() {
         {isOpen && (
           <div
             className={`md:hidden pb-4 ${
-              useSolid ? "bg-white" : "bg-white/10 backdrop-blur-md"
+              useSolid
+                ? "bg-transparent border-t border-gray-200/80"
+                : "bg-transparent border-t border-white/20"
             }`}
           >
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-4 mt-2">
               <Link
                 to="/"
-                className={`${linkBase} font-medium`}
+                className={`${linkBase} font-medium flex items-center gap-2`}
                 onClick={() => setIsOpen(false)}
               >
-                Home
+                <Home className="w-4 h-4" /> Home
               </Link>
               <Link
                 to="/about"
-                className={`${linkBase} font-medium`}
+                className={`${linkBase} font-medium flex items-center gap-2`}
                 onClick={() => setIsOpen(false)}
               >
-                Tentang Kami
+                <Info className="w-4 h-4" /> Tentang Kami
               </Link>
               <Link
                 to="/properties"
-                className={`${linkBase} font-medium`}
+                className={`${linkBase} font-medium flex items-center gap-2`}
                 onClick={() => setIsOpen(false)}
               >
-                Properti
+                <Building2 className="w-4 h-4" /> Properti
               </Link>
               <Link
                 to="/contact"
-                className={`${linkBase} font-medium`}
+                className={`${linkBase} font-medium flex items-center gap-2`}
                 onClick={() => setIsOpen(false)}
               >
-                Kontak Kami
+                <Phone className="w-4 h-4" /> Kontak Kami
               </Link>
               <Link
                 to="/consign"
-                className={`${linkBase} font-medium`}
+                className={`${linkBase} font-medium flex items-center gap-2`}
                 onClick={() => setIsOpen(false)}
               >
-                Jual Properti
+                <PlusSquare className="w-4 h-4" /> Jual Properti
               </Link>
               {/* Admin Panel link only for admins */}
               {state.isAuthenticated && state.user?.role === "admin" && (
@@ -244,9 +257,9 @@ export default function Navbar() {
                     handleAdminClick();
                     setIsOpen(false);
                   }}
-                  className={`${linkBase} font-medium text-left`}
+                  className={`${linkBase} font-medium text-left flex items-center gap-2`}
                 >
-                  Admin Panel
+                  <Settings className="w-4 h-4" /> Admin Panel
                 </button>
               )}
               {/* Logout for any authenticated user */}
@@ -256,9 +269,9 @@ export default function Navbar() {
                     handleLogout();
                     setIsOpen(false);
                   }}
-                  className={`${linkBase} font-medium text-left`}
+                  className={`${linkBase} font-medium text-left flex items-center gap-2`}
                 >
-                  Logout
+                  <LogOut className="w-4 h-4" /> Logout
                 </button>
               )}
               <button

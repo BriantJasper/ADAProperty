@@ -2,39 +2,24 @@ import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { IoArrowBack, IoTrash } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import { Scale, TrendingUp, DollarSign, Home, Zap } from "lucide-react";
+import { Scale } from "lucide-react";
 import type { Property } from "../types/Property";
 import { FaWhatsapp } from "react-icons/fa";
 import PropertyCatalogModal from "../components/PropertyCatalogModal";
-
-interface SectionConfig {
-  title: string;
-  icon: React.ReactNode;
-  color: string;
-  borderColor: string;
-  accentColor: string;
-  bgGradient: string;
-  rows: RowConfig[];
-}
-
-interface RowConfig {
-  label: string;
-  key: keyof Property | string;
-  formatter?: (value: any, prop: Property) => string | number;
-}
 
 const ComparisonPage: React.FC = () => {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [catalogProperty, setCatalogProperty] = useState<Property | null>(null);
-  const [descExpandedMap, setDescExpandedMap] = useState<Record<string, boolean>>({});
+  const [descExpandedMap, setDescExpandedMap] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  const openCatalog = (prop: Property) => setCatalogProperty(prop);
   const closeCatalog = () => setCatalogProperty(null);
 
   const handleRemoveProperty = (propertyId: string) => {
@@ -43,256 +28,6 @@ const ComparisonPage: React.FC = () => {
 
   const comparisonProperties = state.comparisonCart.map(
     (item) => item.property
-  );
-
-  // Gunakan nomor WhatsApp admin jika tersedia dari env, fallback ke nomor properti
-  const adminWhatsApp = (import.meta as any).env?.VITE_ADMIN_WHATSAPP as
-    | string
-    | undefined;
-
-  const sectionConfigs: SectionConfig[] = [
-    {
-      title: "Harga Properti",
-      icon: <DollarSign size={18} />,
-      color: "blue",
-      borderColor: "border-blue-300",
-      accentColor: "bg-blue-600",
-      bgGradient: "from-blue-50 to-blue-100",
-      rows: [
-        {
-          label: "Harga Pokok",
-          key: "price",
-          formatter: (value) => `Rp ${value?.toLocaleString() || "0"}`,
-        },
-        {
-          label: "DP %",
-          key: "price",
-          formatter: (value, prop) => {
-            const dpPercent = prop.financing?.dpPercent ?? 10;
-            const dpAmount = Math.round((value || 0) * (dpPercent / 100));
-            return `Rp ${dpAmount.toLocaleString()}`;
-          },
-        },
-      ],
-    },
-    {
-      title: "Biaya Tambahan",
-      icon: <Zap size={18} />,
-      color: "amber",
-      borderColor: "border-amber-300",
-      accentColor: "bg-amber-600",
-      bgGradient: "from-amber-50 to-amber-100",
-      rows: [
-        {
-          label: "Booking Fee",
-          key: "price",
-          formatter: (_value, prop) => {
-            const booking = prop.financing?.bookingFee ?? 10000000;
-            return `Rp ${booking.toLocaleString()}`;
-          },
-        },
-        {
-          label: "Sisa DP",
-          key: "price",
-          formatter: (value, prop) => {
-            const dpPercent = prop.financing?.dpPercent ?? 10;
-            const booking = prop.financing?.bookingFee ?? 10000000;
-            const dpAmount = Math.round((value || 0) * (dpPercent / 100));
-            const sisaDp = Math.max(dpAmount - booking, 0);
-            return `Rp ${sisaDp.toLocaleString()}`;
-          },
-        },
-      ],
-    },
-    {
-      title: "Cicilan Bulanan",
-      icon: <TrendingUp size={18} />,
-      color: "green",
-      borderColor: "border-green-300",
-      accentColor: "bg-green-600",
-      bgGradient: "from-green-50 to-green-100",
-      rows: [
-        {
-          label: "Angsuran",
-          key: "price",
-          formatter: (value, prop) => {
-            const dpPercent = prop.financing?.dpPercent ?? 10;
-            const tenorYears = prop.financing?.tenorYears ?? 20;
-            const fixedYears = prop.financing?.fixedYears ?? 3;
-            const dpAmount = Math.round((value || 0) * (dpPercent / 100));
-            const principalAmount = (value || 0) - dpAmount;
-            const monthlyInstallment = Math.round(
-              principalAmount / (tenorYears * 12)
-            );
-            return `Rp ${monthlyInstallment.toLocaleString()} Fix ${fixedYears} Thn (Tenor ${tenorYears} Thn)`;
-          },
-        },
-      ],
-    },
-    {
-      title: "Fasilitas",
-      icon: <Home size={18} />,
-      color: "purple",
-      borderColor: "border-purple-300",
-      accentColor: "bg-purple-600",
-      bgGradient: "from-purple-50 to-purple-100",
-      rows: [
-        {
-          label: "Kamar Tidur",
-          key: "bedrooms",
-          formatter: (value) => value || "-",
-        },
-        {
-          label: "Kamar Mandi",
-          key: "bathrooms",
-          formatter: (value) => value || "-",
-        },
-        {
-          label: "Luas Bangunan (m²)",
-          key: "area",
-          formatter: (value) => `${value || "-"} m²`,
-        },
-        {
-          label: "Luas Tanah (m²)",
-          key: "landArea",
-          formatter: (value) => `${value || "-"} m²`,
-        },
-      ],
-    },
-    {
-      title: "Spesifikasi Properti",
-      icon: <Scale size={18} />,
-      color: "indigo",
-      borderColor: "border-indigo-300",
-      accentColor: "bg-indigo-600",
-      bgGradient: "from-indigo-50 to-indigo-100",
-      rows: [
-        {
-          label: "Tipe Properti",
-          key: "type",
-          formatter: (value) => value || "-",
-        },
-        {
-          label: "Status",
-          key: "status",
-          formatter: (value) =>
-            value === "dijual" ? "Dijual" : value === "disewa" ? "Disewa" : "-",
-        },
-        {
-          label: "Lokasi Utama",
-          key: "location",
-          formatter: (value) => value || "-",
-        },
-        {
-          label: "Sub Lokasi",
-          key: "subLocation",
-          formatter: (value) => value || "-",
-        },
-      ],
-    },
-    {
-      title: "Kontak Agen",
-      icon: <Zap size={18} />,
-      color: "rose",
-      borderColor: "border-rose-300",
-      accentColor: "bg-rose-600",
-      bgGradient: "from-rose-50 to-rose-100",
-      rows: [
-        {
-          label: "Nomor WhatsApp",
-          key: "whatsappNumber",
-          formatter: (value) => value || "-",
-        },
-      ],
-    },
-  ];
-
-  const renderSectionHeader = (config: SectionConfig) => (
-    <tr
-      className={`border-t-2 ${config.borderColor} bg-gradient-to-r ${config.bgGradient}`}
-    >
-      <td
-        colSpan={comparisonProperties.length + 1}
-        className="px-6 py-4 font-semibold text-gray-800 text-sm tracking-wide"
-      >
-        <div className="flex items-center gap-3">
-          <div className={`w-1.5 h-6 ${config.accentColor} rounded-full`}></div>
-          <span className="text-gray-700">{config.title}</span>
-        </div>
-      </td>
-    </tr>
-  );
-
-  const renderDetailRow = (rowConfig: RowConfig) => (
-    <tr
-      key={rowConfig.label}
-      className="border-t border-gray-100 hover:bg-gray-50/50 transition-colors"
-    >
-      <td className="px-6 py-3 font-medium text-gray-600 bg-gray-50/50 w-40 text-sm">
-        {rowConfig.label}
-      </td>
-      {comparisonProperties.map((prop) => {
-        if (rowConfig.key === "whatsappNumber") {
-          const targetNumber = adminWhatsApp || prop.whatsappNumber || "";
-          const normalized =
-            typeof targetNumber === "string"
-              ? targetNumber.replace(/\D/g, "")
-              : "";
-          const formattedPrice = prop.price ? prop.price.toLocaleString() : "0";
-          const message = `Halo Admin ADAProperty, saya tertarik dengan properti ${
-            prop.title
-          } di ${prop.location}${
-            prop.subLocation ? ` (${prop.subLocation})` : ""
-          } dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
-          const waUrl = normalized
-            ? `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
-            : null;
-
-          return (
-            <td
-              key={prop.id}
-              className="px-6 py-3 text-center text-gray-800 text-sm"
-            >
-              <div className="flex flex-col items-center gap-2">
-                <span className="font-medium">
-                  {prop.whatsappNumber || "-"}
-                </span>
-                {waUrl && (
-                  <button
-                    onClick={() => window.open(waUrl, "_blank")}
-                    className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
-                    title={
-                      adminWhatsApp
-                        ? "Chat Admin via WhatsApp"
-                        : "Chat via WhatsApp"
-                    }
-                  >
-                    <FaWhatsapp className="text-lg" />
-                    {adminWhatsApp ? "Chat Admin" : "Chat via WhatsApp"}
-                  </button>
-                )}
-              </div>
-            </td>
-          );
-        }
-
-        return (
-          <td
-            key={prop.id}
-            className="px-6 py-3 text-center text-gray-800 text-sm"
-          >
-            <span className="font-medium">
-              {rowConfig.formatter
-                ? rowConfig.formatter(
-                    prop[rowConfig.key as keyof Property],
-                    prop
-                  )
-                : (prop[rowConfig.key as keyof Property] as any) || "-"}
-            </span>
-          </td>
-        );
-      })}
-    </tr>
   );
 
   return (
@@ -458,18 +193,33 @@ const ComparisonPage: React.FC = () => {
 
                         {/* Deskripsi Properti */}
                         <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3">
-                          <p className={`text-sm text-gray-700 leading-relaxed ${isDescExpanded ? 'whitespace-pre-line' : 'line-clamp-3 whitespace-normal'}`}>
+                          <p
+                            className={`text-sm text-gray-700 leading-relaxed ${
+                              isDescExpanded
+                                ? "whitespace-pre-line"
+                                : "line-clamp-3 whitespace-normal"
+                            }`}
+                          >
                             {prop.description || "Tidak ada deskripsi"}
                           </p>
-                          {prop.description && (prop.description.length > 160 || prop.description.split(/\r?\n/).length > 3) && (
-                            <button
-                              type="button"
-                              onClick={() => setDescExpandedMap(prev => ({ ...prev, [prop.id]: !prev[prop.id] }))}
-                              className="mt-2 text-xs text-blue-600 hover:underline"
-                            >
-                              {isDescExpanded ? 'Tutup' : 'Lihat selengkapnya'}
-                            </button>
-                          )}
+                          {prop.description &&
+                            (prop.description.length > 160 ||
+                              prop.description.split(/\r?\n/).length > 3) && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setDescExpandedMap((prev) => ({
+                                    ...prev,
+                                    [prop.id]: !prev[prop.id],
+                                  }))
+                                }
+                                className="mt-2 text-xs text-blue-600 hover:underline"
+                              >
+                                {isDescExpanded
+                                  ? "Tutup"
+                                  : "Lihat selengkapnya"}
+                              </button>
+                            )}
                         </div>
 
                         {/* Actions */}

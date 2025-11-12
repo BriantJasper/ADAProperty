@@ -2,7 +2,7 @@ import { useApp } from "../context/AppContext";
 import PropertyCard from "../components/PropertyCard";
 
 export default function PopularSection() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
 
   const filtered =
     state.selectedLocation && state.selectedLocation !== "Semua Lokasi"

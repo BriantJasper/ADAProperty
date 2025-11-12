@@ -36,10 +36,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     whatsappNumber: property?.whatsappNumber || "",
     igUrl: property?.igUrl || "",
     tiktokUrl: property?.tiktokUrl || "",
-    // add tour url
     tourUrl: property?.tourUrl || "",
+    financing: property?.financing || undefined,
     garage: false,
   });
+
+  // Interest rate state (default 5%)
+  const [interestRate, setInterestRate] = useState<number>(
+    property?.financing?.interestRate ?? 5
+  );
 
   // Local display state for currency-formatted price input (visibility only)
   const [priceDisplay, setPriceDisplay] = useState<string>(() => {
@@ -148,12 +153,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     if (files.length === 0) return;
 
     try {
+      console.log("Uploading images:", files.length, "files");
       const res = await ApiService.uploadImages(files);
+      console.log("Upload response:", res);
       if (res?.success && Array.isArray(res.data)) {
+        console.log("Images uploaded successfully:", res.data);
         setFormData((prev) => ({
           ...prev,
           images: [...(prev.images || []), ...res.data],
         }));
+        // Reset the input so user can upload the same file again or upload more
+        e.target.value = "";
       } else {
         console.error("Upload image failed:", res);
         alert(res?.error || "Gagal mengunggah gambar");
@@ -229,10 +239,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
           typeof formData.floors === "number"
             ? formData.floors
             : parseInt(String(formData.floors as any)) || 0,
-        images:
-          formData.images && formData.images.length > 0
-            ? formData.images
-            : ["/images/p1.png"],
+        images: formData.images || [],
         features: formData.garage
           ? [...(formData.features || []), "Garasi"]
           : formData.features || [],
@@ -241,7 +248,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
         tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
         // add tour url to payload
         tourUrl: trimmed(formData.tourUrl) || undefined,
+        // Add financing with interest rate and default values
+        financing: {
+          dpPercent: 10,
+          tenorYears: 15,
+          fixedYears: 1,
+          bookingFee: 0,
+          interestRate: interestRate,
+        },
       } as Partial<Property>;
+
+      console.log("Submitting property with images:", propertyData.images);
 
       // Validasi ringan di sisi klien agar sesuai aturan backend
       const validationErrors: string[] = [];
@@ -278,6 +295,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       }
       if (!propertyData.whatsappNumber) {
         validationErrors.push("Nomor WhatsApp wajib diisi");
+      }
+      if (!propertyData.images || propertyData.images.length === 0) {
+        validationErrors.push("Minimal 1 gambar harus diunggah");
       }
 
       if (validationErrors.length > 0) {
@@ -326,7 +346,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Gambar Properti (boleh lebih dari satu)
+            Gambar Properti * (boleh pilih beberapa sekaligus)
           </label>
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -338,7 +358,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
               <p className="mt-2 text-xs text-gray-500">
-                Tip: pilih beberapa gambar sekaligus atau ulangi upload.
+                Tip: Anda bisa memilih beberapa gambar sekaligus (tekan Ctrl/Cmd
+                saat memilih) atau upload berkali-kali untuk menambah lebih
+                banyak gambar.
               </p>
             </div>
           </div>
@@ -571,6 +593,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bunga / Tahun (%)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0.1"
+              value={interestRate}
+              onChange={(e) => setInterestRate(Number(e.target.value))}
+              onFocus={(e) => e.target.select()}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Default: 5% per tahun</p>
           </div>
         </div>
 

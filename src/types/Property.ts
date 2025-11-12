@@ -4,6 +4,7 @@ export interface FinancingParams {
   fixedYears: number; // Periode bunga fix dalam tahun (1–10)
   bookingFee: number; // Booking fee (rupiah)
   ppnPercent?: number; // PPN (%), default 11, dapat diubah 0–100
+  interestRate?: number; // Annual interest rate (%), default 5
 }
 
 export interface Property {

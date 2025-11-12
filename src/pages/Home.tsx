@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Dropdown from "../components/Dropdown";
 import PopularSection from "../components/PopularSection";
 import Container from "../components/Container";
@@ -8,14 +8,13 @@ import type { Property } from "../types/Property";
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const { dispatch, state } = useApp();
-  const locations = [
-    "Semua Lokasi",
-    "Cikarang",
-    "Bekasi",
-    "Jakarta",
-    "Karawang",
-    "Bandung",
-  ];
+  // Locations sourced dynamically from properties (fallback to "Semua Lokasi")
+  const locations = useMemo(() => {
+    const setLoc = new Set<string>(
+      state.properties.map((p) => p.location).filter(Boolean)
+    );
+    return ["Semua Lokasi", ...Array.from(setLoc).sort()];
+  }, [state.properties]);
 
   // Initialize with sample data if no properties exist
   useEffect(() => {
@@ -97,7 +96,10 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen">
-      <section className="relative" style={{ height: "100vh" }}>
+      <section
+        className="relative pt-20 md:pt-28"
+        style={{ minHeight: "100vh" }}
+      >
         <div
           className="hero-bg absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(/images/hero-bg.png)` }}
@@ -105,7 +107,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
-        <div className="relative z-10 h-full flex items-center justify-center px-4 py-12 pt-38">
+        <div className="relative z-10 h-full flex items-center justify-center px-4">
           <Container>
             <div className="text-center max-w-4xl mx-auto">
               <div className="mb-8">

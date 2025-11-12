@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 import { COMPANY_INFO } from "../constants/company";
@@ -9,12 +9,7 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,19 +19,24 @@ export default function ContactPage() {
     }
     setErrors(null);
 
-    const subject = encodeURIComponent("Kontak ADA Property");
+    // Send email
+    const subject = encodeURIComponent("Kontak dari Website ADA Property");
     const body = encodeURIComponent(
       `Nama: ${name}\nKontak: ${emailPhone}\n\nPesan:\n${message}`
     );
     window.open(
-      `mailto:hello@adaproperty.com?subject=${subject}&body=${body}`,
+      `mailto:${COMPANY_INFO.email}?subject=${subject}&body=${body}`,
       "_blank"
     );
-    const phone = "6281234567890";
+
+    // Send WhatsApp message
     const waText = encodeURIComponent(
-      `Halo Admin, saya ${name}.\nKontak: ${emailPhone}\n\n${message}`
+      `Halo Admin ADA Property, saya ${name}.\nKontak: ${emailPhone}\n\n${message}`
     );
-    window.open(`https://wa.me/${phone}?text=${waText}`, "_blank");
+    window.open(
+      `https://wa.me/${COMPANY_INFO.whatsapp.number}?text=${waText}`,
+      "_blank"
+    );
 
     setSubmitted(true);
     setName("");
@@ -51,7 +51,7 @@ export default function ContactPage() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
+      transition: { duration: 0.6 },
     },
   };
 

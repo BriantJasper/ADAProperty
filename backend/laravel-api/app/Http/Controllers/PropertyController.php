@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PropertyController extends Controller
 {
@@ -66,6 +67,7 @@ class PropertyController extends Controller
         if (!$p) return response()->json(['success' => false, 'error' => 'Not found'], 404);
 
         $payload = $r->all();
+
         if (isset($payload['type'])) {
             $t = strtolower(trim((string)$payload['type']));
             if (empty($t)) return response()->json(['success' => false, 'error' => 'Invalid type'], 400);

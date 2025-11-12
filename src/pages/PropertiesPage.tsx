@@ -5,14 +5,7 @@ import Dropdown from "../components/Dropdown";
 import Container from "../components/Container";
 import { motion, AnimatePresence } from "framer-motion";
 
-import {
-  Search,
-  SlidersHorizontal,
-  MapPin,
-  Home,
-  Building2,
-  X,
-} from "lucide-react";
+import { Search, SlidersHorizontal, Home, Building2, X } from "lucide-react";
 
 const PropertiesPage: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -27,14 +20,13 @@ const PropertiesPage: React.FC = () => {
 
   const location = state.selectedLocation;
 
-  const locations = [
-    "Semua Lokasi",
-    "Cikarang",
-    "Bekasi",
-    "Jakarta",
-    "Karawang",
-    "Bandung",
-  ];
+  // Generate unique locations from property data, always include 'Semua Lokasi' at the top
+  const locations = useMemo(() => {
+    const locSet = new Set<string>(
+      state.properties.map((p) => p.location).filter(Boolean)
+    );
+    return ["Semua Lokasi", ...Array.from(locSet).sort()];
+  }, [state.properties]);
 
   // Handler for formatting min price
   const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,8 +70,7 @@ const PropertiesPage: React.FC = () => {
   const { subLocations, filteredByLocation } = useMemo(() => {
     const list = state.properties.filter((p) => {
       if (!location || location === "Semua Lokasi") return true;
-      const city = (p.location.split(",")[1] || "").trim().toLowerCase();
-      return city.includes(location.toLowerCase());
+      return p.location && p.location.toLowerCase() === location.toLowerCase();
     });
     const subs = Array.from(
       new Set(list.map((p) => p.location.split(",")[0].trim()).filter(Boolean))

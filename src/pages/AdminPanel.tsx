@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import {
   IoAdd,
   IoEye,
@@ -14,6 +16,7 @@ import {
   IoDownload,
 } from "react-icons/io5";
 import { useApp } from "../context/AppContext";
+import ApiService from "../services/api";
 import PropertyForm from "../components/PropertyForm";
 import PropertyCard from "../components/PropertyCard";
 import ComparisonCart from "../components/ComparisonCart";
@@ -224,6 +227,95 @@ const AdminPanel: React.FC = () => {
   const [showChangeCredentialsForm, setShowChangeCredentialsForm] =
     useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [downloadingZip, setDownloadingZip] = useState<string | null>(null);
+
+  // Helper function to download images as ZIP
+  const downloadImagesAsZip = async (
+    images: string[],
+    title: string,
+    downloadKey?: string
+  ) => {
+    if (!images || images.length === 0) return;
+
+    const activeKey = downloadKey ?? title;
+
+    // If only one image, download directly without ZIP
+    if (images.length === 1) {
+      try {
+        setDownloadingZip(activeKey);
+        const imageUrl = images[0];
+        const slug = title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "");
+
+        // Extract file extension from URL
+        const urlParts = imageUrl.split(".");
+        const ext =
+          urlParts.length > 1
+            ? urlParts[urlParts.length - 1].split("?")[0]
+            : "jpg";
+
+        const downloadName = `${slug}.${ext}`;
+        const response = await ApiService.downloadConsignmentImage(
+          imageUrl,
+          downloadName
+        );
+        const blob = await response.blob();
+
+        // Use saveAs to trigger download
+        saveAs(blob, downloadName);
+      } catch (error) {
+        alert("Gagal mengunduh gambar. Silakan coba lagi.");
+      } finally {
+        setDownloadingZip(null);
+      }
+      return;
+    }
+
+    // Multiple images - create ZIP
+    try {
+      setDownloadingZip(activeKey);
+      const zip = new JSZip();
+      const imgFolder = zip.folder("images");
+
+      // Fetch all images and add to ZIP
+      const promises = images.map(async (imageUrl, index) => {
+        try {
+          const response = await ApiService.downloadConsignmentImage(imageUrl);
+          const blob = await response.blob();
+
+          // Extract file extension from URL or default to jpg
+          const urlParts = imageUrl.split(".");
+          const ext =
+            urlParts.length > 1
+              ? urlParts[urlParts.length - 1].split("?")[0]
+              : "jpg";
+
+          // Create filename
+          const filename = `image-${index + 1}.${ext}`;
+          imgFolder?.file(filename, blob);
+        } catch (error) {
+          // Failed to fetch image
+        }
+      });
+
+      await Promise.all(promises);
+
+      // Generate ZIP and trigger download
+      const content = await zip.generateAsync({ type: "blob" });
+
+      const slug = title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      saveAs(content, `${slug}-images.zip`);
+    } catch (error) {
+      alert("Gagal membuat file ZIP. Silakan coba lagi.");
+    } finally {
+      setDownloadingZip(null);
+    }
+  };
 
   // Load consignments when component mounts
   useEffect(() => {
@@ -659,14 +751,45 @@ const AdminPanel: React.FC = () => {
                               alt={`cs-${i}`}
                               className="w-full h-24 object-cover rounded border"
                             />
-                            <a
-                              href={src}
-                              download={`consign-${idx + 1}-${i + 1}.jpg`}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                downloadImagesAsZip(
+                                  [src],
+                                  `${c.title} image ${i + 1}`,
+                                  `consignment-${c.id}-image-${i}`
+                                )
+                              }
                               className="absolute top-1 right-1 bg-white/80 hover:bg-white text-gray-700 p-1 rounded shadow opacity-0 group-hover:opacity-100 transition"
                               title="Unduh foto"
+                              aria-label="Unduh foto"
                             >
-                              <IoDownload className="w-4 h-4" />
-                            </a>
+                              {downloadingZip ===
+                              `consignment-${c.id}-image-${i}` ? (
+                                <svg
+                                  className="animate-spin h-4 w-4"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                              ) : (
+                                <IoDownload className="w-4 h-4" />
+                              )}
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -749,31 +872,51 @@ const AdminPanel: React.FC = () => {
                       )}
                       {c.images && c.images.length > 0 && (
                         <button
-                          onClick={() => {
-                            const slug = (s: string) =>
-                              s
-                                .toLowerCase()
-                                .replace(/\s+/g, "-")
-                                .replace(/[^a-z0-9-]/g, "");
-                            const base = slug(c.title || "foto");
-                            c.images!.forEach((src, i) => {
-                              try {
-                                const a = document.createElement("a");
-                                a.href = src;
-                                const match = src.match(/^data:(image\/\w+);/);
-                                const ext = match
-                                  ? match[1].split("/")[1]
-                                  : "jpg";
-                                a.download = `${base}-${i + 1}.${ext}`;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                              } catch {}
-                            });
-                          }}
-                          className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded"
+                          type="button"
+                          onClick={() =>
+                            downloadImagesAsZip(
+                              c.images!,
+                              c.title,
+                              `consignment-${c.id}`
+                            )
+                          }
+                          disabled={downloadingZip === `consignment-${c.id}`}
+                          className={`px-3 py-2 rounded flex items-center gap-2 ${
+                            downloadingZip === `consignment-${c.id}`
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-yellow-500 hover:bg-yellow-600 text-white"
+                          }`}
                         >
-                          Unduh Semua Foto
+                          {downloadingZip === `consignment-${c.id}` ? (
+                            <>
+                              <svg
+                                className="animate-spin h-4 w-4"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Menyiapkan ZIP...
+                            </>
+                          ) : (
+                            <>
+                              <IoDownload />
+                              Unduh Semua Foto ({c.images.length})
+                            </>
+                          )}
                         </button>
                       )}
                       <button

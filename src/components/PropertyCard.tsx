@@ -56,6 +56,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const [angsuranYears, setAngsuranYears] = useState(
     property.financing?.tenorYears ?? 1
   );
+  const [annualRate, setAnnualRate] = useState(
+    property.financing?.interestRate ?? 5
+  );
   const [animationKey, setAnimationKey] = useState(0);
   const images =
     property.images && property.images.length > 0
@@ -68,8 +71,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   useEffect(() => {
     const dp = property.financing?.dpPercent;
     const tenor = property.financing?.tenorYears;
+    const rate = property.financing?.interestRate;
     if (typeof dp === "number") setDepositPercentage(dp);
     if (typeof tenor === "number") setAngsuranYears(tenor);
+    if (typeof rate === "number") setAnnualRate(rate);
   }, [property.id, property.financing]);
 
   // Sync inline edit price display when toggling edit or when price changes
@@ -187,8 +192,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   };
 
   // KPI Mortgage formula: A = P * [r(1+r)^n] / [(1+r)^n - 1]
-  // Adjustable interest rate (annual, in percent)
-  const [annualRate, setAnnualRate] = useState(5); // default 7%
   const calculateAngsuran = (): number => {
     const principal = (property.price || 0) - calculateDeposit();
     const totalMonths = angsuranYears * 12;
@@ -206,6 +209,44 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   ) => {
     const value = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
     setDepositPercentage(value);
+  };
+
+  const handleInterestRateBlur = async () => {
+    if (!showAdminControls) return;
+
+    // Only update if the rate has changed from the stored value
+    const currentRate = property.financing?.interestRate ?? 5;
+    if (annualRate === currentRate) return;
+
+    const updatedFinancing = {
+      ...(property.financing || {
+        dpPercent: depositPercentage,
+        tenorYears: angsuranYears,
+        fixedYears: 1,
+        bookingFee: 0,
+      }),
+      interestRate: annualRate,
+    };
+
+    const payload = {
+      ...property,
+      financing: updatedFinancing,
+      updatedAt: new Date(),
+    };
+
+    try {
+      const result = await updateProperty(property.id, payload);
+
+      if (!result.success) {
+        alert("Gagal menyimpan bunga: " + (result.error || "Unknown error"));
+        // Revert to original value
+        setAnnualRate(currentRate);
+      }
+    } catch (error) {
+      console.error("Error updating interest rate:", error);
+      alert("Gagal menyimpan bunga");
+      setAnnualRate(currentRate);
+    }
   };
 
   if (isEditing) {
@@ -595,8 +636,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                           onChange={(e) =>
                             setAnnualRate(Number(e.target.value))
                           }
+                          onBlur={handleInterestRateBlur}
                           onFocus={(e) => e.target.select()}
                           className="w-16 px-2 py-1 text-right font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          title="Tekan Enter atau klik di luar untuk menyimpan"
                         />
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 font-semibold border-l border-gray-300">
                           %/thn

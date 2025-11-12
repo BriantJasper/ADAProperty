@@ -23,24 +23,42 @@ export default function Footer() {
 
         <div className="flex flex-col gap-8">
           <div className="flex flex-col sm:flex-row gap-8 text-sm">
-            <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 mt-1" />
+            {/* WhatsApp Link */}
+            <a
+              href={`https://wa.me/${COMPANY_INFO.whatsapp.number}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 text-green-700 hover:text-green-600 transition-colors group cursor-pointer"
+            >
+              <Phone className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
                 <p className="font-medium">Nomor Telepon</p>
                 <p>{COMPANY_INFO.whatsapp.displayNumber}</p>
               </div>
-            </div>
+            </a>
 
-            <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 mt-1" />
+            {/* Email Link */}
+            <a
+              href={`mailto:${COMPANY_INFO.email}?subject=Pertanyaan tentang Properti&body=Halo ADA Property,%0D%0A%0D%0ASaya tertarik untuk mengetahui lebih lanjut tentang properti yang tersedia.%0D%0A%0D%0ATerima kasih.`}
+              className="flex items-start gap-3 text-blue-700 hover:text-blue-600 transition-colors group cursor-pointer"
+            >
+              <Mail className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
                 <p className="font-medium">Alamat Email</p>
                 <p>{COMPANY_INFO.email}</p>
               </div>
-            </div>
+            </a>
 
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 mt-1" />
+            {/* Google Maps Link */}
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                COMPANY_INFO.address.full
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 text-red-700 hover:text-red-600 transition-colors group cursor-pointer"
+            >
+              <MapPin className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
                 <p className="font-medium">Alamat Kantor</p>
                 <p>
@@ -51,7 +69,7 @@ export default function Footer() {
                   {COMPANY_INFO.address.postalCode}
                 </p>
               </div>
-            </div>
+            </a>
           </div>
 
           {/* Social Media */}
@@ -62,10 +80,10 @@ export default function Footer() {
                 href={COMPANY_INFO.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors text-sm"
+                className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors text-sm font-medium group"
                 title="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 <span>Instagram</span>
               </a>
 
@@ -73,10 +91,10 @@ export default function Footer() {
                 href={COMPANY_INFO.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors text-sm"
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors text-sm font-medium group"
                 title="Facebook"
               >
-                <Facebook className="w-5 h-5" />
+                <Facebook className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 <span>Facebook</span>
               </a>
 
@@ -84,10 +102,10 @@ export default function Footer() {
                 href={COMPANY_INFO.social.tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors text-sm"
+                className="flex items-center gap-2 text-gray-900 hover:text-gray-700 transition-colors text-sm font-medium group"
                 title="TikTok"
               >
-                <Music className="w-5 h-5" />
+                <Music className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 <span>TikTok</span>
               </a>
             </div>
