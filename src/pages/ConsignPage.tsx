@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
 import ApiService from "../services/api";
 import type { ConsignmentRequest } from "../types/Consignment";
+import toast from "react-hot-toast";
 
 export default function ConsignPage() {
   const { addConsignment } = useApp();
@@ -25,8 +26,6 @@ export default function ConsignPage() {
     floors: undefined,
     images: [],
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -90,19 +89,19 @@ export default function ConsignPage() {
           const existing = prev.images ?? [];
           const merged = [...existing, ...res.data];
           if (merged.length > 5) {
-            setError("Maksimal 5 foto. Foto tambahan diabaikan.");
+            toast.error("Maksimal 5 foto. Foto tambahan diabaikan.");
             return { ...prev, images: merged.slice(0, 5) };
           }
+          toast.success(`${res.data.length} foto berhasil diunggah`);
           return { ...prev, images: merged };
         });
         // reset input agar bisa memilih file yang sama lagi jika perlu
         e.target.value = "";
-        setError(null);
       } else {
-        setError(res?.error || "Gagal mengunggah gambar.");
+        toast.error(res?.error || "Gagal mengunggah gambar.");
       }
     } catch (err: any) {
-      setError("Gagal mengunggah gambar.");
+      toast.error("Gagal mengunggah gambar.");
     } finally {
       setUploading(false);
     }
@@ -127,17 +126,17 @@ export default function ConsignPage() {
           const existing = prev.images ?? [];
           const merged = [...existing, ...res.data];
           if (merged.length > 5) {
-            setError("Maksimal 5 foto. Foto tambahan diabaikan.");
+            toast.error("Maksimal 5 foto. Foto tambahan diabaikan.");
             return { ...prev, images: merged.slice(0, 5) };
           }
+          toast.success(`${res.data.length} foto berhasil diunggah`);
           return { ...prev, images: merged };
         });
-        setError(null);
       } else {
-        setError(res?.error || "Gagal mengunggah gambar.");
+        toast.error(res?.error || "Gagal mengunggah gambar.");
       }
     } catch (err: any) {
-      setError("Gagal mengunggah gambar.");
+      toast.error("Gagal mengunggah gambar.");
     } finally {
       setUploading(false);
     }
@@ -160,20 +159,18 @@ export default function ConsignPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     // Simple validations
     if (!form.sellerName || !form.sellerWhatsapp) {
-      setError("Nama penjual dan nomor WhatsApp wajib diisi.");
+      toast.error("Nama penjual dan nomor WhatsApp wajib diisi.");
       return;
     }
     if (!form.title || !form.location) {
-      setError("Judul properti dan lokasi wajib diisi.");
+      toast.error("Judul properti dan lokasi wajib diisi.");
       return;
     }
     if (form.images && form.images.length > 5) {
-      setError("Maksimal 5 foto.");
+      toast.error("Maksimal 5 foto.");
       return;
     }
 
@@ -195,8 +192,9 @@ export default function ConsignPage() {
 
       const resp = await addConsignment(payload);
       if (resp.success) {
-        setSuccess(
-          "Pengajuan titip jual berhasil dikirim! Admin akan menghubungi Anda segera."
+        toast.success(
+          "Pengajuan titip jual berhasil dikirim! Admin akan menghubungi Anda segera.",
+          { duration: 4000 }
         );
         // reset minimal fields
         setPriceDisplay("");
@@ -214,14 +212,15 @@ export default function ConsignPage() {
           floors: undefined,
           images: [],
         }));
-
-        // Scroll to top to show success message
-        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setError(resp.error || "Gagal mengirim pengajuan. Silakan coba lagi.");
+        toast.error(
+          resp.error || "Gagal mengirim pengajuan. Silakan coba lagi."
+        );
       }
     } catch (err: any) {
-      setError("Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi.");
+      toast.error(
+        "Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -235,42 +234,6 @@ export default function ConsignPage() {
         inbox Admin untuk ditinjau. Admin akan menghubungi Anda dan melakukan
         unggah foto (maks 5) saat sudah disetujui.
       </p>
-
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-4 rounded mb-6 flex items-start gap-3">
-          <svg
-            className="w-6 h-6 flex-shrink-0 mt-0.5"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <div className="flex-1">{error}</div>
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border-l-4 border-green-400 text-green-700 px-4 py-4 rounded mb-6 flex items-start gap-3">
-          <svg
-            className="w-6 h-6 flex-shrink-0 mt-0.5"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <div className="flex-1">
-            <p className="font-semibold mb-1">Berhasil!</p>
-            <p>{success}</p>
-          </div>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

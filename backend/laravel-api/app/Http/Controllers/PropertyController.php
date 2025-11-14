@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PropertyController extends Controller
 {
@@ -115,6 +116,19 @@ class PropertyController extends Controller
     {
         $p = Property::find($id);
         if (!$p) return response()->json(['success' => false, 'error' => 'Not found'], 404);
+
+        // Delete associated images from storage
+        $images = $this->parse($p->images, []);
+        foreach ($images as $imageUrl) {
+            // Extract the path from the full URL
+            // Example: https://api.adaproindonesia.com/storage/uploads/filename.png
+            // Extract: uploads/filename.png
+            if (strpos($imageUrl, '/storage/') !== false) {
+                $path = substr($imageUrl, strpos($imageUrl, '/storage/') + 9); // +9 to skip '/storage/'
+                Storage::disk('public')->delete($path);
+            }
+        }
+
         $p->delete();
         return response()->json(['success' => true, 'message' => 'Property deleted successfully']);
     }

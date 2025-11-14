@@ -106,7 +106,7 @@ const ComparisonPage: React.FC = () => {
                 isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }`}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {comparisonProperties.map((prop) => {
                   const isDescExpanded = !!descExpandedMap[prop.id];
                   return (

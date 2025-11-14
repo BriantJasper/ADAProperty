@@ -13,7 +13,15 @@ export const API_BASE_URL = (() => {
 const USE_FALLBACK = false; // Nonaktifkan fallback agar menggunakan backend SQLite
 let nextFallbackId = 100; // ID untuk properti baru dalam fallback mode
 
+// Callback untuk handle unauthorized (401) response
+let onUnauthorizedCallback: (() => void) | null = null;
+
 class ApiService {
+  // Set callback untuk handle 401 unauthorized
+  static setUnauthorizedCallback(callback: () => void) {
+    onUnauthorizedCallback = callback;
+  }
+
   // Helper method to make API calls
   static async makeRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -38,6 +46,19 @@ class ApiService {
       }
 
       const response = await fetch(url, config);
+
+      // Check for 401 Unauthorized - token expired/invalid
+      if (response.status === 401) {
+        // Trigger logout callback if set
+        if (onUnauthorizedCallback) {
+          onUnauthorizedCallback();
+        }
+        return {
+          success: false,
+          error: "Session expired. Please login again.",
+          unauthorized: true,
+        };
+      }
 
       // Parse respons (prioritas JSON), tanpa fallback otomatis
       let data: any;

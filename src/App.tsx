@@ -14,6 +14,7 @@ import Footer from "./components/Footer";
 import { useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AppProvider } from "./context/AppContext";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   const location = useLocation();
@@ -23,6 +24,33 @@ function App() {
 
   return (
     <AppProvider>
+      <Toaster
+        position="top-right"
+        containerStyle={{
+          zIndex: 99999,
+        }}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#333",
+            color: "#fff",
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
       <div className="min-h-screen">
         <RotateToLandscape />
         <Navbar />

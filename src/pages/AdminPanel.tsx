@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import toast from "react-hot-toast";
 import {
   IoAdd,
   IoEye,
@@ -60,7 +61,7 @@ const ChangeCredentialsForm: React.FC<{ onCancel: () => void }> = ({
         password: newPassword,
       });
       if (result.success) {
-        alert("Kredensial berhasil diubah!");
+        toast.success("Kredensial berhasil diubah!");
         onCancel(); // Close the form
       } else {
         setError(result.error || "Gagal mengubah kredensial");
@@ -266,7 +267,7 @@ const AdminPanel: React.FC = () => {
         // Use saveAs to trigger download
         saveAs(blob, downloadName);
       } catch (error) {
-        alert("Gagal mengunduh gambar. Silakan coba lagi.");
+        toast.error("Gagal mengunduh gambar. Silakan coba lagi.");
       } finally {
         setDownloadingZip(null);
       }
@@ -311,7 +312,7 @@ const AdminPanel: React.FC = () => {
         .replace(/[^a-z0-9-]/g, "");
       saveAs(content, `${slug}-images.zip`);
     } catch (error) {
-      alert("Gagal membuat file ZIP. Silakan coba lagi.");
+      toast.error("Gagal membuat file ZIP. Silakan coba lagi.");
     } finally {
       setDownloadingZip(null);
     }
@@ -369,15 +370,6 @@ const AdminPanel: React.FC = () => {
         stiffness: 100,
       },
     },
-    hover: {
-      scale: 1.05,
-      y: -5,
-      transition: {
-        type: "spring" as const,
-        stiffness: 400,
-        damping: 10,
-      },
-    },
   };
 
   const buttonVariants = {
@@ -408,11 +400,11 @@ const AdminPanel: React.FC = () => {
   const handleAddProperty = async (property: Property) => {
     const result = await addProperty(property);
     if (result.success) {
-      alert("Properti berhasil ditambahkan!");
+      toast.success("Properti berhasil ditambahkan!");
       setShowAddForm(false);
       setEditingProperty(null);
     } else {
-      alert(`Gagal menambahkan properti: ${result.error}`);
+      toast.error(`Gagal menambahkan properti: ${result.error}`);
     }
   };
 
@@ -420,10 +412,10 @@ const AdminPanel: React.FC = () => {
     if (editingProperty) {
       const result = await updateProperty(editingProperty.id, property);
       if (result.success) {
-        alert("Properti berhasil diupdate!");
+        toast.success("Properti berhasil diupdate!");
         setEditingProperty(null);
       } else {
-        alert(`Gagal mengupdate properti: ${result.error}`);
+        toast.error(`Gagal mengupdate properti: ${result.error}`);
       }
     }
   };
@@ -467,7 +459,7 @@ const AdminPanel: React.FC = () => {
 
       {/* Header */}
       <motion.div
-        className="sticky top-0 z-50 backdrop-blur-md bg-white/80 shadow-lg border-b border-gray-200/50"
+        className="z-50 backdrop-blur-md bg-white/80 shadow-lg border-b border-gray-200/50"
         variants={headerVariants}
         initial="hidden"
         animate="visible"
@@ -616,7 +608,6 @@ const AdminPanel: React.FC = () => {
           <motion.div
             className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100"
             variants={itemVariants}
-            whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -641,7 +632,6 @@ const AdminPanel: React.FC = () => {
           <motion.div
             className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100"
             variants={itemVariants}
-            whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -703,69 +693,86 @@ const AdminPanel: React.FC = () => {
             </motion.div>
           ) : (
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 gap-6"
               variants={containerVariants}
             >
               {state.consignmentInbox.map((c, idx) => (
                 <motion.div
                   key={c.id}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition-shadow"
                   variants={cardVariants}
-                  whileHover="hover"
                   custom={idx}
                 >
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {c.title}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {c.location}
-                          {c.subLocation ? ` • ${c.subLocation}` : ""}
-                        </p>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          c.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : c.status === "reviewed"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {c.status === "pending"
-                          ? "Menunggu"
-                          : c.status === "reviewed"
-                          ? "Ditinjau"
-                          : "Disetujui"}
-                      </span>
-                    </div>
-
-                    {c.images && c.images.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
-                        {c.images.slice(0, 5).map((src, i) => (
-                          <div key={i} className="relative group">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
+                    {/* Left Column: Images */}
+                    <div className="lg:col-span-1">
+                      {c.images && c.images.length > 0 ? (
+                        <div className="space-y-2">
+                          <div className="relative group">
                             <img
-                              src={src}
-                              alt={`cs-${i}`}
-                              className="w-full h-24 object-cover rounded border"
+                              src={c.images[0]}
+                              alt={c.title}
+                              className="w-full h-48 object-cover rounded-lg border border-gray-200"
                             />
                             <button
                               type="button"
                               onClick={() =>
                                 downloadImagesAsZip(
-                                  [src],
-                                  `${c.title} image ${i + 1}`,
-                                  `consignment-${c.id}-image-${i}`
+                                  [c.images![0]],
+                                  `${c.title} main image`,
+                                  `consignment-${c.id}-main`
                                 )
                               }
-                              className="absolute top-1 right-1 bg-white/80 hover:bg-white text-gray-700 p-1 rounded shadow opacity-0 group-hover:opacity-100 transition"
-                              title="Unduh foto"
-                              aria-label="Unduh foto"
+                              className="absolute top-1 right-1 bg-white/90 hover:bg-white text-gray-700 p-1.5 rounded shadow opacity-0 group-hover:opacity-100 transition"
+                              title="Unduh foto utama"
                             >
-                              {downloadingZip ===
-                              `consignment-${c.id}-image-${i}` ? (
+                              <IoDownload className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {c.images.length > 1 && (
+                            <div className="grid grid-cols-4 gap-1">
+                              {c.images.slice(1, 5).map((src, i) => (
+                                <div key={i} className="relative group">
+                                  <img
+                                    src={src}
+                                    alt={`${c.title} ${i + 2}`}
+                                    className="w-full h-12 object-cover rounded border border-gray-200"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      downloadImagesAsZip(
+                                        [src],
+                                        `${c.title} image ${i + 2}`,
+                                        `consignment-${c.id}-image-${i + 1}`
+                                      )
+                                    }
+                                    className="absolute inset-0 bg-black/50 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded"
+                                  >
+                                    <IoDownload className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              downloadImagesAsZip(
+                                c.images!,
+                                c.title,
+                                `consignment-${c.id}`
+                              )
+                            }
+                            disabled={downloadingZip === `consignment-${c.id}`}
+                            className={`w-full px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition ${
+                              downloadingZip === `consignment-${c.id}`
+                                ? "bg-gray-400 cursor-not-allowed text-white"
+                                : "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-md"
+                            }`}
+                          >
+                            {downloadingZip === `consignment-${c.id}` ? (
+                              <>
                                 <svg
                                   className="animate-spin h-4 w-4"
                                   xmlns="http://www.w3.org/2000/svg"
@@ -786,160 +793,266 @@ const AdminPanel: React.FC = () => {
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                   ></path>
                                 </svg>
-                              ) : (
+                                Menyiapkan...
+                              </>
+                            ) : (
+                              <>
                                 <IoDownload className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="text-sm text-gray-700 space-y-1 mb-3">
-                      <p>
-                        <span className="font-medium">Penjual:</span>{" "}
-                        {c.sellerName}
-                      </p>
-                      <p>
-                        <span className="font-medium">WA:</span>{" "}
-                        {c.sellerWhatsapp}
-                      </p>
-                      {c.sellerEmail && (
-                        <p>
-                          <span className="font-medium">Email:</span>{" "}
-                          {c.sellerEmail}
-                        </p>
-                      )}
-                      {typeof c.price === "number" && (
-                        <p>
-                          <span className="font-medium">Harga:</span> Rp{" "}
-                          {c.price.toLocaleString("id-ID")}
-                        </p>
-                      )}
-                      {c.bedrooms !== undefined && (
-                        <p>
-                          <span className="font-medium">KT:</span> {c.bedrooms}{" "}
-                          • <span className="font-medium">KM:</span>{" "}
-                          {c.bathrooms ?? 0}
-                        </p>
-                      )}
-                      {c.area !== undefined && (
-                        <p>
-                          <span className="font-medium">LB:</span> {c.area} m²{" "}
-                          {c.landArea ? `• LT: ${c.landArea} m²` : ""}
-                        </p>
+                                Unduh Semua ({c.images.length} foto)
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <p className="text-gray-400 text-sm">
+                            Tidak ada gambar
+                          </p>
+                        </div>
                       )}
                     </div>
 
-                    {c.description && (
-                      <p className="text-sm text-gray-600 line-clamp-3 mb-3">
-                        {c.description}
-                      </p>
-                    )}
+                    {/* Middle Column: Property Details */}
+                    <div className="lg:col-span-1 space-y-3">
+                      <div>
+                        <div className="flex items-start justify-between mb-1">
+                          <h3 className="text-lg font-bold text-gray-900 flex-1">
+                            {c.title}
+                          </h3>
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              c.status === "pending"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : c.status === "reviewed"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {c.status === "pending"
+                              ? "⏱"
+                              : c.status === "reviewed"
+                              ? "👁"
+                              : "✓"}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <span className="text-blue-600">📍</span>
+                          {c.location}
+                          {c.subLocation && (
+                            <span className="text-gray-500">
+                              • {c.subLocation}
+                            </span>
+                          )}
+                        </p>
+                      </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <a
-                        href={`https://wa.me/${c.sellerWhatsapp}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
-                      >
-                        Hubungi WA
-                      </a>
-                      {c.sellerEmail && (
+                      {/* Property Type */}
+                      {c.type && (
+                        <div className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                          {c.type.charAt(0).toUpperCase() + c.type.slice(1)}
+                        </div>
+                      )}
+
+                      {/* Price - FIXED */}
+                      {typeof c.price === "number" && c.price > 0 && (
+                        <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg p-3">
+                          <p className="text-xs text-gray-600 mb-0.5">
+                            Harga Penawaran
+                          </p>
+                          <p className="text-xl font-bold text-emerald-700">
+                            Rp {c.price.toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Property Specifications */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {c.bedrooms !== undefined && (
+                          <div className="bg-gray-50 rounded p-2">
+                            <p className="text-xs text-gray-500">Kamar Tidur</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.bedrooms} KT
+                            </p>
+                          </div>
+                        )}
+                        {c.bathrooms !== undefined && (
+                          <div className="bg-gray-50 rounded p-2">
+                            <p className="text-xs text-gray-500">Kamar Mandi</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.bathrooms} KM
+                            </p>
+                          </div>
+                        )}
+                        {c.area !== undefined && c.area > 0 && (
+                          <div className="bg-gray-50 rounded p-2">
+                            <p className="text-xs text-gray-500">
+                              Luas Bangunan
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.area} m²
+                            </p>
+                          </div>
+                        )}
+                        {c.landArea !== undefined && c.landArea > 0 && (
+                          <div className="bg-gray-50 rounded p-2">
+                            <p className="text-xs text-gray-500">Luas Tanah</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.landArea} m²
+                            </p>
+                          </div>
+                        )}
+                        {c.floors !== undefined && c.floors > 0 && (
+                          <div className="bg-gray-50 rounded p-2 col-span-2">
+                            <p className="text-xs text-gray-500">
+                              Jumlah Lantai
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.floors} Lantai
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      {c.description && (
+                        <div className="bg-gray-50 rounded p-2">
+                          <p className="text-xs text-gray-500 mb-1 font-medium">
+                            Deskripsi
+                          </p>
+                          <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
+                            {c.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Column: Seller Info & Actions */}
+                    <div className="lg:col-span-1 space-y-3">
+                      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-3">
+                        <h4 className="text-xs font-semibold text-indigo-900 mb-2 flex items-center gap-1">
+                          <span>👤</span>
+                          Informasi Penjual
+                        </h4>
+                        <div className="space-y-1.5">
+                          <div>
+                            <p className="text-xs text-gray-600">Nama</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.sellerName}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">WhatsApp</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {c.sellerWhatsapp}
+                            </p>
+                          </div>
+                          {c.sellerEmail && (
+                            <div>
+                              <p className="text-xs text-gray-600">Email</p>
+                              <p className="text-sm font-semibold text-gray-900 break-all">
+                                {c.sellerEmail}
+                              </p>
+                            </div>
+                          )}
+                          {c.createdAt && (
+                            <div>
+                              <p className="text-xs text-gray-600">
+                                Tanggal Pengajuan
+                              </p>
+                              <p className="text-xs font-semibold text-gray-900">
+                                {new Date(c.createdAt).toLocaleDateString(
+                                  "id-ID",
+                                  {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="space-y-1.5">
                         <a
-                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-                            c.sellerEmail
-                          )}&su=${encodeURIComponent(
-                            `Pengajuan Titip Jual: ${c.title}`
-                          )}&body=${encodeURIComponent(
-                            `Halo ${
-                              c.sellerName
-                            },\n\nKami menindaklanjuti pengajuan titip jual untuk \"${
-                              c.title
-                            }\" di lokasi ${c.location}${
-                              c.subLocation ? `, ${c.subLocation}` : ""
-                            }.\n\nSilakan balas email ini untuk diskusi lebih lanjut.\n\nTerima kasih,\n${
-                              COMPANY_INFO.name
-                            }\nWA: ${COMPANY_INFO.whatsapp.displayNumber}`
+                          href={`https://wa.me/${
+                            c.sellerWhatsapp
+                          }?text=${encodeURIComponent(
+                            `Halo ${c.sellerName}, kami dari ${COMPANY_INFO.name} ingin menindaklanjuti pengajuan titip jual untuk "${c.title}" di ${c.location}.`
                           )}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+                          className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 shadow-md transition"
                         >
-                          Hubungi Email
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                          </svg>
+                          WhatsApp
                         </a>
-                      )}
-                      {c.images && c.images.length > 0 && (
+
+                        {c.sellerEmail && (
+                          <a
+                            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+                              c.sellerEmail
+                            )}&su=${encodeURIComponent(
+                              `Pengajuan Titip Jual: ${c.title}`
+                            )}&body=${encodeURIComponent(
+                              `Halo ${
+                                c.sellerName
+                              },\n\nKami menindaklanjuti pengajuan titip jual untuk "${
+                                c.title
+                              }" di lokasi ${c.location}${
+                                c.subLocation ? `, ${c.subLocation}` : ""
+                              }.\n\nSilakan balas email ini untuk diskusi lebih lanjut.\n\nTerima kasih,\n${
+                                COMPANY_INFO.name
+                              }\nWA: ${COMPANY_INFO.whatsapp.displayNumber}`
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 shadow-md transition"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                            </svg>
+                            Email
+                          </a>
+                        )}
+
                         <button
-                          type="button"
-                          onClick={() =>
-                            downloadImagesAsZip(
-                              c.images!,
-                              c.title,
-                              `consignment-${c.id}`
-                            )
-                          }
-                          disabled={downloadingZip === `consignment-${c.id}`}
-                          className={`px-3 py-2 rounded flex items-center gap-2 ${
-                            downloadingZip === `consignment-${c.id}`
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-yellow-500 hover:bg-yellow-600 text-white"
-                          }`}
-                        >
-                          {downloadingZip === `consignment-${c.id}` ? (
-                            <>
-                              <svg
-                                className="animate-spin h-4 w-4"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
-                              Menyiapkan ZIP...
-                            </>
-                          ) : (
-                            <>
-                              <IoDownload />
-                              Unduh Semua Foto ({c.images.length})
-                            </>
-                          )}
-                        </button>
-                      )}
-                      <button
-                        onClick={async () => {
-                          if (
-                            confirm(
-                              "Apakah Anda yakin ingin menghapus pengajuan ini?"
-                            )
-                          ) {
-                            const result = await removeConsignment(c.id);
-                            if (result.success) {
-                              alert("Pengajuan berhasil dihapus!");
-                            } else {
-                              alert(
-                                `Gagal menghapus pengajuan: ${result.error}`
-                              );
+                          onClick={async () => {
+                            if (
+                              window.confirm(
+                                "Apakah Anda yakin ingin menghapus pengajuan ini?"
+                              )
+                            ) {
+                              const result = await removeConsignment(c.id);
+                              if (result.success) {
+                                toast.success("Pengajuan berhasil dihapus!");
+                              } else {
+                                toast.error(
+                                  `Gagal menghapus pengajuan: ${result.error}`
+                                );
+                              }
                             }
-                          }
-                        }}
-                        className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
-                      >
-                        Hapus
-                      </button>
+                          }}
+                          className="w-full px-3 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 shadow-md transition"
+                        >
+                          <IoClose className="w-4 h-4" />
+                          Hapus
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -1010,7 +1123,6 @@ const AdminPanel: React.FC = () => {
                   key={`property-${property.id}`}
                   className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden border border-gray-100"
                   variants={cardVariants}
-                  whileHover="hover"
                   custom={index}
                 >
                   <PropertyCard
@@ -1019,6 +1131,7 @@ const AdminPanel: React.FC = () => {
                     showAdminControls={true}
                     showComparisonButton={false}
                     showWhatsAppButton={false}
+                    onEdit={(prop) => setEditingProperty(prop)}
                   />
                 </motion.div>
               ))}
@@ -1083,10 +1196,7 @@ const AdminPanel: React.FC = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  whileHover={{
-                    scale: 1.02,
-                    backgroundColor: "rgba(255,255,255,0.9)",
-                  }}
+                  // ...existing code...
                 >
                   <div className="flex items-start gap-2 sm:gap-3">
                     <span className="text-xl sm:text-2xl">{item.icon}</span>
@@ -1118,66 +1228,68 @@ const AdminPanel: React.FC = () => {
             onClick={handleCancelForm}
           >
             <motion.div
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Tambah Properti Baru
-                </h2>
-                <button
-                  onClick={handleCancelForm}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <IoClose className="w-6 h-6 text-gray-500" />
-                </button>
-              </div>
-              <div className="p-6 relative">
-                <AnimatePresence>
-                  {state.loading && (
-                    <motion.div
-                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-2xl z-[9999] flex items-center justify-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <div className="text-center">
-                        <motion.div
-                          className="inline-block"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        >
-                          <IoReload className="text-5xl text-blue-600" />
-                        </motion.div>
-                        <motion.p
-                          className="mt-4 text-gray-700 font-semibold"
-                          animate={{ opacity: [1, 0.5, 1] }}
-                          transition={{
-                            duration: 1.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        >
-                          Menambahkan properti...
-                        </motion.p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Mohon tunggu sebentar
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <PropertyForm
-                  onSave={handleAddProperty}
-                  onCancel={handleCancelForm}
-                />
+              <div className="max-h-[90vh] overflow-y-auto">
+                <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Tambah Properti Baru
+                  </h2>
+                  <button
+                    onClick={handleCancelForm}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <IoClose className="w-6 h-6 text-gray-500" />
+                  </button>
+                </div>
+                <div className="p-6 relative">
+                  <AnimatePresence>
+                    {state.loading && (
+                      <motion.div
+                        className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-2xl z-[9999] flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <div className="text-center">
+                          <motion.div
+                            className="inline-block"
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                          >
+                            <IoReload className="text-5xl text-blue-600" />
+                          </motion.div>
+                          <motion.p
+                            className="mt-4 text-gray-700 font-semibold"
+                            animate={{ opacity: [1, 0.5, 1] }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                          >
+                            Menambahkan properti...
+                          </motion.p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Mohon tunggu sebentar
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <PropertyForm
+                    onSave={handleAddProperty}
+                    onCancel={handleCancelForm}
+                  />
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1195,67 +1307,69 @@ const AdminPanel: React.FC = () => {
             onClick={handleCancelForm}
           >
             <motion.div
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Edit Properti
-                </h2>
-                <button
-                  onClick={handleCancelForm}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <IoClose className="w-6 h-6 text-gray-500" />
-                </button>
-              </div>
-              <div className="p-6 relative">
-                <AnimatePresence>
-                  {state.loading && (
-                    <motion.div
-                      className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-2xl z-[9999] flex items-center justify-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <div className="text-center">
-                        <motion.div
-                          className="inline-block"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        >
-                          <IoReload className="text-5xl text-blue-600" />
-                        </motion.div>
-                        <motion.p
-                          className="mt-4 text-gray-700 font-semibold"
-                          animate={{ opacity: [1, 0.5, 1] }}
-                          transition={{
-                            duration: 1.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        >
-                          Menyimpan perubahan...
-                        </motion.p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Mohon tunggu sebentar
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <PropertyForm
-                  property={editingProperty}
-                  onSave={handleUpdateProperty}
-                  onCancel={handleCancelForm}
-                />
+              <div className="max-h-[90vh] overflow-y-auto">
+                <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Edit Properti
+                  </h2>
+                  <button
+                    onClick={handleCancelForm}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <IoClose className="w-6 h-6 text-gray-500" />
+                  </button>
+                </div>
+                <div className="p-6 relative">
+                  <AnimatePresence>
+                    {state.loading && (
+                      <motion.div
+                        className="absolute inset-0 bg-white/95 backdrop-blur-md rounded-2xl z-[9999] flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <div className="text-center">
+                          <motion.div
+                            className="inline-block"
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                          >
+                            <IoReload className="text-5xl text-blue-600" />
+                          </motion.div>
+                          <motion.p
+                            className="mt-4 text-gray-700 font-semibold"
+                            animate={{ opacity: [1, 0.5, 1] }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                          >
+                            Menyimpan perubahan...
+                          </motion.p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Mohon tunggu sebentar
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <PropertyForm
+                    property={editingProperty}
+                    onSave={handleUpdateProperty}
+                    onCancel={handleCancelForm}
+                  />
+                </div>
               </div>
             </motion.div>
           </motion.div>
