@@ -3,9 +3,11 @@ import { useApp } from "../context/AppContext";
 import PropertyCard from "../components/PropertyCard";
 import Dropdown from "../components/Dropdown";
 import Container from "../components/Container";
+import SearchBar from "../components/SearchBar";
 import { motion, AnimatePresence } from "framer-motion";
+import { Search } from "lucide-react";
 
-import { Search, SlidersHorizontal, Home, Building2, X } from "lucide-react";
+import { SlidersHorizontal, Home, Building2, X } from "lucide-react";
 
 const PropertiesPage: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -85,6 +87,8 @@ const PropertiesPage: React.FC = () => {
       list = list.filter(
         (p) =>
           p.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.subLocation &&
+            p.subLocation.toLowerCase().includes(searchQuery.toLowerCase())) ||
           p.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.status.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -215,16 +219,11 @@ const PropertiesPage: React.FC = () => {
 
               {/* Search Bar */}
               <div className="max-w-2xl mx-auto mb-6">
-                <div className="relative ">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Cari berdasarkan lokasi, tipe, atau status..."
-                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/95 backdrop-blur-md text-gray-800 placeholder-gray-400 shadow-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-                  />
-                </div>
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Cari berdasarkan lokasi, tipe, atau status..."
+                />
               </div>
 
               {/* Filter Panel - Always Open */}
@@ -324,7 +323,7 @@ const PropertiesPage: React.FC = () => {
 
       {/* Sub-location Pills */}
       {subLocations.length > 0 && (
-        <div className="bg-white py-8 shadow-md">
+        <div className="bg-white py-12 shadow-md">
           <Container>
             <div className="flex flex-wrap gap-3 justify-center">
               <button
@@ -356,8 +355,8 @@ const PropertiesPage: React.FC = () => {
       )}
 
       {/* Properties Grid */}
-      <section className="relative py-20 bg-gray-50">
-        <Container className="px-8 md:px-16 lg:px-24">
+      <section className="relative py-8 bg-gray-50">
+        <Container className="px-4 md:px-4 lg:px-8">
           {finalList.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

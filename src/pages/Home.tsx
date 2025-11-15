@@ -1,20 +1,22 @@
-import { useState, useEffect, useMemo } from "react";
-import Dropdown from "../components/Dropdown";
+import { useEffect } from "react";
 import PopularSection from "../components/PopularSection";
 import Container from "../components/Container";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 
 export default function Home() {
-  const [selectedLocation, setSelectedLocation] = useState("");
   const { dispatch, state } = useApp();
-  // Locations sourced dynamically from properties (fallback to "Semua Lokasi")
-  const locations = useMemo(() => {
-    const setLoc = new Set<string>(
-      state.properties.map((p) => p.location).filter(Boolean)
-    );
-    return ["Semua Lokasi", ...Array.from(setLoc).sort()];
-  }, [state.properties]);
+
+  // Auto-scroll to popular section after 4 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const popularSection = document.querySelector("#popular-section");
+      if (popularSection) {
+        popularSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Initialize with sample data if no properties exist
   useEffect(() => {
@@ -89,11 +91,6 @@ export default function Home() {
     }
   }, [dispatch, state.properties.length]);
 
-  // Sync selected location to global context
-  useEffect(() => {
-    dispatch({ type: "SET_SELECTED_LOCATION", payload: selectedLocation });
-  }, [selectedLocation, dispatch]);
-
   return (
     <div className="relative min-h-screen">
       <section
@@ -130,22 +127,12 @@ export default function Home() {
                 <br />
                 investasi yang pas - cepat, mudah, dan terpercaya!
               </p>
-
-              <div className="max-w-md mx-auto">
-                <Dropdown
-                  options={locations}
-                  selected={selectedLocation}
-                  onSelect={setSelectedLocation}
-                />
-              </div>
             </div>
           </Container>
         </div>
       </section>
 
-      <section className="relative py-20">
-        <PopularSection />
-      </section>
+      <PopularSection />
     </div>
   );
 }

@@ -32,7 +32,7 @@ const PropertyCatalogModal: React.FC<PropertyCatalogModalProps> = ({
 }) => {
   const price = property.price || 0;
   const ppnRate = (property.financing?.ppnPercent ?? 11) / 100;
-  const dpRate = (property.financing?.dpPercent ?? 10) / 100;
+  const dpRate = (property.financing?.dpPercent ?? 5) / 100;
   const bookingFee = property.financing?.bookingFee ?? 15000000;
 
   const ppn = Math.round(price * ppnRate);

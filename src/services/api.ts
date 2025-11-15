@@ -683,7 +683,7 @@ class ApiService {
     const financing =
       financingParsed && typeof financingParsed === "object"
         ? {
-            dpPercent: toNumber(financingParsed.dpPercent) ?? 10,
+            dpPercent: toNumber(financingParsed.dpPercent) ?? 5,
             tenorYears: toNumber(financingParsed.tenorYears) ?? 1,
             fixedYears: toNumber(financingParsed.fixedYears) ?? undefined,
             bookingFee: toNumber(financingParsed.bookingFee) ?? undefined,

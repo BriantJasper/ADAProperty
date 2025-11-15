@@ -39,7 +39,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     tiktokUrl: property?.tiktokUrl || "",
     tourUrl: property?.tourUrl || "",
     financing: property?.financing || undefined,
-    garage: false,
+    garage: undefined,
   });
 
   // Interest rate state (default 5%)
@@ -220,20 +220,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   };
 
   // Template deskripsi: diletakkan di dalam komponen agar punya akses ke setFormData
-  const buildDescriptionTemplateFrom = (p: Partial<Property>) => {
-    const b = Number(p.bedrooms ?? 0);
-    const m = Number(p.bathrooms ?? 0);
-    const lb = Number(p.area ?? 0);
-    const lt = Number(p.landArea ?? 0);
-    const fl = Number(p.floors ?? 0);
-    const loc = String(p.subLocation || p.location || "").trim();
-    return `KT ${b}, KM ${m}, LB ${lb} m², LT ${lt} m²\nLantai ${fl}\nFasilitas: ...\nLokasi: ${loc}\nCatatan: ...`;
+  const buildDescriptionTemplateFrom = () => {
+    return `Fasilitas:\n   -\n   -\n   -\nPromo:\n   -\n   -\n   -`;
   };
 
   const handleInsertTemplate = () => {
     setFormData((prev) => ({
       ...prev,
-      description: buildDescriptionTemplateFrom(prev as Partial<Property>),
+      description: buildDescriptionTemplateFrom(),
     }));
   };
 
@@ -300,7 +294,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
         tourUrl: trimmed(formData.tourUrl) || undefined,
         // Add financing with interest rate and default values
         financing: {
-          dpPercent: 10,
+          dpPercent: 5,
           tenorYears: 15,
           fixedYears: 1,
           bookingFee: 0,
@@ -662,6 +656,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             name="bedrooms"
             value={formData.bedrooms}
             onChange={handleInputChange}
+            onFocus={(e) => e.target.select()}
             placeholder="Contoh: 3"
             min="0"
             required
@@ -678,6 +673,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             name="bathrooms"
             value={formData.bathrooms}
             onChange={handleInputChange}
+            onFocus={(e) => e.target.select()}
             placeholder="Contoh: 2"
             min="0"
             required
@@ -694,6 +690,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             name="area"
             value={formData.area}
             onChange={handleInputChange}
+            onFocus={(e) => e.target.select()}
             placeholder="Contoh: 120"
             min="0"
             required
@@ -710,6 +707,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             name="landArea"
             value={formData.landArea}
             onChange={handleInputChange}
+            onFocus={(e) => e.target.select()}
             placeholder="Contoh: 150"
             min="0"
             required
@@ -743,6 +741,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             name="floors"
             value={formData.floors ?? 0}
             onChange={handleInputChange}
+            onFocus={(e) => e.target.select()}
             placeholder="Contoh: 2"
             min="0"
             required
@@ -839,9 +838,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
           value={formData.description}
           onChange={handleInputChange}
           rows={4}
-          placeholder={
-            "Contoh format:\nKT 3, KM 2, LB 120 m², LT 150 m²\nLantai 2\nFasilitas: carport, taman, kitchen set\nLokasi: dekat tol, sekolah\nCatatan: bisa KPR, nego"
-          }
+          placeholder={"Fasilitas:\n   -\n   -\n   -\nPromo:\n   -\n   -\n   -"}
           className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-500 mt-1">

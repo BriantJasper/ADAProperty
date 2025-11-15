@@ -9,13 +9,37 @@ import {
   IoLogoTiktok,
   IoCart,
 } from "react-icons/io5";
-import { FaBed, FaBath } from "react-icons/fa";
 import {
   Home as HomeIcon,
   Building2,
   ChevronLeft,
   ChevronRight,
+  Bed,
+  Bath,
+  Car,
 } from "lucide-react";
+
+// Custom Stairs icon (lucide currently lacks a dedicated stairs glyph)
+const StairsIcon: React.FC<{ className?: string; size?: number }> = ({
+  className = "",
+  size = 16,
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M3 21h18" />
+    <path d="M6 18v-3h4v-3h4v-3h4V6" />
+  </svg>
+);
 import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import PropertyCatalogModal from "./PropertyCatalogModal";
@@ -51,19 +75,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     return n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "";
   });
 
-  // Get default DP based on property type
-  const getDefaultDPPercentage = (type: string): number => {
-    const normalizedType = type.toLowerCase();
-    // Ruko, Pabrik, Gudang = 10%
-    if (["ruko", "pabrik", "gudang"].includes(normalizedType)) {
-      return 10;
-    }
-    // Rumah, Apartemen, Tanah/Kavling = 5%
-    return 5;
-  };
+  // Get default DP (all property types default to 5%)
+  const getDefaultDPPercentage = (): number => 5;
 
   const [depositPercentage, setDepositPercentage] = useState(
-    property.financing?.dpPercent ?? getDefaultDPPercentage(property.type)
+    property.financing?.dpPercent ?? getDefaultDPPercentage()
   );
   const [angsuranYears, setAngsuranYears] = useState(
     property.financing?.tenorYears ?? 1
@@ -88,6 +104,32 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     top: 0,
     width: 0,
   });
+
+  // Derive garage/parking count from multiple possible sources
+  const garageCount = React.useMemo(() => {
+    const g: unknown = (property as any).garage;
+    if (typeof g === "number") return g;
+    if (typeof g === "boolean") return g ? 1 : 0;
+    const features = Array.isArray(property.features) ? property.features : [];
+    return features.some((f) => /garasi|carport|parkir/i.test(String(f)))
+      ? 1
+      : 0;
+  }, [property.garage, property.features]);
+
+  // Clean description: start from 'Fasilitas' if present; strip leading LB/LT etc.
+  const cleanedDescription = React.useMemo(() => {
+    let desc = property.description || "";
+    const fasilitasIndex = desc.toLowerCase().indexOf("fasilitas");
+    if (fasilitasIndex !== -1) {
+      desc = desc.slice(fasilitasIndex);
+    } else {
+      // Remove leading metadata lines containing abbreviations
+      desc = desc.replace(/^(?:.*?(?:KT|KM|LB|LT)[^\n]*\n)+/gi, "").trim();
+      // Remove inline LB/LT patterns
+      desc = desc.replace(/\b(?:LB|LT)\s*\d+\s*m²?,?\s*/gi, "");
+    }
+    return desc.trim();
+  }, [property.description]);
 
   // Sync when property financing changes
   useEffect(() => {
@@ -604,7 +646,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
             {/* Social Links - Bottom Right */}
             {(property.igUrl || property.tiktokUrl) && (
-              <div className="absolute right-3 bottom-16 flex items-center gap-2 pointer-events-auto">
+              <div className="absolute right-3 bottom-3 flex items-center gap-2 pointer-events-auto">
                 {property.igUrl && (
                   <a
                     href={property.igUrl}
@@ -680,24 +722,52 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
           {/* Location & SubLocation (above DP) with KM/KT badges to the right */}
           <div className="mt-2 flex items-start justify-between relative z-10">
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-gray-700">
                 {property.location}
               </span>
-              <span className="text-xs text-gray-500">
-                {property.subLocation || "-"}
-              </span>
+              {property.subLocation && (
+                <span className="text-xs text-gray-500">
+                  {property.subLocation}
+                </span>
+              )}
+              {(property.landArea || property.area) && (
+                <div className="flex flex-col gap-y-0.5 text-[11px] text-gray-800 font-semibold">
+                  {property.landArea && (
+                    <span className="whitespace-nowrap">
+                      Luas Tanah: {property.landArea} m²
+                    </span>
+                  )}
+                  {property.area && (
+                    <span className="whitespace-nowrap">
+                      Luas Bangunan: {property.area} m²
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
               <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
-                <FaBath size={16} className="text-gray-700" />
+                <Bath size={16} className="text-gray-700" />
                 <span>{property.bathrooms}</span>
               </div>
               <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
-                <FaBed size={16} className="text-gray-700" />
+                <Bed size={16} className="text-gray-700" />
                 <span>{property.bedrooms}</span>
               </div>
+              {property.floors && property.floors > 0 && (
+                <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                  <StairsIcon size={16} className="text-gray-700" />
+                  <span>{property.floors}</span>
+                </div>
+              )}
+              {garageCount > 0 && (
+                <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                  <Car size={16} className="text-gray-700" />
+                  <span>{garageCount}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -806,11 +876,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                   : "line-clamp-3 whitespace-normal"
               }`}
             >
-              {property.description || "Tidak ada deskripsi"}
+              {cleanedDescription || "Tidak ada deskripsi"}
             </p>
-            {property.description &&
-              (property.description.length > 160 ||
-                property.description.split(/\r?\n/).length > 3) && (
+            {cleanedDescription &&
+              (cleanedDescription.length > 160 ||
+                cleanedDescription.split(/\r?\n/).length > 3) && (
                 <button
                   type="button"
                   onClick={() => setIsDescExpanded((v) => !v)}

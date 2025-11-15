@@ -12,8 +12,14 @@ export default function Footer() {
       {/* Top Section */}
       <div className="flex flex-col lg:flex-row justify-between items-start gap-12 border-b border-gray-200 pb-12">
         <div>
-          <h2 className="text-3xl font-semibold">
-            Punya <span className="bg-yellow-300 px-1">pertanyaan?</span>
+          <h2 className="text-3xl font-semibold relative z-10">
+            Punya{" "}
+            <span className="relative inline-block">
+              <span className="absolute inset-0 bg-gradient-to-r from-yellow-200/80 to-yellow-300/80 blur-sm -z-10"></span>
+              <span className="relative bg-gradient-to-r from-yellow-200 to-yellow-300 px-2 pb-1 rounded-md">
+                pertanyaan?
+              </span>
+            </span>
           </h2>
           {/* <p className="text-2xl mt-2">Kontak kami!</p> */}
           <a href="/contact" className="text-2xl mt-2">
@@ -28,7 +34,7 @@ export default function Footer() {
               href={`https://wa.me/${COMPANY_INFO.whatsapp.number}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-3 text-green-700 hover:text-green-600 transition-colors group cursor-pointer"
+              className="flex items-start gap-3 text-gray-600 hover:text-gray-900 transition-colors group cursor-pointer"
             >
               <Phone className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
@@ -40,7 +46,7 @@ export default function Footer() {
             {/* Email Link */}
             <a
               href={`mailto:${COMPANY_INFO.email}?subject=Pertanyaan tentang Properti&body=Halo ADA Property,%0D%0A%0D%0ASaya tertarik untuk mengetahui lebih lanjut tentang properti yang tersedia.%0D%0A%0D%0ATerima kasih.`}
-              className="flex items-start gap-3 text-blue-700 hover:text-blue-600 transition-colors group cursor-pointer"
+              className="flex items-start gap-3 text-gray-600 hover:text-gray-900 transition-colors group cursor-pointer"
             >
               <Mail className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
@@ -51,12 +57,10 @@ export default function Footer() {
 
             {/* Google Maps Link */}
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                COMPANY_INFO.address.full
-              )}`}
+              href="https://maps.app.goo.gl/z61UgGKhY1niro8w6"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-3 text-red-700 hover:text-red-600 transition-colors group cursor-pointer"
+              className="flex items-start gap-3 text-gray-600 hover:text-gray-900 transition-colors group cursor-pointer"
             >
               <MapPin className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
@@ -80,7 +84,7 @@ export default function Footer() {
                 href={COMPANY_INFO.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors text-sm font-medium group"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium group"
                 title="Instagram"
               >
                 <Instagram className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -91,7 +95,7 @@ export default function Footer() {
                 href={COMPANY_INFO.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors text-sm font-medium group"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium group"
                 title="Facebook"
               >
                 <Facebook className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -102,7 +106,7 @@ export default function Footer() {
                 href={COMPANY_INFO.social.tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-900 hover:text-gray-700 transition-colors text-sm font-medium group"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium group"
                 title="TikTok"
               >
                 <Music className="w-5 h-5 group-hover:scale-110 transition-transform" />

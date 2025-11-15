@@ -21,6 +21,7 @@ export interface Property {
   area: number;
   landArea?: number;
   floors?: number;
+  garage?: number;
   images: string[];
   features: string[];
   whatsappNumber: string;

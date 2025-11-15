@@ -38,14 +38,14 @@ export default function ConsignPage() {
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+    const value = e.target.value.replace(/[^0-9]/g, ""); // Remove non-digits
     if (value === "") {
       setForm((prev) => ({ ...prev, price: undefined }));
       setPriceDisplay("");
     } else {
       const numValue = Number(value);
       setForm((prev) => ({ ...prev, price: numValue }));
-      setPriceDisplay(formatNumber(value));
+      setPriceDisplay(`Rp ${formatNumber(value)}`);
     }
   };
 
@@ -196,6 +196,8 @@ export default function ConsignPage() {
           "Pengajuan titip jual berhasil dikirim! Admin akan menghubungi Anda segera.",
           { duration: 4000 }
         );
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: "smooth" });
         // reset minimal fields
         setPriceDisplay("");
         setForm((prev) => ({
@@ -231,8 +233,7 @@ export default function ConsignPage() {
       <h1 className="text-2xl font-bold mb-6">Titip Jual Properti</h1>
       <p className="text-gray-600 mb-6">
         Isi form berikut untuk menitipkan properti Anda. Pengajuan akan masuk ke
-        inbox Admin untuk ditinjau. Admin akan menghubungi Anda dan melakukan
-        unggah foto (maks 5) saat sudah disetujui.
+        inbox untuk ditinjau dan kami akan menghubungi Anda.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -367,6 +368,7 @@ export default function ConsignPage() {
               className="w-full border rounded px-3 py-2"
               type="number"
               min={0}
+              placeholder="3"
             />
           </div>
           <div>
@@ -380,6 +382,7 @@ export default function ConsignPage() {
               className="w-full border rounded px-3 py-2"
               type="number"
               min={0}
+              placeholder="2"
             />
           </div>
         </div>
@@ -396,6 +399,7 @@ export default function ConsignPage() {
               className="w-full border rounded px-3 py-2"
               type="number"
               min={0}
+              placeholder="120"
             />
           </div>
           <div>
@@ -409,6 +413,7 @@ export default function ConsignPage() {
               className="w-full border rounded px-3 py-2"
               type="number"
               min={0}
+              placeholder="150"
             />
           </div>
           <div>
@@ -422,6 +427,7 @@ export default function ConsignPage() {
               className="w-full border rounded px-3 py-2"
               type="number"
               min={0}
+              placeholder="2"
             />
           </div>
         </div>

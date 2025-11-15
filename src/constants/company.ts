@@ -11,9 +11,9 @@ export const COMPANY_INFO = {
     full: "Jl. Cimandiri 1B Blok V No.9, Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat 17823",
   },
   social: {
-    instagram: "https://www.instagram.com/adaproperty88/",
-    facebook: "#",
-    tiktok: "https://www.tiktok.com/@adaproperty88",
+    instagram: "https://www.instagram.com/adaproperty8899",
+    facebook: "https://www.facebook.com/share/1adZCfRby4/",
+    tiktok: "https://tiktok.com/@adaproperty8899",
   },
   whatsapp: {
     number: "6282220005543", // Without + for wa.me links
