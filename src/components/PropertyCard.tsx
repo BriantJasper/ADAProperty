@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import "./PropertyCard.landscape.css";
+import "./PropertyCard.icons.landscape.css";
 import { useApp } from "../context/AppContext";
 import type { Property } from "../types/Property";
 import toast from "react-hot-toast";
@@ -49,6 +51,7 @@ interface PropertyCardProps {
   showAdminControls?: boolean;
   showComparisonButton?: boolean;
   showWhatsAppButton?: boolean;
+  showRemoveFromComparisonButton?: boolean;
   onEdit?: (property: Property) => void;
 }
 
@@ -57,6 +60,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   showAdminControls = false,
   showComparisonButton = true,
   showWhatsAppButton = false,
+  showRemoveFromComparisonButton = false,
   onEdit,
 }) => {
   const {
@@ -105,16 +109,20 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     width: 0,
   });
 
-  // Derive garage/parking count from multiple possible sources
-  const garageCount = React.useMemo(() => {
-    const g: unknown = (property as any).garage;
-    if (typeof g === "number") return g;
-    if (typeof g === "boolean") return g ? 1 : 0;
-    const features = Array.isArray(property.features) ? property.features : [];
-    return features.some((f) => /garasi|carport|parkir/i.test(String(f)))
-      ? 1
-      : 0;
-  }, [property.garage, property.features]);
+  // Use property.garage if available, otherwise fallback to derived count
+  const garageCount =
+    typeof property.garage === "number"
+      ? property.garage
+      : (() => {
+          if (typeof property.garage === "boolean")
+            return property.garage ? 1 : 0;
+          const features = Array.isArray(property.features)
+            ? property.features
+            : [];
+          return features.some((f) => /garasi|carport|parkir/i.test(String(f)))
+            ? 1
+            : 0;
+        })();
 
   // Clean description: start from 'Fasilitas' if present; strip leading LB/LT etc.
   const cleanedDescription = React.useMemo(() => {
@@ -545,13 +553,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 btn-landscape"
             >
               Simpan
             </button>
             <button
               onClick={handleCancel}
-              className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 btn-landscape"
             >
               Batal
             </button>
@@ -626,21 +634,23 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               <div
                 className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
                   property.status === "dijual" ? "bg-blue-600" : "bg-green-600"
-                }`}
+                } type-capsule-landscape`}
               >
                 {formatText(property.status)}
               </div>
-              <div
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
-                  property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
-                } flex items-center gap-1.5`}
-              >
-                {property.type === "rumah" ? (
-                  <HomeIcon className="w-3.5 h-3.5" />
-                ) : (
-                  <Building2 className="w-3.5 h-3.5" />
-                )}
-                <span>{formatText(property.type)}</span>
+              <div className="hidden md:block">
+                <div
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
+                    property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
+                  } flex items-center gap-1.5 type-capsule-landscape`}
+                >
+                  {property.type === "rumah" ? (
+                    <HomeIcon className="w-3.5 h-3.5" />
+                  ) : (
+                    <Building2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>{formatText(property.type)}</span>
+                </div>
               </div>
             </div>
 
@@ -652,7 +662,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                     href={property.igUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-pink-600 hover:text-pink-700"
+                    className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-pink-600 hover:text-pink-700 social-capsule-landscape"
                     title="Buka Instagram"
                   >
                     <IoLogoInstagram size={14} />
@@ -664,7 +674,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                     href={property.tiktokUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-gray-800 hover:text-black"
+                    className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-md text-gray-800 hover:text-black social-capsule-landscape"
                     title="Buka TikTok"
                   >
                     <IoLogoTiktok size={14} />
@@ -681,19 +691,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               <div className="absolute top-3 right-3 flex gap-2">
                 <button
                   onClick={() => onEdit?.(property)}
-                  className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 shadow-lg transition-all duration-200 flex items-center gap-1"
+                  className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 shadow-lg transition-all duration-200 flex items-center"
                   title="Edit Properti"
                 >
                   <IoPencil size={18} />
-                  <span className="text-xs font-medium">Edit</span>
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 shadow-lg transition-all duration-200 flex items-center gap-1"
+                  className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 shadow-lg transition-all duration-200 flex items-center"
                   title="Hapus Properti"
                 >
                   <IoTrash size={18} />
-                  <span className="text-xs font-medium">Hapus</span>
                 </button>
               </div>
             )}
@@ -731,23 +739,57 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                   {property.subLocation}
                 </span>
               )}
-              {(property.landArea || property.area) && (
-                <div className="flex flex-col gap-y-0.5 text-[11px] text-gray-800 font-semibold">
-                  {property.landArea && (
-                    <span className="whitespace-nowrap">
-                      Luas Tanah: {property.landArea} m²
-                    </span>
-                  )}
-                  {property.area && (
-                    <span className="whitespace-nowrap">
-                      Luas Bangunan: {property.area} m²
-                    </span>
-                  )}
+              {/* Property icons for landscape mobile */}
+              <div className="property-icons-landscape mt-1 hidden">
+                <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                  <Bath size={16} className="text-gray-700" />
+                  <span>{property.bathrooms}</span>
                 </div>
-              )}
+                <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                  <Bed size={16} className="text-gray-700" />
+                  <span>{property.bedrooms}</span>
+                </div>
+                {property.floors && property.floors > 0 && (
+                  <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                    <StairsIcon size={16} className="text-gray-700" />
+                    <span>{property.floors}</span>
+                  </div>
+                )}
+                {garageCount > 0 && (
+                  <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
+                    <Car size={16} className="text-gray-700" />
+                    <span>{garageCount}</span>
+                  </div>
+                )}
+              </div>
+              {/* Property type badge: show below sublocation on mobile only */}
+              <div className="block md:hidden mt-1">
+                <div
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
+                    property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
+                  } flex items-center gap-1.5 type-capsule-landscape`}
+                >
+                  {property.type === "rumah" ? (
+                    <HomeIcon className="w-3.5 h-3.5" />
+                  ) : (
+                    <Building2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>{formatText(property.type)}</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-y-0.5 text-[11px] text-gray-800 font-semibold">
+                <span className="whitespace-nowrap">
+                  Luas Tanah: {property.landArea ?? 0} m²
+                </span>
+                {property.area ? (
+                  <span className="whitespace-nowrap">
+                    Luas Bangunan: {property.area} m²
+                  </span>
+                ) : null}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 property-icons-hide-on-landscape">
               <div className="bg-white/90 px-2 py-1 rounded-md text-sm font-semibold text-gray-700 border border-gray-200 flex items-center gap-2">
                 <Bath size={16} className="text-gray-700" />
                 <span>{property.bathrooms}</span>
@@ -898,14 +940,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 href={property.tourUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 btn-landscape"
               >
                 House Tour
               </a>
             ) : (
               <button
                 disabled
-                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-gray-400 px-4 py-2 text-white cursor-not-allowed"
+                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-gray-400 px-4 py-2 text-white cursor-not-allowed btn-landscape"
               >
                 House Tour
               </button>
@@ -913,9 +955,21 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             {showWhatsAppButton && (
               <button
                 onClick={handleWhatsAppClick}
-                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-x-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 btn-landscape"
               >
                 WhatsApp
+              </button>
+            )}
+            {showRemoveFromComparisonButton && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFromComparison();
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center btn-landscape"
+                title="Hapus dari perbandingan"
+              >
+                <IoTrash size={20} />
               </button>
             )}
             {showComparisonButton && (
@@ -926,7 +980,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                       e.stopPropagation();
                       handleRemoveFromComparison();
                     }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center"
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center btn-landscape"
                     title="Hapus dari perbandingan"
                   >
                     <IoCart size={20} />

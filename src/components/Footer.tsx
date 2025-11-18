@@ -5,9 +5,18 @@ export default function Footer() {
   return (
     <footer
       className="
-        bg-white text-gray-900 py-16 px-8 md:px-16 lg:px-24 
+        text-gray-900 py-16 px-8 md:px-16 lg:px-24
         border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]
+        bg-white
+        relative
+        overflow-hidden
       "
+      style={{
+        backgroundImage: "url(/images/footer-bg.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
       {/* Top Section */}
       <div className="flex flex-col lg:flex-row justify-between items-start gap-12 border-b border-gray-200 pb-12">
@@ -38,8 +47,10 @@ export default function Footer() {
             >
               <Phone className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
-                <p className="font-medium">Nomor Telepon</p>
-                <p>{COMPANY_INFO.whatsapp.displayNumber}</p>
+                <p className="font-medium text-black">Nomor Telepon</p>
+                <p className="text-gray-700">
+                  {COMPANY_INFO.whatsapp.displayNumber}
+                </p>
               </div>
             </a>
 
@@ -50,8 +61,8 @@ export default function Footer() {
             >
               <Mail className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
-                <p className="font-medium">Alamat Email</p>
-                <p>{COMPANY_INFO.email}</p>
+                <p className="font-medium text-black">Alamat Email</p>
+                <p className="text-gray-700">{COMPANY_INFO.email}</p>
               </div>
             </a>
 
@@ -64,8 +75,8 @@ export default function Footer() {
             >
               <MapPin className="w-5 h-5 mt-1 group-hover:scale-110 transition-transform" />
               <div>
-                <p className="font-medium">Alamat Kantor</p>
-                <p>
+                <p className="font-medium text-black">Alamat Kantor</p>
+                <p className="text-gray-700">
                   {COMPANY_INFO.address.street}
                   <br />
                   {COMPANY_INFO.address.area}, {COMPANY_INFO.address.city},{" "}

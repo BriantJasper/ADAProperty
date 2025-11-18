@@ -90,7 +90,8 @@ const PropertiesPage: React.FC = () => {
           (p.subLocation &&
             p.subLocation.toLowerCase().includes(searchQuery.toLowerCase())) ||
           p.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.status.toLowerCase().includes(searchQuery.toLowerCase())
+          p.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 

@@ -299,10 +299,17 @@ export default function ContactPage() {
                     Kunjungi kantor kami untuk konsultasi tatap muka
                   </p>
                   <p className="text-gray-700 font-medium">
-                    Jl. Cimandiri 1B Blok V No.9
-                    <br />
-                    Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa Barat
-                    17823
+                    <a
+                      href="https://maps.app.goo.gl/eTt8VyP9ZxiTPTgX9"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-yellow-600 hover:text-orange-600 font-semibold transition-colors"
+                    >
+                      Jl. Cimandiri 1B Blok V No.9
+                      <br />
+                      Graha Asri Jababeka, Cikarang Timur, Kab. Bekasi, Jawa
+                      Barat 17823
+                    </a>
                   </p>
                 </div>
               </div>

@@ -18,7 +18,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 }) => {
   const { state } = useApp();
   const [formData, setFormData] = useState<
-    Partial<Property> & { garage?: boolean }
+    Partial<Property> & { garage?: number }
   >({
     title: property?.title || "",
     description: property?.description || "",
@@ -39,7 +39,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     tiktokUrl: property?.tiktokUrl || "",
     tourUrl: property?.tourUrl || "",
     financing: property?.financing || undefined,
-    garage: undefined,
+    garage: property?.garage ?? 0,
   });
 
   // Interest rate state (default 5%)
@@ -109,12 +109,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     >
   ) => {
     const { name, value, type } = e.target;
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked,
-      }));
-    } else if (type === "number") {
+    if (type === "number") {
       // Allow empty string for number inputs so users can clear the field
       if (value === "" || value === null || value === undefined) {
         setFormData((prev) => ({
@@ -284,9 +279,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             ? formData.floors
             : parseInt(String(formData.floors as any)) || 0,
         images: formData.images || [],
-        features: formData.garage
-          ? [...(formData.features || []), "Garasi"]
-          : formData.features || [],
+        garage:
+          typeof formData.garage === "number"
+            ? formData.garage
+            : parseInt(String(formData.garage)) || 0,
+        features: formData.features || [],
         whatsappNumber: trimmed(formData.whatsappNumber),
         igUrl: trimmed(formData.igUrl) || undefined,
         tiktokUrl: trimmed(formData.tiktokUrl) || undefined,
@@ -342,6 +339,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       }
       if (!propertyData.images || propertyData.images.length === 0) {
         validationErrors.push("Minimal 1 gambar harus diunggah");
+      }
+      if (!isNonNegInt(propertyData.garage)) {
+        validationErrors.push(
+          "Jumlah garasi wajib diisi dan bilangan bulat ≥ 0"
+        );
       }
 
       if (validationErrors.length > 0) {
@@ -714,6 +716,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Garasi
+          </label>
+          <input
+            type="number"
+            name="garage"
+            value={formData.garage ?? 0}
+            onChange={handleInputChange}
+            onFocus={(e) => e.target.select()}
+            placeholder="Contoh: 1"
+            min="0"
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -845,19 +864,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
           Tips: pisahkan poin dengan baris baru atau koma; kartu akan merapikan
           otomatis.
         </p>
-      </div>
-
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          name="garage"
-          checked={formData.garage}
-          onChange={handleInputChange}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        />
-        <label className="ml-2 block text-sm text-gray-700">
-          Memiliki Garasi
-        </label>
       </div>
 
       {/* Color Settings */}

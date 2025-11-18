@@ -21,7 +21,7 @@ const ComparisonPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 overflow-x-hidden">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div
@@ -53,10 +53,10 @@ const ComparisonPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-5 py-2.5 rounded-xl">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-5 py-2.5 rounded-xl min-w-0">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                <span className="text-sm font-semibold text-blue-900">
+                <span className="text-sm font-semibold text-blue-900 truncate">
                   {state.comparisonCart.length} dari 3 Properti
                 </span>
               </div>
@@ -104,6 +104,7 @@ const ComparisonPage: React.FC = () => {
                     showAdminControls={false}
                     showComparisonButton={false}
                     showWhatsAppButton={true}
+                    showRemoveFromComparisonButton={true}
                   />
                 ))}
               </div>

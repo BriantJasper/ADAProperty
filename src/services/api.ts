@@ -721,6 +721,7 @@ class ApiService {
       landArea:
         toNumber(record.landArea ?? record.land_area) ?? record.landArea,
       floors: toNumber(record.floors) ?? record.floors,
+      garage: toNumber(record.garage ?? record.garasi) ?? 0,
       images,
       features,
       tourUrl,

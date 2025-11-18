@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -19,6 +20,7 @@ return new class extends Migration {
             $table->unsignedInteger('area')->default(0);
             $table->unsignedInteger('land_area')->default(0);
             $table->unsignedInteger('floors')->default(0);
+            $table->unsignedInteger('garage')->default(0);
             $table->text('images')->nullable();
             $table->text('features')->nullable();
             $table->string('whatsapp_number')->nullable();
@@ -29,7 +31,8 @@ return new class extends Migration {
             $table->timestamps();
         });
     }
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('properties');
     }
 };

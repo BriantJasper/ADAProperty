@@ -1,0 +1,51 @@
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .type-capsule-landscape {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    font-size: 0.75rem !important;
+    min-width: 0 !important;
+    max-width: 80px !important;
+  }
+  .type-capsule-landscape svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .type-capsule-landscape span {
+    font-size: 0.7rem !important;
+  }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .social-capsule-landscape {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    font-size: 0.75rem !important;
+    min-width: 0 !important;
+    max-width: 80px !important;
+  }
+  .social-capsule-landscape svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .social-capsule-landscape span {
+    font-size: 0.7rem !important;
+  }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .property-icons-landscape {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 0.25rem !important;
+    margin-top: 0.25rem !important;
+  }
+  .property-icons-landscape > div {
+    font-size: 0.85rem !important;
+    padding: 0.15rem 0.5rem !important;
+  }
+  .property-icons-hide-on-landscape {
+    display: none !important;
+  }
+}
