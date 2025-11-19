@@ -40,6 +40,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     tourUrl: property?.tourUrl || "",
     financing: property?.financing || undefined,
     garage: property?.garage ?? 0,
+    isFeatured: property?.isFeatured ?? false,
   });
 
   // Interest rate state (default 5%)
@@ -140,7 +141,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       // Normalize URL inputs
       setFormData((prev) => ({ ...prev, [name]: normalizeUrl(value) }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Handle checkbox for isFeatured
+      if (type === "checkbox") {
+        const checked = (e.target as HTMLInputElement).checked;
+        setFormData((prev) => ({ ...prev, [name]: checked }));
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      }
     }
   };
 
@@ -297,6 +304,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
           bookingFee: 0,
           interestRate: interestRate,
         },
+        // Flag featured for Popular section
+        isFeatured: Boolean(formData.isFeatured),
       } as Partial<Property>;
 
       console.log("Submitting property with images:", propertyData.images);
@@ -499,6 +508,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             required
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+
+        {/* Featured toggle */}
+        <div className="flex items-center gap-3">
+          <input
+            id="isFeatured"
+            name="isFeatured"
+            type="checkbox"
+            checked={Boolean(formData.isFeatured)}
+            onChange={handleInputChange}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label htmlFor="isFeatured" className="text-sm font-medium text-gray-700">
+            Tampilkan di bagian "Pilihan Populer" (Home)
+          </label>
         </div>
 
         <div>

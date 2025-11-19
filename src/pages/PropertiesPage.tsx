@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import PropertyCard from "../components/PropertyCard";
 import Dropdown from "../components/Dropdown";
@@ -19,6 +19,16 @@ const PropertiesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [minPriceDisplay, setMinPriceDisplay] = useState<string>("");
   const [maxPriceDisplay, setMaxPriceDisplay] = useState<string>("");
+
+  // Ref to the cards section for smooth scroll
+  const cardsSectionRef = useRef<HTMLElement | null>(null);
+
+  const scrollToCards = () => {
+    const el = cardsSectionRef.current;
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 80; // offset for header
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
 
   const location = state.selectedLocation;
 
@@ -209,12 +219,14 @@ const PropertiesPage: React.FC = () => {
                 <Dropdown
                   options={locations}
                   selected={location}
-                  onSelect={(value) =>
+                  onSelect={(value) => {
                     dispatch({
                       type: "SET_SELECTED_LOCATION",
                       payload: value,
-                    })
-                  }
+                    });
+                    // Scroll down to property cards when location is chosen
+                    scrollToCards();
+                  }}
                 />
               </div>
 
@@ -328,7 +340,10 @@ const PropertiesPage: React.FC = () => {
           <Container>
             <div className="flex flex-wrap gap-3 justify-center">
               <button
-                onClick={() => setActiveSub("")}
+                onClick={() => {
+                  setActiveSub("");
+                  scrollToCards();
+                }}
                 className={`px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 ${
                   activeSub === ""
                     ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg"
@@ -340,7 +355,10 @@ const PropertiesPage: React.FC = () => {
               {subLocations.map((sub) => (
                 <button
                   key={sub}
-                  onClick={() => setActiveSub(sub)}
+                  onClick={() => {
+                    setActiveSub(sub);
+                    scrollToCards();
+                  }}
                   className={`px-5 py-2.5 rounded-xl font-medium transition-all transform hover:scale-105 ${
                     activeSub === sub
                       ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg"
@@ -356,7 +374,7 @@ const PropertiesPage: React.FC = () => {
       )}
 
       {/* Properties Grid */}
-      <section className="relative py-8 bg-gray-50">
+      <section ref={cardsSectionRef} className="relative py-8 bg-gray-50">
         <Container className="px-4 md:px-4 lg:px-8">
           {finalList.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center">

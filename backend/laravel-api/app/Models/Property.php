@@ -19,6 +19,7 @@ class Property extends Model
         'area',
         'land_area',
         'floors',
+        'is_featured',
         'images',
         'features',
         'whatsapp_number',

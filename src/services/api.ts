@@ -106,6 +106,7 @@ class ApiService {
       whatsappNumber: "6281234567890",
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-01T00:00:00.000Z",
+      isFeatured: true,
     },
     {
       id: "2",
@@ -125,6 +126,7 @@ class ApiService {
       whatsappNumber: "6281234567890",
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-01T00:00:00.000Z",
+      isFeatured: false,
     },
     {
       id: "3",
@@ -144,6 +146,7 @@ class ApiService {
       whatsappNumber: "6281234567890",
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-01T00:00:00.000Z",
+      isFeatured: false,
     },
   ];
 
@@ -550,9 +553,14 @@ class ApiService {
       return ApiService.normalizeResponse({ success: true, data: newProperty });
     }
 
+    // Map camelCase to backend expectations, including isFeatured -> is_featured
+    const payload = {
+      ...propertyData,
+      isFeatured: propertyData.isFeatured ?? false,
+    };
     const res = await this.makeRequest("/properties", {
       method: "POST",
-      body: JSON.stringify(propertyData),
+      body: JSON.stringify(payload),
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -566,7 +574,7 @@ class ApiService {
         return ApiService.normalizeResponse({
           success: true,
           data: {
-            ...propertyData,
+            ...payload,
             id: String(newId),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -606,9 +614,13 @@ class ApiService {
       }
     }
 
+    const payload = {
+      ...propertyData,
+      isFeatured: propertyData.isFeatured ?? undefined,
+    };
     const res = await this.makeRequest(`/properties/${id}`, {
       method: "PUT",
-      body: JSON.stringify(propertyData),
+      body: JSON.stringify(payload),
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -712,6 +724,13 @@ class ApiService {
       (record?.tourUrl ?? record?.tour_url ?? "").toString().trim() ||
       undefined;
 
+    const isFeaturedRaw =
+      record?.isFeatured ?? record?.is_featured ?? record?.featured;
+    const isFeatured =
+      typeof isFeaturedRaw === "string"
+        ? ["1", "true", "yes"].includes(isFeaturedRaw.toLowerCase())
+        : Boolean(isFeaturedRaw);
+
     return {
       ...record,
       price: toNumber(record.price) ?? 0,
@@ -726,6 +745,7 @@ class ApiService {
       features,
       tourUrl,
       financing,
+      isFeatured,
     };
   }
 

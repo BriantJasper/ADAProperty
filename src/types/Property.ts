@@ -22,6 +22,8 @@ export interface Property {
   landArea?: number;
   floors?: number;
   garage?: number;
+  // Ditandai untuk ditampilkan di bagian "Pilihan Populer" (home)
+  isFeatured?: boolean;
   images: string[];
   features: string[];
   whatsappNumber: string;

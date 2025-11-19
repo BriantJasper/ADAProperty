@@ -4,8 +4,13 @@ import PropertyCard from "../components/PropertyCard";
 export default function PopularSection() {
   const { state } = useApp();
 
+  // Prioritaskan properti yang ditandai featured oleh admin
+  const featured = state.properties.filter((p) => p.isFeatured);
+  // Jika tidak ada yang featured, fallback ke filter lokasi seperti sebelumnya
   const filtered =
-    state.selectedLocation && state.selectedLocation !== "Semua Lokasi"
+    featured.length > 0
+      ? featured
+      : state.selectedLocation && state.selectedLocation !== "Semua Lokasi"
       ? state.properties.filter((p) =>
           p.location
             .toLowerCase()

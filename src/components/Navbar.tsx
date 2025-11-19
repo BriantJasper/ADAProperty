@@ -110,13 +110,13 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/properties"
-                className={`${linkBase} font-medium transition-colors`}
+                className={`${linkBase} font-medium text-yellow-500 hover:text-yellow-700 whitespace-nowrap`}
               >
-                Properti
+                Cari Properti
               </Link>
               <Link
                 to="/consign"
-                className={`${linkBase} font-medium text-yellow-500 hover:text-yellow-700 whitespace-nowrap`}
+                className={`${linkBase} font-medium transition-colors`}
               >
                 Jual Properti
               </Link>
