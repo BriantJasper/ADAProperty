@@ -51,6 +51,7 @@ Route::middleware('jwt')->group(function () {
     Route::post('/properties', [PropertyController::class, 'store']);
     Route::put('/properties/{id}', [PropertyController::class, 'update']);
     Route::delete('/properties/{id}', [PropertyController::class, 'destroy']);
+    Route::post('/properties/batch-delete', [PropertyController::class, 'batchDestroy']);
 
     // Consignment management (admin only)
     Route::get('/consignments', [ConsignmentController::class, 'index']);

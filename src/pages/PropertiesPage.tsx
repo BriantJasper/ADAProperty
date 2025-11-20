@@ -375,7 +375,7 @@ const PropertiesPage: React.FC = () => {
 
       {/* Properties Grid */}
       <section ref={cardsSectionRef} className="relative py-8 bg-gray-50">
-        <Container className="px-4 md:px-4 lg:px-8">
+        <Container className="px-4 md:px-6 lg:px-12">
           {finalList.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -399,7 +399,7 @@ const PropertiesPage: React.FC = () => {
           ) : (
             <motion.div
               layout
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               transition={{ duration: 0.5, ease: "easeInOut" }}
             >
               <AnimatePresence>

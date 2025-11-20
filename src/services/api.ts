@@ -654,6 +654,36 @@ class ApiService {
     });
   }
 
+  static async batchDeleteProperties(ids: string[]) {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      throw new Error("Authentication required");
+    }
+
+    if (USE_FALLBACK) {
+      this.ensureFallbackLoaded();
+      const before = this.fallbackProperties.length;
+      this.fallbackProperties = this.fallbackProperties.filter(
+        (p) => !ids.includes(p.id)
+      );
+      if (this.fallbackProperties.length !== before) {
+        this.persistFallback();
+      }
+      return {
+        success: true,
+        message: `${
+          before - this.fallbackProperties.length
+        } properties deleted successfully`,
+      };
+    }
+
+    return this.makeRequest("/properties/batch-delete", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
   // Upload multiple images and return array of public URLs
   static async uploadImages(files: File[]) {
     const token = localStorage.getItem("auth_token");

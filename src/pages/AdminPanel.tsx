@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -8,7 +8,6 @@ import {
   IoEye,
   IoEyeOff,
   IoHome,
-  IoCart,
   IoSparkles,
   IoKey,
   IoSave,
@@ -17,12 +16,16 @@ import {
   IoDownload,
   IoChevronDown,
   IoChevronUp,
+  IoStar,
+  IoCheckbox,
+  IoTrashBin,
 } from "react-icons/io5";
 import { useApp } from "../context/AppContext";
 import ApiService from "../services/api";
 import PropertyForm from "../components/PropertyForm";
 import PropertyCard from "../components/PropertyCard";
-import ComparisonCart from "../components/ComparisonCart";
+import FeaturedManagerModal from "../components/FeaturedManagerModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 import SearchBar from "../components/SearchBar";
 import type { Property } from "../types/Property";
 import { COMPANY_INFO } from "../constants/company";
@@ -225,16 +228,23 @@ const AdminPanel: React.FC = () => {
     addProperty,
     removeConsignment,
     loadConsignments,
+    loadProperties,
   } = useApp();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showComparisonCart, setShowComparisonCart] = useState(false);
+  const [showFeaturedManager, setShowFeaturedManager] = useState(false);
   const [showChangeCredentialsForm, setShowChangeCredentialsForm] =
     useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [downloadingZip, setDownloadingZip] = useState<string | null>(null);
   const [isConsignmentInboxCollapsed, setIsConsignmentInboxCollapsed] =
-    useState(false);
+    useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
+  const [pendingDeletionIds, setPendingDeletionIds] = useState<string[]>([]);
+  const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [propertiesToDelete, setPropertiesToDelete] = useState<string[]>([]);
 
   // Helper function to download images as ZIP
   const downloadImagesAsZip = async (
@@ -324,20 +334,22 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  // Filter properties based on search query
-  const filteredProperties = state.properties.filter((property) => {
-    if (!searchQuery) return true;
+  // Filter properties based on search query and pending deletions
+  const filteredProperties = state.properties
+    .filter((p) => !pendingDeletionIds.includes(p.id))
+    .filter((property) => {
+      if (!searchQuery) return true;
 
-    const query = searchQuery.toLowerCase();
-    return (
-      property.title.toLowerCase().includes(query) ||
-      property.location.toLowerCase().includes(query) ||
-      (property.subLocation &&
-        property.subLocation.toLowerCase().includes(query)) ||
-      property.type.toLowerCase().includes(query) ||
-      property.status.toLowerCase().includes(query)
-    );
-  });
+      const query = searchQuery.toLowerCase();
+      return (
+        property.title.toLowerCase().includes(query) ||
+        property.location.toLowerCase().includes(query) ||
+        (property.subLocation &&
+          property.subLocation.toLowerCase().includes(query)) ||
+        property.type.toLowerCase().includes(query) ||
+        property.status.toLowerCase().includes(query)
+      );
+    });
 
   // Load consignments when component mounts
   useEffect(() => {
@@ -406,18 +418,6 @@ const AdminPanel: React.FC = () => {
     tap: { scale: 0.95 },
   };
 
-  const badgeVariants = {
-    initial: { scale: 0 },
-    animate: {
-      scale: 1,
-      transition: {
-        type: "spring" as const,
-        stiffness: 500,
-        damping: 15,
-      },
-    },
-  };
-
   const handleAddProperty = async (property: Property) => {
     const result = await addProperty(property);
     if (result.success) {
@@ -444,6 +444,90 @@ const AdminPanel: React.FC = () => {
   const handleCancelForm = () => {
     setShowAddForm(false);
     setEditingProperty(null);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedPropertyIds((prev) =>
+      prev.includes(id) ? prev.filter((pId) => pId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedPropertyIds.length === 0) return;
+    setPropertiesToDelete([...selectedPropertyIds]);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmBatchDelete = () => {
+    const idsToDelete = [...propertiesToDelete];
+
+    // Optimistically hide properties
+    setPendingDeletionIds(idsToDelete);
+    setSelectedPropertyIds([]);
+    setIsSelectionMode(false);
+
+    // Clear any existing timeout
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+
+    const doDelete = async () => {
+      try {
+        const result = await ApiService.batchDeleteProperties(idsToDelete);
+        if (result.success) {
+          await loadProperties();
+          // Clear pending list only after reload to prevent flicker
+          setPendingDeletionIds([]);
+          toast.success(`${idsToDelete.length} properti berhasil dihapus!`);
+        } else {
+          toast.error(`Gagal menghapus properti: ${result.error}`);
+          setPendingDeletionIds([]); // Restore on error
+        }
+      } catch (error) {
+        toast.error("Terjadi kesalahan saat menghapus properti");
+        setPendingDeletionIds([]); // Restore on error
+      }
+    };
+
+    // Start undo timer (5 seconds)
+    undoTimeoutRef.current = setTimeout(() => {
+      doDelete();
+    }, 5000);
+
+    // Show toast with Undo button
+    toast(
+      (t) => (
+        <div className="flex items-center gap-4 min-w-[300px] justify-between">
+          <span className="font-medium">
+            Menghapus {idsToDelete.length} properti...
+          </span>
+          <button
+            onClick={() => {
+              if (undoTimeoutRef.current) {
+                clearTimeout(undoTimeoutRef.current);
+              }
+              setPendingDeletionIds([]);
+              toast.dismiss(t.id);
+              toast.success("Penghapusan dibatalkan");
+            }}
+            className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-gray-700 transition-colors shadow-sm"
+          >
+            Undo
+          </button>
+        </div>
+      ),
+      {
+        duration: 5000,
+        position: "bottom-center",
+        style: {
+          background: "#fff",
+          color: "#333",
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+          borderRadius: "12px",
+          padding: "12px 16px",
+        },
+      }
+    );
   };
 
   return (
@@ -516,28 +600,53 @@ const AdminPanel: React.FC = () => {
 
             {/* Desktop Buttons */}
             <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+              {isSelectionMode ? (
+                <motion.button
+                  onClick={handleBatchDelete}
+                  disabled={selectedPropertyIds.length === 0}
+                  className={`px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold ${
+                    selectedPropertyIds.length === 0
+                      ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                      : "bg-gradient-to-r from-red-500 to-rose-600 text-white"
+                  }`}
+                  variants={buttonVariants}
+                  whileHover={
+                    selectedPropertyIds.length > 0 ? "hover" : undefined
+                  }
+                  whileTap={selectedPropertyIds.length > 0 ? "tap" : undefined}
+                >
+                  <IoTrashBin className="text-xl" />
+                  Hapus ({selectedPropertyIds.length})
+                </motion.button>
+              ) : null}
+
               <motion.button
-                onClick={() => setShowComparisonCart(!showComparisonCart)}
-                className="relative bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
+                onClick={() => {
+                  setIsSelectionMode(!isSelectionMode);
+                  setSelectedPropertyIds([]);
+                }}
+                className={`px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold ${
+                  isSelectionMode
+                    ? "bg-gray-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300"
+                }`}
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
-                <IoCart className="text-xl" />
-                Keranjang
-                <AnimatePresence>
-                  {state.comparisonCart.length > 0 && (
-                    <motion.span
-                      className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
-                      variants={badgeVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit={{ scale: 0 }}
-                    >
-                      {state.comparisonCart.length}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                <IoCheckbox className="text-xl" />
+                {isSelectionMode ? "Batal Pilih" : "Pilih Banyak"}
+              </motion.button>
+
+              <motion.button
+                onClick={() => setShowFeaturedManager(true)}
+                className="relative bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <IoStar className="text-xl" />
+                Atur Featured
               </motion.button>
 
               <motion.button
@@ -568,26 +677,13 @@ const AdminPanel: React.FC = () => {
             {/* Mobile & Tablet Buttons */}
             <div className="flex md:hidden items-center gap-2 justify-end flex-shrink-0">
               <motion.button
-                onClick={() => setShowComparisonCart(!showComparisonCart)}
-                className="relative bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg hover:shadow-xl flex items-center gap-1 text-xs font-semibold"
+                onClick={() => setShowFeaturedManager(true)}
+                className="relative bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-2 rounded-lg hover:shadow-xl flex items-center gap-1 text-xs font-semibold"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
-                <IoCart className="text-base" />
-                <AnimatePresence>
-                  {state.comparisonCart.length > 0 && (
-                    <motion.span
-                      className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
-                      variants={badgeVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit={{ scale: 0 }}
-                    >
-                      {state.comparisonCart.length}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                <IoStar className="text-base" />
               </motion.button>
 
               <motion.button
@@ -657,7 +753,7 @@ const AdminPanel: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm text-gray-600 font-medium">
-                  Dalam Komparasi
+                  Properti Featured
                 </p>
                 <motion.p
                   className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1"
@@ -665,11 +761,11 @@ const AdminPanel: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3, type: "spring" }}
                 >
-                  {state.comparisonCart.length}
+                  {state.properties.filter((p) => p.isFeatured).length}
                 </motion.p>
               </div>
-              <div className="bg-purple-100 p-3 sm:p-4 rounded-lg sm:rounded-xl">
-                <IoCart className="text-2xl sm:text-3xl text-purple-600" />
+              <div className="bg-yellow-100 p-3 sm:p-4 rounded-lg sm:rounded-xl">
+                <IoStar className="text-2xl sm:text-3xl text-yellow-600" />
               </div>
             </div>
           </motion.div>
@@ -918,7 +1014,7 @@ const AdminPanel: React.FC = () => {
                                     Kamar Tidur
                                   </p>
                                   <p className="text-sm font-semibold text-gray-900">
-                                    {c.bedrooms} KT
+                                    {c.bedrooms}
                                   </p>
                                 </div>
                               )}
@@ -928,7 +1024,7 @@ const AdminPanel: React.FC = () => {
                                     Kamar Mandi
                                   </p>
                                   <p className="text-sm font-semibold text-gray-900">
-                                    {c.bathrooms} KM
+                                    {c.bathrooms}
                                   </p>
                                 </div>
                               )}
@@ -1229,6 +1325,9 @@ const AdminPanel: React.FC = () => {
                     showComparisonButton={false}
                     showWhatsAppButton={false}
                     onEdit={(prop) => setEditingProperty(prop)}
+                    selectable={isSelectionMode}
+                    isSelected={selectedPropertyIds.includes(property.id)}
+                    onToggleSelect={() => toggleSelection(property.id)}
                   />
                 </motion.div>
               ))}
@@ -1498,28 +1597,27 @@ const AdminPanel: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Comparison Cart */}
-      <AnimatePresence>
-        {showComparisonCart && (
-          <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowComparisonCart(false)}
-          >
-            <motion.div
-              className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ComparisonCart onClose={() => setShowComparisonCart(false)} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Featured Manager Modal */}
+      <FeaturedManagerModal
+        isOpen={showFeaturedManager}
+        onClose={() => setShowFeaturedManager(false)}
+        properties={state.properties}
+        onUpdate={async (id, isFeatured) => {
+          await updateProperty(id, { isFeatured });
+        }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmBatchDelete}
+        title="Hapus Properti?"
+        message={`Apakah Anda yakin ingin menghapus ${propertiesToDelete.length} properti yang dipilih? Anda memiliki 5 detik untuk membatalkan setelah konfirmasi.`}
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
     </div>
   );
 };

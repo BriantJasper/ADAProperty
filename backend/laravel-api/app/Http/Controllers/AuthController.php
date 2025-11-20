@@ -23,7 +23,7 @@ class AuthController extends Controller
         $user = DB::table('users')->where('username', $username)->first();
 
         if (!$user || !Hash::check($password, $user->password)) {
-            return response()->json(['success' => false, 'error' => 'Invalid username or password'], 401);
+            return response()->json(['success' => false, 'error' => 'Invalid username or password'], 400);
         }
 
         // Generate JWT token (30-minute expiry)

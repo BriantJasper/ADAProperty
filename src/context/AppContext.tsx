@@ -361,6 +361,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         tourUrl: (propertyData as any).tourUrl || undefined,
         // keep financing if provided
         financing: (propertyData as any).financing || undefined,
+        // ensure garage is sent
+        garage:
+          typeof (propertyData as any).garage === "number"
+            ? (propertyData as any).garage
+            : parseInt((propertyData as any).garage) || 0,
       };
 
       const response = await ApiService.createProperty(safePropertyData);

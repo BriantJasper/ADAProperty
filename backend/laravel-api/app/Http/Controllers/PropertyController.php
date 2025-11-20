@@ -50,6 +50,7 @@ class PropertyController extends Controller
             'area' => (int)($data['area'] ?? 0),
             'land_area' => (int)($data['landArea'] ?? 0),
             'floors' => (int)($data['floors'] ?? 0),
+            'garage' => (int)($data['garage'] ?? 0),
             'images' => json_encode($data['images'] ?? ['/images/p1.png']),
             'features' => json_encode($data['features'] ?? []),
             'whatsapp_number' => $data['whatsappNumber'] ?? null,
@@ -134,6 +135,33 @@ class PropertyController extends Controller
 
         $p->delete();
         return response()->json(['success' => true, 'message' => 'Property deleted successfully']);
+    }
+
+    public function batchDestroy(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (!is_array($ids) || empty($ids)) {
+            return response()->json(['success' => false, 'error' => 'No IDs provided'], 400);
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $p = Property::find($id);
+            if ($p) {
+                // Delete associated images from storage
+                $images = $this->parse($p->images, []);
+                foreach ($images as $imageUrl) {
+                    if (strpos($imageUrl, '/storage/') !== false) {
+                        $path = substr($imageUrl, strpos($imageUrl, '/storage/') + 9);
+                        Storage::disk('public')->delete($path);
+                    }
+                }
+                $p->delete();
+                $count++;
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => "$count properties deleted successfully"]);
     }
 
     private function toFrontend(Property $p)

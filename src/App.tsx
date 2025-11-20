@@ -9,7 +9,6 @@ import About from "./pages/About";
 import ContactPage from "./pages/ContactPage";
 import ConsignPage from "./pages/ConsignPage";
 import Navbar from "./components/Navbar";
-import RotateToLandscape from "./components/RotateToLandscape";
 import Footer from "./components/Footer";
 import { useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -52,7 +51,6 @@ function App() {
         }}
       />
       <div className="min-h-screen">
-        <RotateToLandscape />
         <Navbar />
         <main>
           <Routes>
