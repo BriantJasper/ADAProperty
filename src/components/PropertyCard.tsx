@@ -19,6 +19,7 @@ import {
   Bed,
   Bath,
   Car,
+  X,
 } from "lucide-react";
 
 // Custom Stairs icon (lucide currently lacks a dedicated stairs glyph)
@@ -104,6 +105,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       ? property.images.slice(0, 5)
       : ["/images/p1.png"];
   const [slide, setSlide] = useState(0);
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
+  const openOverlay = () => setIsOverlayOpen(true);
+  const closeOverlay = () => setIsOverlayOpen(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [overlayPos, setOverlayPos] = useState<{
@@ -155,20 +160,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     if (typeof tenor === "number") setAngsuranYears(tenor);
     if (typeof rate === "number") setAnnualRate(rate);
   }, [property.id, property.financing]);
-
-  // Close expanded description when clicking outside (portal)
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (!isDescExpanded) return;
-      const target = e.target as Node;
-      // If click is outside the card and overlay, close
-      if (cardRef.current && !cardRef.current.contains(target)) {
-        setIsDescExpanded(false);
-      }
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [isDescExpanded]);
 
   // Position overlay when expanded
   useEffect(() => {
@@ -646,9 +637,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           <div className="relative h-56 w-full overflow-hidden bg-gray-200">
             {/* Main Image */}
             <img
-              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500 cursor-pointer hover:opacity-90"
               src={images[slide]}
               alt={`${property.type} ${slide + 1}`}
+              onClick={openOverlay}
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement;
                 // Prevent infinite loop if placeholder also fails
@@ -1074,6 +1066,62 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
         </div>
       </motion.div>
+
+      {/* Image Overlay Portal */}
+      {isOverlayOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+            onClick={closeOverlay}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                closeOverlay();
+              }}
+              className="absolute top-4 right-4 text-white/80 hover:text-white z-50 p-2 transition-colors"
+            >
+              <X size={32} />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-50 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full transition-all"
+            >
+              <ChevronLeft size={32} />
+            </button>
+
+            <div
+              className="relative w-full h-full flex items-center justify-center p-4 md:p-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={images[slide]}
+                alt={`Full view ${slide + 1}`}
+                className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
+              />
+
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/90 bg-black/50 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-medium border border-white/10">
+                {slide + 1} / {images.length}
+              </div>
+            </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-50 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full transition-all"
+            >
+              <ChevronRight size={32} />
+            </button>
+          </div>,
+          document.body
+        )}
+
       {isDescExpanded &&
         typeof document !== "undefined" &&
         createPortal(

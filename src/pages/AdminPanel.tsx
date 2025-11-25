@@ -570,7 +570,7 @@ const AdminPanel: React.FC = () => {
         animate="visible"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center py-4 sm:py-6 gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap justify-between items-stretch sm:items-center py-4 sm:py-6 gap-4">
             <motion.div
               className="flex items-center gap-2 sm:gap-4 flex-shrink-0"
               whileHover={{ x: 5 }}
@@ -599,12 +599,12 @@ const AdminPanel: React.FC = () => {
             </motion.div>
 
             {/* Desktop Buttons */}
-            <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-shrink-0">
               {isSelectionMode ? (
                 <motion.button
                   onClick={handleBatchDelete}
                   disabled={selectedPropertyIds.length === 0}
-                  className={`px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold ${
+                  className={`px-3 py-2 lg:px-6 lg:py-3 rounded-xl hover:shadow-xl flex items-center gap-1 lg:gap-2 text-sm lg:text-base font-semibold ${
                     selectedPropertyIds.length === 0
                       ? "bg-gray-400 cursor-not-allowed text-gray-200"
                       : "bg-gradient-to-r from-red-500 to-rose-600 text-white"
@@ -615,7 +615,7 @@ const AdminPanel: React.FC = () => {
                   }
                   whileTap={selectedPropertyIds.length > 0 ? "tap" : undefined}
                 >
-                  <IoTrashBin className="text-xl" />
+                  <IoTrashBin className="text-lg lg:text-xl" />
                   Hapus ({selectedPropertyIds.length})
                 </motion.button>
               ) : null}
@@ -625,7 +625,7 @@ const AdminPanel: React.FC = () => {
                   setIsSelectionMode(!isSelectionMode);
                   setSelectedPropertyIds([]);
                 }}
-                className={`px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold ${
+                className={`px-3 py-2 lg:px-6 lg:py-3 rounded-xl hover:shadow-xl flex items-center gap-1 lg:gap-2 text-sm lg:text-base font-semibold ${
                   isSelectionMode
                     ? "bg-gray-600 text-white"
                     : "bg-white text-gray-700 border border-gray-300"
@@ -634,43 +634,43 @@ const AdminPanel: React.FC = () => {
                 whileHover="hover"
                 whileTap="tap"
               >
-                <IoCheckbox className="text-xl" />
-                {isSelectionMode ? "Batal Pilih" : "Pilih Banyak"}
+                <IoCheckbox className="text-lg lg:text-xl" />
+                {isSelectionMode ? "Batal" : "Pilih"}
               </motion.button>
 
               <motion.button
                 onClick={() => setShowFeaturedManager(true)}
-                className="relative bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
+                className="relative bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-2 lg:px-6 lg:py-3 rounded-xl hover:shadow-xl flex items-center gap-1 lg:gap-2 text-sm lg:text-base font-semibold"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
-                <IoStar className="text-xl" />
-                Atur Featured
+                <IoStar className="text-lg lg:text-xl" />
+                Featured
               </motion.button>
 
               <motion.button
                 onClick={() =>
                   setShowChangeCredentialsForm(!showChangeCredentialsForm)
                 }
-                className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
+                className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-3 py-2 lg:px-6 lg:py-3 rounded-xl hover:shadow-xl flex items-center gap-1 lg:gap-2 text-sm lg:text-base font-semibold"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
-                <IoKey className="text-xl" />
-                Ganti Kredensial
+                <IoKey className="text-lg lg:text-xl" />
+                Kredensial
               </motion.button>
 
               <motion.button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl hover:shadow-xl flex items-center gap-2 font-semibold"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 lg:px-6 lg:py-3 rounded-xl hover:shadow-xl flex items-center gap-1 lg:gap-2 text-sm lg:text-base font-semibold"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
-                <IoAdd className="text-xl" />
-                Tambah Properti
+                <IoAdd className="text-lg lg:text-xl" />
+                Tambah
               </motion.button>
             </div>
 

@@ -33,7 +33,7 @@ class AuthController extends Controller
             'role' => $user->role,
             'jti' => bin2hex(random_bytes(16)),
             'iat' => time(),
-            'exp' => time() + (60 * 30), // 30 minutes
+            'exp' => time() + (config('session.lifetime') * 60), // Use session lifetime
         ];
 
         // Get JWT secret from env if provided; otherwise fallback to APP_KEY (base64 decoded if needed)
@@ -82,5 +82,53 @@ class AuthController extends Controller
     public function resetPassword(Request $r)
     {
         return response()->json(['success' => true, 'message' => 'Password reset']);
+    }
+
+    // Refresh JWT token if still valid
+    public function refresh(Request $request)
+    {
+        $auth = $request->header('Authorization');
+        if (!$auth || !str_starts_with($auth, 'Bearer ')) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+        $token = substr($auth, 7);
+        try {
+            $secret = env('JWT_SECRET');
+            if (!$secret || !is_string($secret) || $secret === '') {
+                $appKey = config('app.key');
+                if (is_string($appKey) && \Illuminate\Support\Str::startsWith($appKey, 'base64:')) {
+                    $secret = base64_decode(substr($appKey, 7));
+                } else {
+                    $secret = is_string($appKey) ? $appKey : '';
+                }
+            }
+            if ($secret === '') {
+                return response()->json(['success' => false, 'error' => 'JWT secret not configured'], 500);
+            }
+            $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($secret, 'HS256'));
+            $payload = (array)$decoded;
+            // Check expiry
+            if (isset($payload['exp']) && time() > $payload['exp']) {
+                return response()->json(['success' => false, 'error' => 'Token expired'], 401);
+            }
+            // Issue new token with fresh expiry (e.g., 15 min)
+            $payload['iat'] = time();
+            $payload['exp'] = time() + (config('session.lifetime') * 60); // Use session lifetime
+            $newToken = \Firebase\JWT\JWT::encode($payload, $secret, 'HS256');
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'token' => $newToken,
+                    'user' => [
+                        'id' => $payload['user_id'] ?? null,
+                        'username' => $payload['sub'] ?? null,
+                        'name' => $payload['name'] ?? null,
+                        'role' => $payload['role'] ?? null
+                    ]
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => 'Invalid token'], 401);
+        }
     }
 }

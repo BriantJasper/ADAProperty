@@ -37,6 +37,9 @@ Route::post('/auth/verify', [AuthController::class, 'verify']);
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
+// Token refresh endpoint (requires valid JWT)
+Route::post('/auth/refresh', [AuthController::class, 'refresh']);
+
 // Public read-only routes for properties
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{id}', [PropertyController::class, 'show']);

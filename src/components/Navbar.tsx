@@ -234,14 +234,7 @@ export default function Navbar() {
                 className={`${linkBase} font-medium flex items-center gap-2`}
                 onClick={() => setIsOpen(false)}
               >
-                <Building2 className="w-4 h-4" /> Properti
-              </Link>
-              <Link
-                to="/contact"
-                className={`${linkBase} font-medium flex items-center gap-2`}
-                onClick={() => setIsOpen(false)}
-              >
-                <Phone className="w-4 h-4" /> Kontak Kami
+                <Building2 className="w-4 h-4" /> Cari Properti
               </Link>
               <Link
                 to="/consign"
@@ -249,6 +242,13 @@ export default function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 <PlusSquare className="w-4 h-4" /> Jual Properti
+              </Link>
+              <Link
+                to="/contact"
+                className={`${linkBase} font-medium flex items-center gap-2`}
+                onClick={() => setIsOpen(false)}
+              >
+                <Phone className="w-4 h-4" /> Kontak Kami
               </Link>
               {/* Admin Panel link only for admins */}
               {state.isAuthenticated && state.user?.role === "admin" && (
