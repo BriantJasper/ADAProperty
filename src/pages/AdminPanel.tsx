@@ -1049,12 +1049,22 @@ const AdminPanel: React.FC = () => {
                                 </div>
                               )}
                               {c.floors !== undefined && c.floors > 0 && (
-                                <div className="bg-gray-50 rounded p-2 col-span-2">
+                                <div className="bg-gray-50 rounded p-2">
                                   <p className="text-xs text-gray-500">
                                     Jumlah Lantai
                                   </p>
                                   <p className="text-sm font-semibold text-gray-900">
                                     {c.floors} Lantai
+                                  </p>
+                                </div>
+                              )}
+                              {c.garage !== undefined && c.garage > 0 && (
+                                <div className="bg-gray-50 rounded p-2">
+                                  <p className="text-xs text-gray-500">
+                                    Garasi
+                                  </p>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {c.garage} Mobil
                                   </p>
                                 </div>
                               )}

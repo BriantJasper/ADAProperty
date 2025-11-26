@@ -64,6 +64,7 @@ class ConsignmentController extends Controller
             'area' => 'nullable|numeric|min:0',
             'land_area' => 'nullable|numeric|min:0',
             'floors' => 'nullable|integer|min:0',
+            'garage' => 'nullable|integer|min:0',
             'images' => 'nullable|array|max:5',
         ]);
 
@@ -89,6 +90,7 @@ class ConsignmentController extends Controller
             'area' => $request->area,
             'land_area' => $request->land_area,
             'floors' => $request->floors,
+            'garage' => $request->garage,
             'images' => $request->images ?? [],
             'status' => 'pending',
         ]);

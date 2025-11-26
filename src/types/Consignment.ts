@@ -16,6 +16,7 @@ export interface ConsignmentRequest {
   area?: number;
   landArea?: number;
   floors?: number;
+  garage?: number;
   images?: string[]; // data URLs untuk preview (maks 5)
   createdAt: Date;
   status: ConsignmentStatus;

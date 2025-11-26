@@ -507,6 +507,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         area: data.area,
         land_area: data.landArea,
         floors: data.floors,
+        garage: data.garage,
         images: data.images,
       };
 
@@ -530,6 +531,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           area: response.data.area,
           landArea: response.data.land_area,
           floors: response.data.floors,
+          garage: response.data.garage,
           images: response.data.images || [],
           status: response.data.status,
           createdAt: new Date(response.data.created_at),
@@ -597,6 +599,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           area: item.area,
           landArea: item.land_area,
           floors: item.floors,
+          garage: item.garage,
           images: item.images || [],
           status: item.status,
           createdAt: new Date(item.created_at),

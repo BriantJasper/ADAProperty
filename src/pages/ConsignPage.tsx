@@ -24,6 +24,7 @@ export default function ConsignPage() {
     area: undefined,
     landArea: undefined,
     floors: undefined,
+    garage: undefined,
     images: [],
   });
   const [uploading, setUploading] = useState(false);
@@ -64,9 +65,14 @@ export default function ConsignPage() {
     setForm((prev) => ({
       ...prev,
       [name]:
-        ["bedrooms", "bathrooms", "area", "landArea", "floors"].includes(
-          name
-        ) && value !== ""
+        [
+          "bedrooms",
+          "bathrooms",
+          "area",
+          "landArea",
+          "floors",
+          "garage",
+        ].includes(name) && value !== ""
           ? Number(value)
           : value,
     }));
@@ -212,6 +218,7 @@ export default function ConsignPage() {
           area: undefined,
           landArea: undefined,
           floors: undefined,
+          garage: undefined,
           images: [],
         }));
       } else {
@@ -387,7 +394,7 @@ export default function ConsignPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">
               Luas Bangunan (m²)
@@ -428,6 +435,20 @@ export default function ConsignPage() {
               type="number"
               min={0}
               placeholder="2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Garasi (Mobil)
+            </label>
+            <input
+              name="garage"
+              value={form.garage ?? ""}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+              type="number"
+              min={0}
+              placeholder="1"
             />
           </div>
         </div>

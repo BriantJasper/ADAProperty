@@ -59,6 +59,8 @@ class PropertyController extends Controller
             'tour_url' => $data['tourUrl'] ?? null,
             'financing' => isset($data['financing']) ? json_encode($data['financing']) : null,
             'is_featured' => !empty($data['isFeatured']) ? 1 : 0,
+            'type_color' => $data['typeColor'] ?? null,
+            'status_color' => $data['statusColor'] ?? null,
         ]);
 
         return response()->json(['success' => true, 'data' => $this->toFrontend($p)]);
@@ -101,6 +103,8 @@ class PropertyController extends Controller
             'tiktokUrl' => 'tiktok_url',
             'tourUrl' => 'tour_url',
             'isFeatured' => 'is_featured',
+            'typeColor' => 'type_color',
+            'statusColor' => 'status_color',
         ];
 
         foreach ($map as $k => $col) {
@@ -193,6 +197,8 @@ class PropertyController extends Controller
             'tourUrl' => $p->tour_url ?? '',
             'financing' => $financing,
             'isFeatured' => (bool)$p->is_featured,
+            'typeColor' => $p->type_color,
+            'statusColor' => $p->status_color,
             'createdAt' => $p->created_at?->toIso8601String(),
             'updatedAt' => $p->updated_at?->toIso8601String(),
         ];

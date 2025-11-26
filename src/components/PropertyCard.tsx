@@ -571,6 +571,28 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     );
   }
 
+  // Helper to get colors with defaults
+  const getStatusColorFinal = (_status: string, customColor?: string) => {
+    if (customColor) return customColor;
+    // Default for both is green
+    return "bg-green-600";
+  };
+
+  const getTypeColorFinal = (type: string, customColor?: string) => {
+    if (customColor) return customColor;
+    switch (type.toLowerCase()) {
+      case "rumah":
+        return "bg-blue-600";
+      case "ruko":
+      case "gudang":
+        return "bg-purple-600";
+      case "kavling":
+        return "bg-yellow-500";
+      default:
+        return "bg-blue-600";
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -650,7 +672,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 }
               }}
             />
-
             {/* Previous Button */}
             <button
               onClick={goToPrevious}
@@ -659,7 +680,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             >
               <ChevronLeft size={20} />
             </button>
-
             {/* Next Button */}
             <button
               onClick={goToNext}
@@ -668,12 +688,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             >
               <ChevronRight size={20} />
             </button>
-
             {/* Image Counter - Top Right */}
             <div className="absolute top-2 right-2 bg-black/60 text-white px-2.5 py-1 rounded-full text-xs font-semibold">
               {slide + 1} / {images.length}
             </div>
-
             {/* Title - Top Center (show listing title) */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md pointer-events-none max-w-[70%]">
               <p className="text-xs font-semibold text-gray-800 truncate">
@@ -684,17 +702,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             {/* Badges - Bottom Left */}
             <div className="absolute left-3 bottom-3 flex flex-col xl:flex-row gap-1.5 xl:gap-2 pointer-events-none">
               <div
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
-                  property.status === "dijual" ? "bg-blue-600" : "bg-green-600"
-                } type-capsule-landscape`}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${getStatusColorFinal(
+                  property.status,
+                  property.statusColor
+                )} type-capsule-landscape`}
               >
                 {formatText(property.status)}
               </div>
               <div className="hidden md:block">
                 <div
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
-                    property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
-                  } flex items-center gap-1.5 type-capsule-landscape`}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${getTypeColorFinal(
+                    property.type,
+                    property.typeColor
+                  )} flex items-center gap-1.5 type-capsule-landscape`}
                 >
                   {property.type === "rumah" ? (
                     <HomeIcon className="w-3.5 h-3.5" />
@@ -705,7 +725,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 </div>
               </div>
             </div>
-
             {/* Social Links - Bottom Right */}
             {(property.igUrl || property.tiktokUrl) && (
               <div className="absolute right-3 bottom-3 flex items-center gap-2 pointer-events-auto">
@@ -735,9 +754,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 )}
               </div>
             )}
-
             {/* Overlay deskripsi di foto dihapus sesuai permintaan */}
-
             {/* Admin Controls */}
             {showAdminControls && (
               <div className="absolute top-3 right-3 flex gap-2">

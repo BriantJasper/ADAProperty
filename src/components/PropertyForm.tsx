@@ -41,6 +41,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     financing: property?.financing || undefined,
     garage: property?.garage ?? 0,
     isFeatured: property?.isFeatured ?? false,
+    typeColor: property?.typeColor || "bg-blue-600",
+    statusColor: property?.statusColor || "bg-green-600",
   });
 
   // Interest rate state (default 5%)
@@ -145,6 +147,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       if (type === "checkbox") {
         const checked = (e.target as HTMLInputElement).checked;
         setFormData((prev) => ({ ...prev, [name]: checked }));
+      } else if (name === "status") {
+        // Auto-set color for status
+        const newStatus = value;
+        let newColor = (formData as any).statusColor;
+        if (newStatus === "dijual" || newStatus === "disewa") {
+          newColor = "bg-green-600";
+        }
+        setFormData((prev) => ({
+          ...prev,
+          status: newStatus as any,
+          statusColor: newColor,
+        }));
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }));
       }
@@ -175,7 +189,29 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     if (value === "__custom__") {
       setIsAddingCustomType(true);
     } else {
-      setFormData((prev) => ({ ...prev, type: value as any }));
+      // Auto-set color based on type
+      let newColor = (formData as any).typeColor;
+      switch (value) {
+        case "rumah":
+          newColor = "bg-blue-600";
+          break;
+        case "ruko":
+        case "gudang":
+          newColor = "bg-purple-600";
+          break;
+        case "kavling":
+          newColor = "bg-yellow-500";
+          break;
+        default:
+          // Keep existing or default to blue if not set
+          if (!newColor) newColor = "bg-blue-600";
+          break;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        type: value as any,
+        typeColor: newColor,
+      }));
     }
   };
 
@@ -305,7 +341,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
           interestRate: interestRate,
         },
         // Flag featured for Popular section
+        // Flag featured for Popular section
         isFeatured: Boolean(formData.isFeatured),
+        typeColor: formData.typeColor,
+        statusColor: formData.statusColor,
       } as Partial<Property>;
 
       console.log("Submitting property with images:", propertyData.images);
@@ -520,7 +559,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             onChange={handleInputChange}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <label htmlFor="isFeatured" className="text-sm font-medium text-gray-700">
+          <label
+            htmlFor="isFeatured"
+            className="text-sm font-medium text-gray-700"
+          >
             Tampilkan di bagian "Pilihan Populer" (Home)
           </label>
         </div>
@@ -897,15 +939,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             Warna Tag Tipe
           </label>
           <select
-            name="colorType"
-            value={(formData as any).colorType || ""}
+            name="typeColor"
+            value={formData.typeColor || "bg-blue-600"}
             onChange={handleInputChange}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="bg-green-600">Hijau</option>
             <option value="bg-blue-600">Biru</option>
             <option value="bg-purple-600">Ungu</option>
-            <option value="bg-orange-600">Orange</option>
+            <option value="bg-yellow-500">Kuning</option>
+            <option value="bg-red-600">Merah</option>
           </select>
         </div>
 
@@ -914,15 +957,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             Warna Tag Status
           </label>
           <select
-            name="colorStatus"
-            value={(formData as any).colorStatus || ""}
+            name="statusColor"
+            value={formData.statusColor || "bg-green-600"}
             onChange={handleInputChange}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="bg-blue-800">Biru</option>
-            <option value="bg-red-600">Merah</option>
             <option value="bg-green-600">Hijau</option>
+            <option value="bg-blue-600">Biru</option>
             <option value="bg-purple-600">Ungu</option>
+            <option value="bg-yellow-500">Kuning</option>
+            <option value="bg-red-600">Merah</option>
           </select>
         </div>
       </div>

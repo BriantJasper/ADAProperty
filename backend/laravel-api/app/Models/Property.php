@@ -27,6 +27,8 @@ class Property extends Model
         'tiktok_url',
         'tour_url',
         'financing',
-        'garage'
+        'garage',
+        'type_color',
+        'status_color'
     ];
 }

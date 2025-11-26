@@ -14,8 +14,18 @@ export interface Property {
   price: number;
   location: string;
   subLocation: string;
-  type: "rumah" | "apartemen" | "tanah" | "ruko";
+  type:
+    | "rumah"
+    | "apartemen"
+    | "tanah"
+    | "ruko"
+    | "gudang"
+    | "kavling"
+    | "pabrik"
+    | string;
   status: "dijual" | "disewa";
+  typeColor?: string;
+  statusColor?: string;
   bedrooms: number;
   bathrooms: number;
   area: number;

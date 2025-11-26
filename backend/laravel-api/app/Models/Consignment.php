@@ -21,6 +21,7 @@ class Consignment extends Model
         'area',
         'land_area',
         'floors',
+        'garage',
         'images',
         'status',
     ];
@@ -33,5 +34,6 @@ class Consignment extends Model
         'bedrooms' => 'integer',
         'bathrooms' => 'integer',
         'floors' => 'integer',
+        'garage' => 'integer',
     ];
 }
