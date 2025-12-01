@@ -136,18 +136,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             : 0;
         })();
 
-  // Clean description: start from 'Fasilitas' if present; strip leading LB/LT etc.
+  // Clean description: strip leading LB/LT etc.
   const cleanedDescription = React.useMemo(() => {
     let desc = property.description || "";
-    const fasilitasIndex = desc.toLowerCase().indexOf("fasilitas");
-    if (fasilitasIndex !== -1) {
-      desc = desc.slice(fasilitasIndex);
-    } else {
-      // Remove leading metadata lines containing abbreviations
-      desc = desc.replace(/^(?:.*?(?:KT|KM|LB|LT)[^\n]*\n)+/gi, "").trim();
-      // Remove inline LB/LT patterns
-      desc = desc.replace(/\b(?:LB|LT)\s*\d+\s*m²?,?\s*/gi, "");
-    }
+
+    // Remove leading metadata lines containing abbreviations
+    desc = desc.replace(/^(?:.*?(?:KT|KM|LB|LT)[^\n]*\n)+/gi, "").trim();
+    // Remove inline LB/LT patterns
+    desc = desc.replace(/\b(?:LB|LT)\s*\d+\s*m²?,?\s*/gi, "");
+
     return desc.trim();
   }, [property.description]);
 
