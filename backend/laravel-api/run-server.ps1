@@ -80,7 +80,8 @@ function Run-Artisan {
     try { & $PhpExec artisan db:seed --class=AdminUserSeeder --no-interaction | Write-Output } catch { Write-Warning "Seeder AdminUserSeeder tidak tersedia atau gagal. Lewati langkah ini." }
 
     # Jalankan server
-    Write-Host "Menjalankan server: http://$Host:$Port/" -ForegroundColor Green
+    $url = "http://{0}:{1}/" -f $Host, $Port
+    Write-Host "Menjalankan server: $url" -ForegroundColor Green
     & $PhpExec artisan serve --host=$Host --port=$Port
   } finally {
     Pop-Location

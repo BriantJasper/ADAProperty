@@ -687,18 +687,17 @@ class ApiService {
   // Upload multiple images and return array of public URLs
   static async uploadImages(files: File[]) {
     const token = localStorage.getItem("auth_token");
-    if (!token) {
-      throw new Error("Authentication required");
-    }
     const form = new FormData();
     // Gunakan 'files[]' agar PHP/Laravel mengenali sebagai array
     files.forEach((f) => form.append("files[]", f, f.name));
+    const headers: any = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     const res = await this.makeRequest("/upload", {
       method: "POST",
       body: form,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     });
     return res;
   }

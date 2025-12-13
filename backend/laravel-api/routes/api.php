@@ -47,8 +47,10 @@ Route::get('/properties/{id}', [PropertyController::class, 'show']);
 // Public consignment submission
 Route::post('/consignments', [ConsignmentController::class, 'store']);
 
+// Public upload endpoint (used by admin and consignment form)
+Route::post('/upload', [UploadController::class, 'upload']);
+
 Route::middleware('jwt')->group(function () {
-    Route::post('/upload', [UploadController::class, 'upload']);
 
     // Write operations require authentication
     Route::post('/properties', [PropertyController::class, 'store']);
