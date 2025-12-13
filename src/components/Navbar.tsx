@@ -12,11 +12,13 @@ import {
   Phone,
   PlusSquare,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useApp } from "../context/AppContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { state, dispatch } = useApp();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { state, logout } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const compareCount = state.comparisonCart.length;
@@ -43,8 +45,18 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    dispatch({ type: "LOGOUT" });
-    navigate("/");
+    setIsLoggingOut(true);
+    try {
+      logout();
+      toast.success("Logout berhasil! Sampai jumpa lagi.", {
+        position: "top-center",
+        duration: 3000,
+      });
+      setTimeout(() => navigate("/"), 500);
+    } catch {
+      toast.error("Gagal logout. Silakan coba lagi.");
+      setIsLoggingOut(false);
+    }
   };
 
   // Hidden shortcut: Ctrl+Alt+A opens admin login via secret route
@@ -135,14 +147,23 @@ export default function Navbar() {
             {state.isAuthenticated && (
               <button
                 onClick={handleLogout}
+                disabled={isLoggingOut}
                 className={
                   useSolid
-                    ? "p-2.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-all duration-200"
-                    : "p-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-white transition-all duration-200"
+                    ? `p-2.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-all duration-200 ${
+                        isLoggingOut ? "opacity-50 cursor-not-allowed" : ""
+                      }`
+                    : `p-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-white transition-all duration-200 ${
+                        isLoggingOut ? "opacity-50 cursor-not-allowed" : ""
+                      }`
                 }
-                title="Logout"
+                title={isLoggingOut ? "Logging out..." : "Logout"}
               >
-                <LogOut className="w-5 h-5" />
+                {isLoggingOut ? (
+                  <div className="w-5 h-5 border-2 border-transparent border-t-current rounded-full animate-spin" />
+                ) : (
+                  <LogOut className="w-5 h-5" />
+                )}
               </button>
             )}
 
