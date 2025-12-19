@@ -343,7 +343,7 @@ class ApiService {
       // Get stored credentials or use default
       const storedCredentials = JSON.parse(
         localStorage.getItem("adminCredentials") ||
-          '{"username": "admin", "password": "admin123"}'
+        '{"username": "admin", "password": "admin123"}'
       );
 
       if (
@@ -466,7 +466,7 @@ class ApiService {
       try {
         const stored = JSON.parse(
           localStorage.getItem("adminCredentials") ||
-            '{"username":"admin","password":"admin123"}'
+          '{"username":"admin","password":"admin123"}'
         );
         if (currentPassword !== stored.password) {
           return { success: false, error: "Current password is incorrect" };
@@ -671,9 +671,8 @@ class ApiService {
       }
       return {
         success: true,
-        message: `${
-          before - this.fallbackProperties.length
-        } properties deleted successfully`,
+        message: `${before - this.fallbackProperties.length
+          } properties deleted successfully`,
       };
     }
 
@@ -690,14 +689,11 @@ class ApiService {
     const form = new FormData();
     // Gunakan 'files[]' agar PHP/Laravel mengenali sebagai array
     files.forEach((f) => form.append("files[]", f, f.name));
-    const headers: any = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
     const res = await this.makeRequest("/upload", {
       method: "POST",
       body: form,
-      headers,
+      // headers: {}, // Explicitly empty headers or let makeRequest handle defaults
+      // Note: Do not send Authorization header for public upload to avoid 401 on invalid token
     });
     return res;
   }
@@ -724,13 +720,13 @@ class ApiService {
     const financing =
       financingParsed && typeof financingParsed === "object"
         ? {
-            dpPercent: toNumber(financingParsed.dpPercent) ?? 5,
-            tenorYears: toNumber(financingParsed.tenorYears) ?? 1,
-            fixedYears: toNumber(financingParsed.fixedYears) ?? undefined,
-            bookingFee: toNumber(financingParsed.bookingFee) ?? undefined,
-            ppnPercent: toNumber(financingParsed.ppnPercent) ?? undefined,
-            interestRate: toNumber(financingParsed.interestRate) ?? undefined,
-          }
+          dpPercent: toNumber(financingParsed.dpPercent) ?? 5,
+          tenorYears: toNumber(financingParsed.tenorYears) ?? 1,
+          fixedYears: toNumber(financingParsed.fixedYears) ?? undefined,
+          bookingFee: toNumber(financingParsed.bookingFee) ?? undefined,
+          ppnPercent: toNumber(financingParsed.ppnPercent) ?? undefined,
+          interestRate: toNumber(financingParsed.interestRate) ?? undefined,
+        }
         : undefined;
 
     const imagesRaw = record?.images;
@@ -738,16 +734,16 @@ class ApiService {
     const images = Array.isArray(imagesParsed)
       ? imagesParsed
       : Array.isArray(imagesRaw)
-      ? imagesRaw
-      : ["/images/p1.png"];
+        ? imagesRaw
+        : ["/images/p1.png"];
 
     const featuresRaw = record?.features;
     const featuresParsed = parseJSON(featuresRaw);
     const features = Array.isArray(featuresParsed)
       ? featuresParsed
       : Array.isArray(featuresRaw)
-      ? featuresRaw
-      : [];
+        ? featuresRaw
+        : [];
 
     const tourUrl =
       (record?.tourUrl ?? record?.tour_url ?? "").toString().trim() ||

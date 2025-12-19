@@ -126,19 +126,30 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     typeof property.garage === "number"
       ? property.garage
       : (() => {
-          if (typeof property.garage === "boolean")
-            return property.garage ? 1 : 0;
-          const features = Array.isArray(property.features)
-            ? property.features
-            : [];
-          return features.some((f) => /garasi|carport|parkir/i.test(String(f)))
-            ? 1
-            : 0;
-        })();
+        if (typeof property.garage === "boolean")
+          return property.garage ? 1 : 0;
+        const features = Array.isArray(property.features)
+          ? property.features
+          : [];
+        return features.some((f) => /garasi|carport|parkir/i.test(String(f)))
+          ? 1
+          : 0;
+      })();
 
-  // Clean description: strip leading LB/LT etc.
+  // Clean description: strip HTML and then remove leading LB/LT etc.
   const cleanedDescription = React.useMemo(() => {
     let desc = property.description || "";
+
+    // Helper to strip HTML tags but preserve line breaks
+    const stripHtml = (html: string) => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return doc.body.textContent || "";
+    };
+
+    // If it looks like HTML, strip it
+    if (/<[a-z][\s\S]*>/i.test(desc)) {
+      desc = stripHtml(desc);
+    }
 
     // Remove leading metadata lines containing abbreviations
     desc = desc.replace(/^(?:.*?(?:KT|KM|LB|LT)[^\n]*\n)+/gi, "").trim();
@@ -222,9 +233,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       ? property.price.toLocaleString()
       : "0";
     const message = `Halo, saya tertarik dengan properti ${property.title} di ${property.location} dengan harga Rp ${formattedPrice}. Apakah masih tersedia?`;
-    const whatsappUrl = `https://wa.me/${
-      property.whatsappNumber
-    }?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${property.whatsappNumber
+      }?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -593,9 +603,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   return (
     <>
       <motion.div
-        className={`w-full overflow-hidden rounded-lg bg-white shadow-lg font-sans flex flex-col h-full ${
-          selectable ? "cursor-pointer" : ""
-        } ${isSelected ? "ring-4 ring-blue-500" : ""}`}
+        className={`w-full overflow-hidden rounded-lg bg-white shadow-lg font-sans flex flex-col h-full ${selectable ? "cursor-pointer" : ""
+          } ${isSelected ? "ring-4 ring-blue-500" : ""}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{
@@ -628,11 +637,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                   e.stopPropagation();
                   onToggleSelect?.();
                 }}
-                className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors shadow-md ${
-                  isSelected
+                className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors shadow-md ${isSelected
                     ? "bg-blue-600 border-blue-600"
                     : "bg-white border-gray-300 hover:border-blue-400"
-                }`}
+                  }`}
               >
                 {isSelected && (
                   <svg
@@ -831,9 +839,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               {/* Property type badge: show below sublocation on mobile only */}
               <div className="block md:hidden mt-1">
                 <div
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${
-                    property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
-                  } flex items-center gap-1.5 type-capsule-landscape`}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ring-1 ring-white/20 w-fit ${property.type === "rumah" ? "bg-green-600" : "bg-purple-600"
+                    } flex items-center gap-1.5 type-capsule-landscape`}
                 >
                   {property.type === "rumah" ? (
                     <HomeIcon className="w-3.5 h-3.5" />
@@ -978,11 +985,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           {/* Detail singkat: tipe, lantai, kamar */}
           <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 min-h-[5.5rem]">
             <p
-              className={`text-sm text-gray-700 leading-relaxed ${
-                isDescExpanded
+              className={`text-sm text-gray-700 leading-relaxed ${isDescExpanded
                   ? "whitespace-pre-line"
                   : "line-clamp-3 whitespace-normal"
-              }`}
+                }`}
             >
               {cleanedDescription || "Tidak ada deskripsi"}
             </p>
@@ -1065,11 +1071,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                       duration: 0.5,
                       ease: "easeInOut",
                     }}
-                    className={`px-4 py-2 rounded-lg flex items-center justify-center ${
-                      canAddToComparison
+                    className={`px-4 py-2 rounded-lg flex items-center justify-center ${canAddToComparison
                         ? "bg-blue-600 text-white hover:bg-blue-700"
                         : "bg-gray-400 text-gray-200 cursor-not-allowed"
-                    }`}
+                      }`}
                     title="Tambah ke perbandingan"
                   >
                     <IoCart size={20} />
@@ -1157,9 +1162,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 Tutup
               </button>
             </div>
-            <div className="text-sm text-gray-700 whitespace-pre-line">
-              {property.description}
-            </div>
+            <div
+              className="text-sm text-gray-700 whitespace-pre-wrap prose prose-sm max-w-none prose-p:my-2 prose-ul:list-disc prose-ul:pl-4"
+              dangerouslySetInnerHTML={{ __html: property.description }}
+            />
           </div>,
           document.body
         )}
